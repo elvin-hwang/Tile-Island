@@ -1,0 +1,12 @@
+# ignore generated files to avoid conflicts upon merge
+*.filters
+*.cmake
+*.bin
+*.sln
+*.vcxproj
+
+*build*
+.vscode
+.vs
+
+out/
