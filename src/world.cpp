@@ -3,12 +3,34 @@
 #include "physics.hpp"
 #include "debug.hpp"
 #include "render_components.hpp"
+#include "tile.hpp"
+#include "blobule.hpp"
+
 
 // stlib
 #include <string.h>
 #include <cassert>
 #include <sstream>
 #include <iostream>
+
+// Game Configuration
+
+// Position of first tile.
+// Should figure out a way to position this such that the grid will always be centered on the background.
+float first_loc_x = 142.f;
+float first_loc_y = 130.f;
+
+// Movement size of blobule.
+float move = 103.f;
+
+// Set the width and height of grid in terms of number of tiles.
+static const int grid_width = 8;
+static const int grid_height = 6;
+int grid_size = grid_width * grid_height;
+
+// We need to store a an array of vec2 that contains the locations of every tile on the grid.
+// For example, perhaps index 3 of the array contains {100, 200}, meaning a tile exists on 100, 200.
+vec2 GRID[grid_width * grid_height];
 
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
@@ -76,6 +98,11 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 {
 	(void)elapsed_ms; // silence unused warning
 	(void)window_size_in_game_units; // silence unused warning
+    
+    // Giving our game a title.
+    std::stringstream title_ss;
+    title_ss << "Welcome to Tile Island!";;
+    glfwSetWindowTitle(window, title_ss.str().c_str());
 }
 
 // Reset the world state to its initial state
@@ -94,6 +121,42 @@ void WorldSystem::restart()
 
 	// Debugging for memory/component leaks
 	ECS::ContainerInterface::list_all_components();
+    
+    // Generate our default grid first.
+    // We will place tiles such that they form a 5 x 8 grid. Each tile will be placed next to one another.
+    
+    // Make one tile at the origin of the grid first.
+    ECS::Entity entity_tile = Tile::createBlueTile({first_loc_x, first_loc_y});
+    
+    // Make a 8 x 5 Grid of Tiles.
+    // First, get the dimensions of one tile defined in tile.cpp.
+    auto& motion = ECS::registry<Motion>.get(entity_tile);
+    auto width = motion.scale.x;
+    auto height = motion.scale.y;
+    int count = 0;
+    // Horizontally...
+    for (int i = 0; i < grid_width; i++)
+    {
+        // Vertically...
+        for (int j = 0; j < grid_height; j++)
+        {
+            // Calculate position of tile to be generated.
+            float loc_x = first_loc_x + (width * i);
+            float loc_y = first_loc_y + (height * j);
+            // Place locations in GRID.
+            vec2 new_location_for_tile = {loc_x, loc_y};
+            GRID[count] = new_location_for_tile;
+            count++;
+            
+            // Create a tile everywhere except the origin of the grid.
+            if (!(i == 0 && j == 0)){
+                Tile::createPurpleTile({loc_x, loc_y});
+            }
+        }
+    }
+    
+    // Create and place our blobule at the origin of the grid.
+    player_blobule = Blobule::createBlobule({first_loc_x, first_loc_y});
 }
 
 // Compute collisions between entities
@@ -122,6 +185,35 @@ bool WorldSystem::is_over() const
 // Check out https://www.glfw.org/docs/3.3/input_guide.html
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
+    // Retrieve player salmon Motion data.
+    auto& blobule_movement = ECS::registry<Motion>.get(player_blobule);
+    auto blobule_position = blobule_movement.position;
+            
+    // For when you press an arrow key and the salmon starts moving.
+    if (action == GLFW_PRESS)
+    {
+        if (key == GLFW_KEY_UP)
+        {
+            // Note: Subtraction causes upwards movement.
+            blobule_movement.position = { blobule_position.x, blobule_position.y - move};
+        }
+        if (key == GLFW_KEY_DOWN)
+        {
+            // Note: Addition causes downwards movement.
+            blobule_movement.position = { blobule_position.x, blobule_position.y + move};
+        }
+        if (key == GLFW_KEY_LEFT)
+        {
+            blobule_movement.position = { blobule_position.x - move, blobule_position.y};
+                    
+        }
+        if (key == GLFW_KEY_RIGHT)
+        {
+            blobule_movement.position = { blobule_position.x + move, blobule_position.y};
+                    
+        }
+    }
+    
 	// Resetting game
 	if (action == GLFW_RELEASE && key == GLFW_KEY_R)
 	{
