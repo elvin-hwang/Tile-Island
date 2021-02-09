@@ -244,13 +244,21 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 // On mouse move callback
 void WorldSystem::on_mouse_move(vec2 mouse_pos)
 {
-	(void)mouse_pos; // silence unused warning
+    (void)mouse_pos;
 }
 
 // On mouse button callback
 void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 {
-	(void)wnd; // silence unused warning
-	(void)button; // silence unused warning
-	(void)action; // silence unused warning
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        double mouse_x, mouse_y;
+        glfwGetCursorPos(wnd, &mouse_x, &mouse_y);
+        ECS::registry<Motion>.get(player_blobule).angle = atan2(mouse_y - ECS::registry<Motion>.get(player_blobule).position.y, mouse_x - ECS::registry<Motion>.get(player_blobule).position.x) - PI;
+    }
+
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    {
+        ECS::registry<Motion>.get(player_blobule).velocity = {cos(ECS::registry<Motion>.get(player_blobule).angle) * 50, sin(ECS::registry<Motion>.get(player_blobule).angle) * 50};
+    }
 }
