@@ -156,7 +156,10 @@ void WorldSystem::restart()
     }
     
     // Create and place our blobule at the origin of the grid.
-    player_blobule = Blobule::createBlobule({first_loc_x, first_loc_y});
+    player_blobule1 = Blobule::createBlobule({first_loc_x + 100.0f, first_loc_y + 100.0f}, Yellow);
+	player_blobule2 = Blobule::createBlobule({ first_loc_x + 200.0f, first_loc_y+ 200.0f}, Green);
+	/*player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y }, Red);
+	player_blobule4 = Blobule::createBlobule({ first_loc_x, first_loc_y }, Green);*/
 }
 
 // Compute collisions between entities
@@ -186,7 +189,7 @@ bool WorldSystem::is_over() const
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
     // Retrieve player salmon Motion data.
-    auto& blobule_movement = ECS::registry<Motion>.get(player_blobule);
+    auto& blobule_movement = ECS::registry<Motion>.get(player_blobule1);
     auto blobule_position = blobule_movement.position;
             
     // For when you press an arrow key and the salmon starts moving.
