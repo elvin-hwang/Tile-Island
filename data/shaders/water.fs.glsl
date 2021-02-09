@@ -10,15 +10,21 @@ layout(location = 0) out vec4 color;
 
 vec2 distort(vec2 uv) 
 {
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// HANDLE THE WATER WAVE DISTORTION HERE (you may want to try sin/cos)
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 	vec2 coord = uv.xy;
-	coord = coord + (0.002 * cos(time));
     return coord;
 }
 
 vec4 color_shift(vec4 in_color) 
 {
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// HANDLE THE COLOR SHIFTING HERE (you may want to make it blue-ish)
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 	vec4 color = in_color;
-	color += vec4(0, 0, 0.3, 1);
 	return color;
 }
 

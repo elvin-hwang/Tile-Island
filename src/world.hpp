@@ -2,6 +2,7 @@
 
 // internal
 #include "common.hpp"
+#include "blobule.hpp"
 
 // stlib
 #include <vector>
@@ -50,6 +51,7 @@ private:
 
 	// Game state
 	float current_speed;
+    ECS::Entity player_blobule;
 
 	// C++ random number generator
 	std::default_random_engine rng;
