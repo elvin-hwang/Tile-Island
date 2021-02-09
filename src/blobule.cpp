@@ -2,20 +2,37 @@
 #include "blobule.hpp"
 #include "render.hpp"
 
-ECS::Entity Blobule::createBlobule(vec2 position)
+ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col)
 {
     // Reserve an entity
     auto entity = ECS::Entity();
     
     // Create the rendering components
-    std::string key = "blobule";
+    std::string key = "blobule" + col;
     ShadedMesh& resource = cache_resource(key);
     if (resource.effect.program.resource == 0)
     {
         resource = ShadedMesh();
-        RenderSystem::createSprite(resource, textures_path("blobule.png"), "textured");
+        std::string path;
+        switch (col) {
+        case Blue:
+            path = textures_path("blobule_blue.png");
+            break;
+        case Red:
+            path = textures_path("blobule_red.png");
+            break;
+        case Yellow:
+            path = textures_path("blobule_yellow.png");
+            break;
+        case Green:
+            path = textures_path("blobule_green.png");
+            break;
+        default:
+            path = textures_path("blobule_blue.png");
+        }
+        RenderSystem::createSprite(resource, path, "textured");
+
     }
-    
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
     ECS::registry<ShadedMeshRef>.emplace(entity, resource);
     
@@ -31,3 +48,4 @@ ECS::Entity Blobule::createBlobule(vec2 position)
     ECS::registry<Blobule>.emplace(entity);
     return entity;
 }
+

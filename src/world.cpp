@@ -28,6 +28,8 @@ static const int grid_width = 8;
 static const int grid_height = 6;
 int grid_size = grid_width * grid_height;
 
+int playerMove = 1;
+
 // We need to store a an array of vec2 that contains the locations of every tile on the grid.
 // For example, perhaps index 3 of the array contains {100, 200}, meaning a tile exists on 100, 200.
 vec2 GRID[grid_width * grid_height];
@@ -156,7 +158,10 @@ void WorldSystem::restart()
     }
     
     // Create and place our blobule at the origin of the grid.
-    player_blobule = Blobule::createBlobule({first_loc_x, first_loc_y});
+    player_blobule1 = Blobule::createBlobule({first_loc_x, first_loc_y}, Yellow);
+	player_blobule2 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y}, Green);
+	player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 510.f }, Red);
+	player_blobule4 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y + 510.f }, Blue);
 }
 
 // Compute collisions between entities
@@ -185,8 +190,23 @@ bool WorldSystem::is_over() const
 // Check out https://www.glfw.org/docs/3.3/input_guide.html
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
-    // Retrieve player salmon Motion data.
-    auto& blobule_movement = ECS::registry<Motion>.get(player_blobule);
+	auto player = player_blobule1;
+	switch (playerMove) {
+		case 1:
+			player = player_blobule1;
+			break;
+		case 2:
+			player = player_blobule2;
+			break;
+		case 3:
+			player = player_blobule3;
+			break;
+		case 4:
+			player = player_blobule4;
+			break;
+	}
+
+	auto& blobule_movement = ECS::registry<Motion>.get(player);
     auto blobule_position = blobule_movement.position;
             
     // For when you press an arrow key and the salmon starts moving.
@@ -212,6 +232,16 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             blobule_movement.position = { blobule_position.x + move, blobule_position.y};
                     
         }
+
+		if (key == GLFW_KEY_ENTER)
+		{
+			if (playerMove != 4) {
+				playerMove++;
+			}
+			else {
+				playerMove = 1;
+			}
+		}
     }
     
 	// Resetting game
