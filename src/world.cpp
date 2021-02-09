@@ -23,6 +23,8 @@ float first_loc_y = 130.f;
 // Movement size of blobule.
 float move = 103.f;
 
+double mouse_press_x, mouse_press_y;
+
 // Set the width and height of grid in terms of number of tiles.
 static const int grid_width = 8;
 static const int grid_height = 6;
@@ -274,13 +276,23 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 // On mouse move callback
 void WorldSystem::on_mouse_move(vec2 mouse_pos)
 {
-	(void)mouse_pos; // silence unused warning
+    (void)mouse_pos;
 }
 
 // On mouse button callback
 void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 {
-	(void)wnd; // silence unused warning
-	(void)button; // silence unused warning
-	(void)action; // silence unused warning
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
+        ECS::registry<Motion>.get(player_blobule).angle = atan2(mouse_press_y - ECS::registry<Motion>.get(player_blobule).position.y, mouse_press_x - ECS::registry<Motion>.get(player_blobule).position.x) - PI;
+    }
+
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    {
+        double mouse_release_x, mouse_release_y;
+        glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
+        double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
+        ECS::registry<Motion>.get(player_blobule).velocity = {cos(ECS::registry<Motion>.get(player_blobule).angle) * drag_distance, sin(ECS::registry<Motion>.get(player_blobule).angle) * drag_distance};
+    }
 }
