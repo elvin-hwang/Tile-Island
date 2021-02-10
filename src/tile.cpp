@@ -2,6 +2,9 @@
 #include "tile.hpp"
 #include "render.hpp"
 
+// Initialize size of tiles.
+float size = 0.13f;
+
 ECS::Entity Tile::createWaterTile(vec2 position)
 {
     // Reserve an entity
@@ -25,12 +28,11 @@ ECS::Entity Tile::createWaterTile(vec2 position)
     motion.angle = 0.f;
     motion.velocity = { 0.f, 0.f };
     motion.position = position;
-    motion.scale = vec2({ 0.3f, 0.3f }) * static_cast<vec2>(resource.texture.size);
+    motion.scale = vec2({ size, size }) * static_cast<vec2>(resource.texture.size);
 
     auto& terrain = ECS::registry<Terrain>.emplace(entity);
     terrain.type = Water;
     terrain.friction = 0.0f;
-
 
     // Create and (empty) Tile component to be able to refer to all tiles
     ECS::registry<Tile>.emplace(entity);
@@ -60,7 +62,7 @@ ECS::Entity Tile::createBlueTile(vec2 position)
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
     motion.position = position;
-    motion.scale = vec2({0.3f, 0.3f}) * static_cast<vec2>(resource.texture.size);
+    motion.scale = vec2({ size, size }) * static_cast<vec2>(resource.texture.size);
 
     auto& terrain = ECS::registry<Terrain>.emplace(entity);
     terrain.type = Ice;
@@ -94,7 +96,7 @@ ECS::Entity Tile::createPurpleTile(vec2 position)
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
     motion.position = position;
-    motion.scale = vec2({0.3f, 0.3f}) * static_cast<vec2>(resource.texture.size);
+    motion.scale = vec2({ size, size }) * static_cast<vec2>(resource.texture.size);
 
     auto& terrain = ECS::registry<Terrain>.emplace(entity);
     terrain.type = Ice;
