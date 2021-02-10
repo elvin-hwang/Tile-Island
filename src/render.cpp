@@ -156,7 +156,8 @@ void RenderSystem::draw(vec2 window_size_in_game_units)
 	// Clearing backbuffer
 	glViewport(0, 0, frame_buffer_size.x, frame_buffer_size.y);
 	glDepthRange(0.00001, 10);
-	glClearColor(0, 0, 1, 1.0);
+    // Background colour is {R, G, B, A}
+	glClearColor(1, 1, 1, 1.0);
 	glClearDepth(1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	gl_has_errors();
