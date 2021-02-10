@@ -25,6 +25,7 @@ ECS::Entity Tile::createBlueTile(vec2 position)
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
     motion.position = position;
+    motion.friction = 0.005f;
     motion.scale = vec2({0.3f, 0.3f}) * static_cast<vec2>(resource.texture.size);
     
     // Create and (empty) Tile component to be able to refer to all tiles
@@ -55,6 +56,7 @@ ECS::Entity Tile::createPurpleTile(vec2 position)
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
     motion.position = position;
+    motion.friction = 0.02f;
     motion.scale = vec2({0.3f, 0.3f}) * static_cast<vec2>(resource.texture.size);
     
     // Create and (empty) Tile component to be able to refer to all tiles

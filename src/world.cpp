@@ -21,8 +21,10 @@
 float first_loc_x = 142.f;
 float first_loc_y = 130.f;
 
-// Movement size of blobule.
-float move = 103.f;
+// Movement speed of blobule.
+float moveSpeed = 100.f;
+
+double mouse_press_x, mouse_press_y;
 
 // Set the width and height of grid in terms of number of tiles.
 static const int grid_width = 8;
@@ -106,6 +108,13 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
     std::stringstream title_ss;
     title_ss << "Welcome to Tile Island!";;
     glfwSetWindowTitle(window, title_ss.str().c_str());
+
+	// Friction implementation
+	for (auto& blob : ECS::registry<Blobule>.entities)
+	{
+		auto& motion = ECS::registry<Motion>.get(blob);
+		motion.velocity += -motion.velocity * motion.friction;
+	}
 }
 
 // Reset the world state to its initial state
@@ -151,10 +160,12 @@ void WorldSystem::restart()
             GRID[count] = new_location_for_tile;
             count++;
             
-            // Create a tile everywhere except the origin of the grid.
-            if (!(i == 0 && j == 0)){
-                Tile::createPurpleTile({loc_x, loc_y});
-            }
+            // Create a tile everywhere on half of the grid.
+			if (i < grid_width / 2) {
+				Tile::createBlueTile({ loc_x, loc_y });
+			} else {
+				Tile::createPurpleTile({ loc_x, loc_y });
+			}
         }
     }
     
@@ -185,6 +196,15 @@ void WorldSystem::handle_collisions()
 		// The entity and its collider
 		auto entity = registry.entities[i];
 		auto entity_other = registry.components[i].other;
+
+		// Change friction of blobule based on which tile it is on
+		if (ECS::registry<Blobule>.has(entity)) {
+			if (ECS::registry<Tile>.has(entity_other)) {
+				auto& blobMotion = ECS::registry<Motion>.get(entity);
+				auto& tileMotion = ECS::registry<Motion>.get(entity_other);
+				blobMotion.friction = tileMotion.friction;
+			}
+		}
 	}
 
 	// Remove all collisions from this simulation step
@@ -221,39 +241,40 @@ void WorldSystem::on_key(int key, int, int action, int mod)
     auto blobule_position = blobule_movement.position;
             
     // For when you press an arrow key and the salmon starts moving.
-    if (action == GLFW_PRESS)
+    if (action == GLFW_PRESS || action == GLFW_REPEAT)
     {
         if (key == GLFW_KEY_UP)
         {
             // Note: Subtraction causes upwards movement.
-            blobule_movement.position = { blobule_position.x, blobule_position.y - move};
+            blobule_movement.velocity.y = -moveSpeed;
         }
         if (key == GLFW_KEY_DOWN)
         {
             // Note: Addition causes downwards movement.
-            blobule_movement.position = { blobule_position.x, blobule_position.y + move};
+            blobule_movement.velocity.y = moveSpeed;
         }
         if (key == GLFW_KEY_LEFT)
         {
-            blobule_movement.position = { blobule_position.x - move, blobule_position.y};
+            blobule_movement.velocity.x = -moveSpeed;
                     
         }
         if (key == GLFW_KEY_RIGHT)
         {
-            blobule_movement.position = { blobule_position.x + move, blobule_position.y};
+            blobule_movement.velocity.x = moveSpeed;
                     
         }
-
-		if (key == GLFW_KEY_ENTER)
-		{
-			if (playerMove != 4) {
-				playerMove++;
-			}
-			else {
-				playerMove = 1;
-			}
-		}
     }
+
+	// Turn based system
+	if (action == GLFW_PRESS && key == GLFW_KEY_ENTER)
+	{
+		if (playerMove != 4) {
+			playerMove++;
+		}
+		else {
+			playerMove = 1;
+		}
+	}
     
 	// Resetting game
 	if (action == GLFW_RELEASE && key == GLFW_KEY_R)
@@ -285,13 +306,23 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 // On mouse move callback
 void WorldSystem::on_mouse_move(vec2 mouse_pos)
 {
-	(void)mouse_pos; // silence unused warning
+    (void)mouse_pos;
 }
 
 // On mouse button callback
 void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 {
-	(void)wnd; // silence unused warning
-	(void)button; // silence unused warning
-	(void)action; // silence unused warning
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
+        ECS::registry<Motion>.get(player_blobule1).angle = atan2(mouse_press_y - ECS::registry<Motion>.get(player_blobule1).position.y, mouse_press_x - ECS::registry<Motion>.get(player_blobule1).position.x) - PI;
+    }
+
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    {
+        double mouse_release_x, mouse_release_y;
+        glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
+        double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
+        ECS::registry<Motion>.get(player_blobule1).velocity = {cos(ECS::registry<Motion>.get(player_blobule1).angle) * drag_distance, sin(ECS::registry<Motion>.get(player_blobule1).angle) * drag_distance};
+    }
 }
