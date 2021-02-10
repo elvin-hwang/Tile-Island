@@ -23,6 +23,7 @@ float first_loc_y = 130.f;
 
 // Movement speed of blobule.
 float moveSpeed = 100.f;
+float terminalVelocity = 20.f;
 
 double mouse_press_x, mouse_press_y;
 
@@ -114,6 +115,12 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	{
 		auto& motion = ECS::registry<Motion>.get(blob);
 		motion.velocity += -motion.velocity * motion.friction;
+		if (-terminalVelocity < motion.velocity.x && motion.velocity.x < terminalVelocity) {
+			motion.velocity.x = 0;
+		}
+		if (-terminalVelocity < motion.velocity.y && motion.velocity.y < terminalVelocity) {
+			motion.velocity.y = 0;
+		}
 	}
 }
 
