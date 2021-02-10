@@ -2,29 +2,29 @@
 #include "blobule.hpp"
 #include "render.hpp"
 
-ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col)
+ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col, std::string colString)
 {
     // Reserve an entity
     auto entity = ECS::Entity();
 
     // Create the rendering components
-    std::string key = "blobule" + col;
+    std::string key = "blobule" + colString;
     ShadedMesh& resource = cache_resource(key);
     if (resource.effect.program.resource == 0)
     {
         resource = ShadedMesh();
         std::string path;
         switch (col) {
-        case Blue:
+        case blobuleCol::Blue:
             path = textures_path("blobule_blue.png");
             break;
-        case Red:
+        case blobuleCol::Red:
             path = textures_path("blobule_red.png");
             break;
-        case Yellow:
+        case blobuleCol::Yellow:
             path = textures_path("blobule_yellow.png");
             break;
-        case Green:
+        case blobuleCol::Green:
             path = textures_path("blobule_green.png");
             break;
         default:
