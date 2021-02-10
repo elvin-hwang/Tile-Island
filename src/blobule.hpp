@@ -15,6 +15,8 @@ struct Blobule
 {
     vec2 origin;
 
+    bool active_player = false;
+
     // Create all the associated render resources and default transform.
     static ECS::Entity createBlobule(vec2 position, blobuleCol col, std::string colString);
 

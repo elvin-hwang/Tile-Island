@@ -5,7 +5,7 @@
 #include "render_components.hpp"
 #include "tile.hpp"
 #include "blobule.hpp"
-
+#include "common.hpp"
 
 // stlib
 #include <string.h>
@@ -185,6 +185,7 @@ void WorldSystem::restart()
 		player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 510.f }, blobuleCol::Red, "red");
 		player_blobule4 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y + 510.f }, blobuleCol::Blue, "blue");
 		active_player = player_blobule1;
+		ECS::registry<Blobule>.get(active_player).active_player = true;
 	}
 
 	//Only one npc for now
@@ -239,6 +240,7 @@ bool WorldSystem::is_over() const
 // Check out https://www.glfw.org/docs/3.3/input_guide.html
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
+	ECS::registry<Blobule>.get(active_player).active_player = false;
 	switch (playerMove) {
 		case 1:
 			active_player = player_blobule1;
@@ -254,6 +256,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			break;
 	}
 
+	ECS::registry<Blobule>.get(active_player).active_player = true;
 	auto& blobule_movement = ECS::registry<Motion>.get(active_player);
     auto blobule_position = blobule_movement.position;
             
