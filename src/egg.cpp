@@ -1,14 +1,14 @@
 // Header
-#include "npc.hpp"
+#include "egg.hpp"
 #include "render.hpp"
 
-ECS::Entity NPC::createNpc(vec2 position)
+ECS::Entity Egg::createEgg(vec2 position)
 {
     // Reserve an entity
     auto entity = ECS::Entity();
     
     // Create the rendering components
-    std::string key = "npc";
+    std::string key = "egg";
     ShadedMesh& resource = cache_resource(key);
     if (resource.effect.program.resource == 0)
     {
@@ -17,6 +17,8 @@ ECS::Entity NPC::createNpc(vec2 position)
     }
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
     ECS::registry<ShadedMeshRef>.emplace(entity, resource);
+    // adding reference to eggAi
+    ECS::registry<EggAi>.emplace(entity);
     
     // Initialize the position, scale and physics components.
     // The only relevant component is position, as the others will not be used.
@@ -26,7 +28,7 @@ ECS::Entity NPC::createNpc(vec2 position)
     motion.position = position;
     motion.scale = vec2({0.5f, 0.5f}) * static_cast<vec2>(resource.texture.size);
     
-    ECS::registry<NPC>.emplace(entity);
+    ECS::registry<Egg>.emplace(entity);
     return entity;
 }
 
