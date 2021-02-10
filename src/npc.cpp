@@ -24,7 +24,7 @@ ECS::Entity NPC::createNpc(vec2 position)
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
     motion.position = position;
-    motion.scale = vec2({1.0f, 1.0f}) * static_cast<vec2>(resource.texture.size);
+    motion.scale = vec2({0.5f, 0.5f}) * static_cast<vec2>(resource.texture.size);
     
     ECS::registry<NPC>.emplace(entity);
     return entity;

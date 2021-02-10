@@ -43,7 +43,7 @@ ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col)
     motion.velocity = {0.f, 0.f};
     motion.position = position;
     motion.friction = 0.f;
-    motion.scale = vec2({1.0f, 1.0f}) * static_cast<vec2>(resource.texture.size);
+    motion.scale = vec2({0.42f, 0.42f}) * static_cast<vec2>(resource.texture.size);
     
     // Create and (empty) Blobule component to be able to refer to all tiles
     ECS::registry<Blobule>.emplace(entity);

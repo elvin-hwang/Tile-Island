@@ -18,8 +18,8 @@
 
 // Position of first tile.
 // Should figure out a way to position this such that the grid will always be centered on the background.
-float first_loc_x = 142.f;
-float first_loc_y = 130.f;
+float first_loc_x = 78.f;
+float first_loc_y = 90.f;
 
 // Movement speed of blobule.
 float moveSpeed = 100.f;
@@ -28,8 +28,8 @@ float terminalVelocity = 20.f;
 double mouse_press_x, mouse_press_y;
 
 // Set the width and height of grid in terms of number of tiles.
-static const int grid_width = 8;
-static const int grid_height = 6;
+static const int grid_width = 20;
+static const int grid_height = 15;
 int grid_size = grid_width * grid_height;
 
 int playerMove = 1;
@@ -147,7 +147,7 @@ void WorldSystem::restart()
     // Make one tile at the origin of the grid first.
     ECS::Entity entity_tile = Tile::createBlueTile({first_loc_x, first_loc_y});
     
-    // Make a 8 x 5 Grid of Tiles.
+    // Make a 20 x 15 Grid of Tiles.
     // First, get the dimensions of one tile defined in tile.cpp.
     auto& motion = ECS::registry<Motion>.get(entity_tile);
     auto width = motion.scale.x;
@@ -179,16 +179,16 @@ void WorldSystem::restart()
     // Create blobule characters
 	if (ECS::registry<Blobule>.components.size() <= 4) {
 		player_blobule1 = Blobule::createBlobule({ first_loc_x, first_loc_y }, Yellow);
-		player_blobule2 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y }, Green);
-		player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 510.f }, Red);
-		player_blobule4 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y + 510.f }, Blue);
+		player_blobule2 = Blobule::createBlobule({ first_loc_x + 846.f, first_loc_y }, Green);
+		player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 621.f }, Red);
+		player_blobule4 = Blobule::createBlobule({ first_loc_x + 846.f, first_loc_y + 621.f }, Blue);
 	}
 
 	//Only one npc for now
 	if (ECS::registry<NPC>.components.size() < 1)
 	{
 		// Create egg
-		ECS::Entity entity = NPC::createNpc({ first_loc_x + 360.f, first_loc_x + 250.f });
+		ECS::Entity entity = NPC::createNpc({ first_loc_x + 423.f, first_loc_x + 305.f });
 		//add movement things here 
 	}
 }
