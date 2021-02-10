@@ -12,6 +12,7 @@
 #include <cassert>
 #include <sstream>
 #include <iostream>
+#include <npc.hpp>
 
 // Game Configuration
 
@@ -168,11 +169,21 @@ void WorldSystem::restart()
         }
     }
     
-    // Create and place our blobule at the origin of the grid.
-    player_blobule1 = Blobule::createBlobule({first_loc_x, first_loc_y}, Yellow);
-	player_blobule2 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y}, Green);
-	player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 510.f }, Red);
-	player_blobule4 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y + 510.f }, Blue);
+    // Create blobule characters
+	if (ECS::registry<Blobule>.components.size() <= 4) {
+		player_blobule1 = Blobule::createBlobule({ first_loc_x, first_loc_y }, Yellow);
+		player_blobule2 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y }, Green);
+		player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 510.f }, Red);
+		player_blobule4 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y + 510.f }, Blue);
+	}
+
+	//Only one npc for now
+	if (ECS::registry<NPC>.components.size() < 1)
+	{
+		// Create egg
+		ECS::Entity entity = NPC::createNpc({ first_loc_x + 360.f, first_loc_x + 250.f });
+		//add movement things here 
+	}
 }
 
 // Compute collisions between entities
