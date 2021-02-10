@@ -6,7 +6,7 @@ ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col)
 {
     // Reserve an entity
     auto entity = ECS::Entity();
-    
+
     // Create the rendering components
     std::string key = "blobule" + col;
     ShadedMesh& resource = cache_resource(key);
@@ -46,7 +46,9 @@ ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col)
     motion.scale = vec2({1.0f, 1.0f}) * static_cast<vec2>(resource.texture.size);
     
     // Create and (empty) Blobule component to be able to refer to all tiles
-    ECS::registry<Blobule>.emplace(entity);
+    auto& blob = ECS::registry<Blobule>.emplace(entity);
+    blob.origin = position;
+
     return entity;
 }
 

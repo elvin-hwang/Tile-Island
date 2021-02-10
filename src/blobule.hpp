@@ -13,6 +13,8 @@ enum blobuleCol {
 // tiles that form the island
 struct Blobule
 {
+    vec2 origin;
+
     // Create all the associated render resources and default transform.
     static ECS::Entity createBlobule(vec2 position, blobuleCol col);
 

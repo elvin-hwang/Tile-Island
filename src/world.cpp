@@ -137,6 +137,8 @@ void WorldSystem::restart()
     // Generate our default grid first.
     // We will place tiles such that they form a 5 x 8 grid. Each tile will be placed next to one another.
     
+	Tile::createWaterTile({ 0, 0 });
+
     // Make one tile at the origin of the grid first.
     ECS::Entity entity_tile = Tile::createBlueTile({first_loc_x, first_loc_y});
     
@@ -200,9 +202,17 @@ void WorldSystem::handle_collisions()
 		// Change friction of blobule based on which tile it is on
 		if (ECS::registry<Blobule>.has(entity)) {
 			if (ECS::registry<Tile>.has(entity_other)) {
+				auto& blob = ECS::registry<Blobule>.get(entity);
 				auto& blobMotion = ECS::registry<Motion>.get(entity);
-				auto& tileMotion = ECS::registry<Motion>.get(entity_other);
-				blobMotion.friction = tileMotion.friction;
+				auto& terrain = ECS::registry<Terrain>.get(entity_other);
+
+				if (terrain.type == Water) {
+					blobMotion.velocity = { 0.f, 0.f };
+					blobMotion.friction = 0.f;
+					blobMotion.position = blob.origin;
+				} else {
+					blobMotion.friction = terrain.friction;
+				}
 			}
 		}
 	}
