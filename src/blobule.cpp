@@ -48,6 +48,7 @@ ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col, std::string co
     // Create and (empty) Blobule component to be able to refer to all tiles
     auto& blob = ECS::registry<Blobule>.emplace(entity);
     blob.origin = position;
+    blob.color = colString;
 
     return entity;
 }

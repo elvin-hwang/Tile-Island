@@ -194,6 +194,7 @@ void WorldSystem::restart() {
             player_blobule4 = Blobule::createBlobule({first_loc_x + grid_width_x, first_loc_y + grid_width_y},
                                                      blobuleCol::Blue, "blue");
             active_player = player_blobule1;
+            ECS::registry<Blobule>.get(active_player).active_player = true;
         }
 
         //Only one npc for now
@@ -273,6 +274,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         }
     }
     else{
+        ECS::registry<Blobule>.get(active_player).active_player = false;
         switch (playerMove) {
             case 1:
                 active_player = player_blobule1;
@@ -288,6 +290,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                 break;
         }
 
+        ECS::registry<Blobule>.get(active_player).active_player = true;
         auto& blobule_movement = ECS::registry<Motion>.get(active_player);
         auto blobule_position = blobule_movement.position;
 
