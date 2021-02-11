@@ -14,4 +14,10 @@ public:
 	void EggAiActOnState();
 	ECS::Entity& getActivePlayerBlobule();
 	float euclideanDist(Motion motion1, Motion motion2);
+
+private:
+	std::string lastActivePlayer;
+	int currentState;
 };
+
+

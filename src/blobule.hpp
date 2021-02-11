@@ -14,7 +14,7 @@ enum class blobuleCol {
 struct Blobule
 {
     vec2 origin;
-
+    std::string color;
     bool active_player = false;
 
     // Create all the associated render resources and default transform.

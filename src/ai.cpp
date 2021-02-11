@@ -9,7 +9,7 @@
 
 float maxDistanceFromEgg = 150.f;
 
-float eggSpeed = 50.f;
+float eggSpeed = 75.f;
 
 void AISystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 {
@@ -19,6 +19,7 @@ void AISystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	// egg ai here
 	updateEggAiState();
 	EggAiActOnState();
+
 	// add other ai steps...
 }
 
@@ -36,18 +37,21 @@ void AISystem::EggAiActOnState()
 		{
 			eggMotion.velocity = { 0, 0 };
 		}
-		else if (eggAi.state == EggState::panic)
+		else if (eggAi.state == EggState::moveUp)
 		{
-			// this guard so so that the egg doesnt keep moving when next to nonmoving blobules
-			if (eggAi.velOfNearbyBlobule != vec2(0.f, 0.f))
-			{
-				float angle = atan2(eggAi.velOfNearbyBlobule.y, eggAi.velOfNearbyBlobule.x);
-				eggMotion.velocity = { cos(angle) * eggSpeed, sin(angle) * eggSpeed };
-			}
-			else {
-				eggMotion.velocity = { 0.f, 0.f };
-			}
-			eggAi.state = EggState::normal;
+			eggMotion.velocity = { 0, -eggSpeed };
+		}
+		else if (eggAi.state == EggState::moveDown)
+		{
+			eggMotion.velocity = { 0, eggSpeed };
+		}
+		else if (eggAi.state == EggState::moveLeft)
+		{
+			eggMotion.velocity = { -eggSpeed, 0 };
+		}
+		else if (eggAi.state == EggState::moveRight)
+		{
+			eggMotion.velocity = { eggSpeed, 0 };
 		}
 	}
 }
@@ -64,14 +68,41 @@ void AISystem::updateEggAiState()
 		EggAi& eggAi = ECS::registry<EggAi>.get(eggNPC);
 
 		ECS::Entity& active_blobule = getActivePlayerBlobule();
+
 		Motion& blobMotion = ECS::registry<Motion>.get(active_blobule);
 		float dist = euclideanDist(eggMotion, blobMotion);
 
-		// eggAi will be set to panic if it a blob is within distance
 		if (dist < maxDistanceFromEgg)
 		{
-			eggAi.state = EggState::panic;
-			eggAi.velOfNearbyBlobule = blobMotion.velocity;
+			std::string currentActivePlayer = ECS::registry<Blobule>.get(active_blobule).color;
+			std::cout << currentActivePlayer << std::endl;
+			if (currentActivePlayer != lastActivePlayer)
+			{
+				lastActivePlayer = currentActivePlayer;
+				currentState = rand() % 5;
+				
+			}
+			switch (currentState)
+			{
+			case 0:
+				eggAi.state = EggState::normal;
+				break;
+			case 1:
+				eggAi.state = EggState::moveDown;
+				break;
+			case 2:
+				eggAi.state = EggState::moveLeft;
+				break;
+			case 3:
+				eggAi.state = EggState::moveRight;
+				break;
+			case 4:
+				eggAi.state = EggState::moveUp;
+				break;
+			}
+		}
+		else {
+			eggAi.state = EggState::normal;
 		}
 	}
 }
@@ -93,7 +124,7 @@ float AISystem::euclideanDist(Motion motion1, Motion motion2)
 	float x = motion1.position.x - motion2.position.x;
 	float y = motion1.position.y - motion2.position.y;
 
-	float dist = pow(x, 2) + pow(y, 2);
+	float dist = (float) pow(x, 2) + (float) pow(y, 2);
 	return sqrt(dist);
 }
 
