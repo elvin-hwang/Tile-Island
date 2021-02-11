@@ -5,6 +5,7 @@
 #include "render_components.hpp"
 #include "tile.hpp"
 #include "blobule.hpp"
+#include "start.hpp"
 
 
 // stlib
@@ -40,6 +41,7 @@ vec2 GRID[grid_width * grid_height];
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
 {
+    menuState = true;
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 
@@ -120,70 +122,76 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 // Reset the world state to its initial state
 void WorldSystem::restart()
 {
-	// Debugging for memory/component leaks
-	ECS::ContainerInterface::list_all_components();
-	std::cout << "Restarting\n";
-
-	// Reset the game speed
-	current_speed = 1.f;
-
-	// Remove all entities that we created (those that have a motion component)
-	while (ECS::registry<Motion>.entities.size()>0)
-		ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
-
-	// Debugging for memory/component leaks
-	ECS::ContainerInterface::list_all_components();
-    
-    // Generate our default grid first.
-    // We will place tiles such that they form a 5 x 8 grid. Each tile will be placed next to one another.
-    
-    // Make one tile at the origin of the grid first.
-    ECS::Entity entity_tile = Tile::createBlueTile({first_loc_x, first_loc_y});
-    
-    // Make a 8 x 5 Grid of Tiles.
-    // First, get the dimensions of one tile defined in tile.cpp.
-    auto& motion = ECS::registry<Motion>.get(entity_tile);
-    auto width = motion.scale.x;
-    auto height = motion.scale.y;
-    int count = 0;
-    // Horizontally...
-    for (int i = 0; i < grid_width; i++)
+    if(menuState)
     {
-        // Vertically...
-        for (int j = 0; j < grid_height; j++)
+        Menu::createMenu({ first_loc_x + 360.f, first_loc_x + 250.f });
+    }
+    else{
+        // Debugging for memory/component leaks
+        ECS::ContainerInterface::list_all_components();
+        std::cout << "Restarting\n";
+
+        // Reset the game speed
+        current_speed = 1.f;
+
+        // Remove all entities that we created (those that have a motion component)
+        while (ECS::registry<Motion>.entities.size()>0)
+            ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
+
+        // Debugging for memory/component leaks
+        ECS::ContainerInterface::list_all_components();
+
+        // Generate our default grid first.
+        // We will place tiles such that they form a 5 x 8 grid. Each tile will be placed next to one another.
+
+        // Make one tile at the origin of the grid first.
+        ECS::Entity entity_tile = Tile::createBlueTile({first_loc_x, first_loc_y});
+
+        // Make a 8 x 5 Grid of Tiles.
+        // First, get the dimensions of one tile defined in tile.cpp.
+        auto& motion = ECS::registry<Motion>.get(entity_tile);
+        auto width = motion.scale.x;
+        auto height = motion.scale.y;
+        int count = 0;
+        // Horizontally...
+        for (int i = 0; i < grid_width; i++)
         {
-            // Calculate position of tile to be generated.
-            float loc_x = first_loc_x + (width * i);
-            float loc_y = first_loc_y + (height * j);
-            // Place locations in GRID.
-            vec2 new_location_for_tile = {loc_x, loc_y};
-            GRID[count] = new_location_for_tile;
-            count++;
-            
-            // Create a tile everywhere on half of the grid.
-			if (i < grid_width / 2) {
-				Tile::createBlueTile({ loc_x, loc_y });
-			} else {
-				Tile::createPurpleTile({ loc_x, loc_y });
-			}
+            // Vertically...
+            for (int j = 0; j < grid_height; j++)
+            {
+                // Calculate position of tile to be generated.
+                float loc_x = first_loc_x + (width * i);
+                float loc_y = first_loc_y + (height * j);
+                // Place locations in GRID.
+                vec2 new_location_for_tile = {loc_x, loc_y};
+                GRID[count] = new_location_for_tile;
+                count++;
+
+                // Create a tile everywhere on half of the grid.
+                if (i < grid_width / 2) {
+                    Tile::createBlueTile({ loc_x, loc_y });
+                } else {
+                    Tile::createPurpleTile({ loc_x, loc_y });
+                }
+            }
+        }
+
+        // Create blobule characters
+        if (ECS::registry<Blobule>.components.size() <= 4) {
+            player_blobule1 = Blobule::createBlobule({ first_loc_x, first_loc_y }, Yellow);
+            player_blobule2 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y }, Green);
+            player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 510.f }, Red);
+            player_blobule4 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y + 510.f }, Blue);
+        }
+
+        //Only one npc for now
+        if (ECS::registry<NPC>.components.size() < 1)
+        {
+            // Create egg
+            ECS::Entity entity = NPC::createNpc({ first_loc_x + 360.f, first_loc_x + 250.f });
+            //add movement things here
         }
     }
-    
-    // Create blobule characters
-	if (ECS::registry<Blobule>.components.size() <= 4) {
-		player_blobule1 = Blobule::createBlobule({ first_loc_x, first_loc_y }, Yellow);
-		player_blobule2 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y }, Green);
-		player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 510.f }, Red);
-		player_blobule4 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y + 510.f }, Blue);
-	}
-
-	//Only one npc for now
-	if (ECS::registry<NPC>.components.size() < 1)
-	{
-		// Create egg
-		ECS::Entity entity = NPC::createNpc({ first_loc_x + 360.f, first_loc_x + 250.f });
-		//add movement things here 
-	}
 }
 
 // Compute collisions between entities
@@ -221,86 +229,96 @@ bool WorldSystem::is_over() const
 // Check out https://www.glfw.org/docs/3.3/input_guide.html
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
-	auto player = player_blobule1;
-	switch (playerMove) {
-		case 1:
-			player = player_blobule1;
-			break;
-		case 2:
-			player = player_blobule2;
-			break;
-		case 3:
-			player = player_blobule3;
-			break;
-		case 4:
-			player = player_blobule4;
-			break;
-	}
-
-	auto& blobule_movement = ECS::registry<Motion>.get(player);
-    auto blobule_position = blobule_movement.position;
-            
-    // For when you press an arrow key and the salmon starts moving.
-    if (action == GLFW_PRESS || action == GLFW_REPEAT)
+    if (menuState)
     {
-        if (key == GLFW_KEY_UP)
+        if (action == GLFW_PRESS && key == GLFW_KEY_SPACE)
         {
-            // Note: Subtraction causes upwards movement.
-            blobule_movement.velocity.y = -moveSpeed;
-        }
-        if (key == GLFW_KEY_DOWN)
-        {
-            // Note: Addition causes downwards movement.
-            blobule_movement.velocity.y = moveSpeed;
-        }
-        if (key == GLFW_KEY_LEFT)
-        {
-            blobule_movement.velocity.x = -moveSpeed;
-                    
-        }
-        if (key == GLFW_KEY_RIGHT)
-        {
-            blobule_movement.velocity.x = moveSpeed;
-                    
+            menuState = false;
+            restart();
         }
     }
+    else{
+        auto player = player_blobule1;
+        switch (playerMove) {
+            case 1:
+                player = player_blobule1;
+                break;
+            case 2:
+                player = player_blobule2;
+                break;
+            case 3:
+                player = player_blobule3;
+                break;
+            case 4:
+                player = player_blobule4;
+                break;
+        }
 
-	// Turn based system
-	if (action == GLFW_PRESS && key == GLFW_KEY_ENTER)
-	{
-		if (playerMove != 4) {
-			playerMove++;
-		}
-		else {
-			playerMove = 1;
-		}
-	}
-    
-	// Resetting game
-	if (action == GLFW_RELEASE && key == GLFW_KEY_R)
-	{
-		int w, h;
-		glfwGetWindowSize(window, &w, &h);
+        auto& blobule_movement = ECS::registry<Motion>.get(player);
+        auto blobule_position = blobule_movement.position;
 
-		restart();
-	}
+        // For when you press an arrow key and the salmon starts moving.
+        if (action == GLFW_PRESS || action == GLFW_REPEAT)
+        {
+            if (key == GLFW_KEY_UP)
+            {
+                // Note: Subtraction causes upwards movement.
+                blobule_movement.velocity.y = -moveSpeed;
+            }
+            if (key == GLFW_KEY_DOWN)
+            {
+                // Note: Addition causes downwards movement.
+                blobule_movement.velocity.y = moveSpeed;
+            }
+            if (key == GLFW_KEY_LEFT)
+            {
+                blobule_movement.velocity.x = -moveSpeed;
 
-	// Debugging
-	if (key == GLFW_KEY_D)
-		DebugSystem::in_debug_mode = (action != GLFW_RELEASE);
+            }
+            if (key == GLFW_KEY_RIGHT)
+            {
+                blobule_movement.velocity.x = moveSpeed;
 
-	// Control the current speed with `<` `>`
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
-	{
-		current_speed -= 0.1f;
-		std::cout << "Current speed = " << current_speed << std::endl;
-	}
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
-	{
-		current_speed += 0.1f;
-		std::cout << "Current speed = " << current_speed << std::endl;
-	}
-	current_speed = std::max(0.f, current_speed);
+            }
+        }
+
+        // Turn based system
+        if (action == GLFW_PRESS && key == GLFW_KEY_ENTER)
+        {
+            if (playerMove != 4) {
+                playerMove++;
+            }
+            else {
+                playerMove = 1;
+            }
+        }
+
+        // Resetting game
+        if (action == GLFW_RELEASE && key == GLFW_KEY_R)
+        {
+            int w, h;
+            glfwGetWindowSize(window, &w, &h);
+
+            restart();
+        }
+
+        // Debugging
+        if (key == GLFW_KEY_D)
+            DebugSystem::in_debug_mode = (action != GLFW_RELEASE);
+
+        // Control the current speed with `<` `>`
+        if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
+        {
+            current_speed -= 0.1f;
+            std::cout << "Current speed = " << current_speed << std::endl;
+        }
+        if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
+        {
+            current_speed += 0.1f;
+            std::cout << "Current speed = " << current_speed << std::endl;
+        }
+        current_speed = std::max(0.f, current_speed);
+    }
 }
 
 // On mouse move callback
@@ -312,17 +330,20 @@ void WorldSystem::on_mouse_move(vec2 mouse_pos)
 // On mouse button callback
 void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 {
-    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    if (!menuState)
     {
-        glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
-        ECS::registry<Motion>.get(player_blobule1).angle = atan2(mouse_press_y - ECS::registry<Motion>.get(player_blobule1).position.y, mouse_press_x - ECS::registry<Motion>.get(player_blobule1).position.x) - PI;
-    }
+        if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        {
+            glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
+            ECS::registry<Motion>.get(player_blobule1).angle = atan2(mouse_press_y - ECS::registry<Motion>.get(player_blobule1).position.y, mouse_press_x - ECS::registry<Motion>.get(player_blobule1).position.x) - PI;
+        }
 
-    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-    {
-        double mouse_release_x, mouse_release_y;
-        glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
-        double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
-        ECS::registry<Motion>.get(player_blobule1).velocity = {cos(ECS::registry<Motion>.get(player_blobule1).angle) * drag_distance, sin(ECS::registry<Motion>.get(player_blobule1).angle) * drag_distance};
+        if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+        {
+            double mouse_release_x, mouse_release_y;
+            glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
+            double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
+            ECS::registry<Motion>.get(player_blobule1).velocity = {cos(ECS::registry<Motion>.get(player_blobule1).angle) * drag_distance, sin(ECS::registry<Motion>.get(player_blobule1).angle) * drag_distance};
+        }
     }
 }
