@@ -2,29 +2,29 @@
 #include "blobule.hpp"
 #include "render.hpp"
 
-ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col)
+ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col, std::string colString)
 {
     // Reserve an entity
     auto entity = ECS::Entity();
-    
+
     // Create the rendering components
-    std::string key = "blobule" + col;
+    std::string key = "blobule" + colString;
     ShadedMesh& resource = cache_resource(key);
     if (resource.effect.program.resource == 0)
     {
         resource = ShadedMesh();
         std::string path;
         switch (col) {
-        case Blue:
+        case blobuleCol::Blue:
             path = textures_path("blobule_blue.png");
             break;
-        case Red:
+        case blobuleCol::Red:
             path = textures_path("blobule_red.png");
             break;
-        case Yellow:
+        case blobuleCol::Yellow:
             path = textures_path("blobule_yellow.png");
             break;
-        case Green:
+        case blobuleCol::Green:
             path = textures_path("blobule_green.png");
             break;
         default:
@@ -43,10 +43,12 @@ ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col)
     motion.velocity = {0.f, 0.f};
     motion.position = position;
     motion.friction = 0.f;
-    motion.scale = vec2({1.0f, 1.0f}) * static_cast<vec2>(resource.texture.size);
+    motion.scale = vec2({0.42f, 0.42f}) * static_cast<vec2>(resource.texture.size);
     
     // Create and (empty) Blobule component to be able to refer to all tiles
-    ECS::registry<Blobule>.emplace(entity);
+    auto& blob = ECS::registry<Blobule>.emplace(entity);
+    blob.origin = position;
+
     return entity;
 }
 

@@ -3,10 +3,8 @@
 #include "common.hpp"
 #include "tiny_ecs.hpp"
 
-struct NPC
+struct Wall
 {
     // Create all the associated render resources and default transform.
-    static ECS::Entity createNpc(vec2 position);
-
+    static ECS::Entity createWall(std::string wall_type, vec2 position, float angle);
 };
-
