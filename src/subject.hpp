@@ -1,12 +1,12 @@
-
 #include "tiny_ecs.hpp"
+#include <functional>
 
 class Subject
 {
-    std::list<int> observers_list;
-    // Create all the associated render resources and default transform.
-    void add_observer(auto lambda);
-    void notify();
-    //void getState();
+public:
+    std::list<std::function<void(ECS::Entity, ECS::Entity)>> observers_list;
+    static ECS::Entity createSubject(std::string name);
+    void add_observer(const std::function<void(ECS::Entity, ECS::Entity)>& lambda);
+    void notify(ECS::Entity entity, ECS::Entity entity_other);
 };
 

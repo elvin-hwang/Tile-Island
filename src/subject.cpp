@@ -1,11 +1,23 @@
 #include "subject.hpp"
+#include <functional>
 
-void Subject::add_observer(auto lambda)
+
+ECS::Entity Subject::createSubject(std::string name)
+{
+    auto entity = ECS::Entity();
+    std::string key = name;
+    auto& subj = ECS::registry<Subject>.emplace(entity);
+    return entity;
+}
+
+void Subject::add_observer(const std::function<void(ECS::Entity, ECS::Entity)>& lambda)
 {
 	observers_list.push_back(lambda);
 }
 
-void Subject::notify() {
-    for (int i = 0; i < observers_list.size(); i++)
-		observers_list[i]->update();
+void Subject::notify(ECS::Entity entity, ECS::Entity entity_other) {
+    for (auto o : observers_list) {
+        //updating all the observers, calling the lambda function
+        o(entity, entity_other);
+    }
 }

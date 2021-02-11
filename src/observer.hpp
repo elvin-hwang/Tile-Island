@@ -3,7 +3,7 @@
 class Observer
 {
     // Create all the associated render resources and default transform.
-    void update(auto lambda);
+    void update(ECS::Entity entity, ECS::Entity entity_other);
 
 };
 
