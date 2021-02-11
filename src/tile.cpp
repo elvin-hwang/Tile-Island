@@ -66,7 +66,7 @@ ECS::Entity Tile::createBlueTile(vec2 position)
 
     auto& terrain = ECS::registry<Terrain>.emplace(entity);
     terrain.type = Ice;
-    terrain.friction = 0.005f;
+    terrain.friction = 0.01f;
     
     // Create and (empty) Tile component to be able to refer to all tiles
     ECS::registry<Tile>.emplace(entity);
@@ -100,7 +100,7 @@ ECS::Entity Tile::createPurpleTile(vec2 position)
 
     auto& terrain = ECS::registry<Terrain>.emplace(entity);
     terrain.type = Ice;
-    terrain.friction = 0.02f;
+    terrain.friction = 0.04f;
     
     // Create and (empty) Tile component to be able to refer to all tiles
     ECS::registry<Tile>.emplace(entity);
