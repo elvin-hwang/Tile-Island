@@ -38,6 +38,8 @@ public:
 	// Should the game be over ?
 	bool is_over() const;
 
+	bool menuState;
+
 	// OpenGL window handle
 	GLFWwindow* window;
 private:
