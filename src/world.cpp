@@ -20,6 +20,9 @@
 // Should figure out a way to position this such that the grid will always be centered on the background.
 float first_loc_x = 78.f;
 float first_loc_y = 90.f;
+float grid_width_x = 845.f;
+float grid_width_y = 620.f;
+
 
 // Movement speed of blobule.
 float moveSpeed = 100.f;
@@ -181,9 +184,9 @@ void WorldSystem::restart()
     // Create blobule characters
 	if (ECS::registry<Blobule>.components.size() <= 4) {
 		player_blobule1 = Blobule::createBlobule({ first_loc_x, first_loc_y }, blobuleCol::Yellow, "yellow");
-		player_blobule2 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y }, blobuleCol::Green, "green");
-		player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 510.f }, blobuleCol::Red, "red");
-		player_blobule4 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y + 510.f }, blobuleCol::Blue, "blue");
+		player_blobule2 = Blobule::createBlobule({ first_loc_x + grid_width_x, first_loc_y }, blobuleCol::Green, "green");
+		player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + grid_width_y }, blobuleCol::Red, "red");
+		player_blobule4 = Blobule::createBlobule({ first_loc_x + grid_width_x, first_loc_y + grid_width_y }, blobuleCol::Blue, "blue");
 		active_player = player_blobule1;
 	}
 
@@ -191,7 +194,7 @@ void WorldSystem::restart()
 	if (ECS::registry<Egg>.components.size() < 1)
 	{
 		// Create egg
-		ECS::Entity entity = Egg::createEgg({ first_loc_x + 360.f, first_loc_x + 250.f });
+		ECS::Entity entity = Egg::createEgg({ first_loc_x + grid_width_x/2, first_loc_x + grid_width_y/2 });
 		//add movement things here 
 	}
 }
