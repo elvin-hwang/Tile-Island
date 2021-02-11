@@ -32,38 +32,32 @@ void AISystem::eggAiStep()
 	{
 		Motion& eggMotion = ECS::registry<Motion>.get(eggNPC);
 		EggAi& eggAi = ECS::registry<EggAi>.get(eggNPC);
-
-		// timer is so that an egg which state was recently changed cannot be changed again immediately
-		eggAi.timer--;
+		eggAi.state = EggState::normal;
 
 		for (ECS::Entity& blobule : ECS::registry<Blobule>.entities)
 		{
-			if (eggAi.timer <= 0)
-			{
-				Motion& blobMotion = ECS::registry<Motion>.get(blobule);
-				float dist = euclideanDist(eggMotion, blobMotion);
+			Motion& blobMotion = ECS::registry<Motion>.get(blobule);
+			float dist = euclideanDist(eggMotion, blobMotion);
+			std::cout << dist << std::endl;
 
-				// Egg Panic State
-				if (dist < maxDistanceFromEgg)
+			if (dist < maxDistanceFromEgg && eggAi.state != EggState::panic)
+			{
+					
+				float angle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
+				// this guard so so that the egg doesnt keep moving when next to nonmoving blobules
+				if (angle != 0)
 				{
 					eggAi.state = EggState::panic;
-					eggAi.timer = 50;
-					float angle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
+					eggMotion.velocity = { cos(angle) * eggSpeed, sin(angle) * eggSpeed };
 
-					// this guard so so that the egg doesnt keep moving when next to nonmoving blobules
-					if (angle != 0)
-					{
-						eggMotion.velocity = { cos(angle) * eggSpeed, sin(angle) * eggSpeed };
-					}
+					std::cout << eggMotion.velocity.x << std::endl;
 				}
+			}				
+		}
 
-				// Egg Normal State 
-				else
-				{
-					eggAi.state = EggState::normal;
-					eggMotion.velocity = { 0, 0 };
-				}
-			}
+		if (eggAi.state == EggState::normal)
+		{
+			eggMotion.velocity = { 0, 0 };
 		}
 
 	}
