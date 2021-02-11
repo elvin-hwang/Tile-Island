@@ -5,7 +5,7 @@
 #include "render_components.hpp"
 #include "tile.hpp"
 #include "blobule.hpp"
-
+#include "wall.hpp"
 
 // stlib
 #include <string.h>
@@ -197,6 +197,14 @@ void WorldSystem::restart()
 		ECS::Entity entity = Egg::createEgg({ first_loc_x + grid_width_x/2, first_loc_x + grid_width_y/2 });
 		//add movement things here 
 	}
+
+	// Create walls (hardcoded for now) 
+	ECS::Entity wall = Wall::createWall("wall", { 400.f, 400.f }, 0.f);
+	auto &wall_motion = ECS::registry<Motion>.get(wall);
+	auto wall_height = wall_motion.scale.y;
+	auto wall_width = wall_motion.scale.x;
+	ECS::Entity wall_2 = Wall::createWall("wall_corner", { 400.f, 400.f + wall_height }, 0.f);
+	ECS::Entity wall_3 = Wall::createWall("wall_end", { 400.f + wall_width, 400.f + wall_height }, -PI / 2);
 }
 
 // Compute collisions between entities
@@ -210,8 +218,9 @@ void WorldSystem::handle_collisions()
 		auto entity = registry.entities[i];
 		auto entity_other = registry.components[i].other;
 
-		// Change friction of blobule based on which tile it is on
+		// Blobule collisions
 		if (ECS::registry<Blobule>.has(entity)) {
+			// Change friction of blobule based on which tile it is on
 			if (ECS::registry<Tile>.has(entity_other)) {
 				auto& blob = ECS::registry<Blobule>.get(entity);
 				auto& blobMotion = ECS::registry<Motion>.get(entity);
@@ -224,6 +233,13 @@ void WorldSystem::handle_collisions()
 				} else {
 					blobMotion.friction = terrain.friction;
 				}
+			}
+
+			// Blobule - wall collisions
+			if (ECS::registry<Wall>.has(entity_other)) {
+				auto& blobMotion = ECS::registry<Motion>.get(entity);
+				auto& tileMotion = ECS::registry<Motion>.get(entity_other);
+				blobMotion.velocity = -blobMotion.velocity;
 			}
 		}
 	}
