@@ -3,10 +3,10 @@
 #include "common.hpp"
 #include "tiny_ecs.hpp"
 
-struct NPC
+struct Egg
 {
     // Create all the associated render resources and default transform.
-    static ECS::Entity createNpc(vec2 position);
+    static ECS::Entity createEgg(vec2 position);
 
 };
 

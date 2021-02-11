@@ -12,23 +12,24 @@
 #include <cassert>
 #include <sstream>
 #include <iostream>
-#include <npc.hpp>
+#include <egg.hpp>
 
 // Game Configuration
 
 // Position of first tile.
 // Should figure out a way to position this such that the grid will always be centered on the background.
-float first_loc_x = 142.f;
-float first_loc_y = 130.f;
+float first_loc_x = 78.f;
+float first_loc_y = 90.f;
 
 // Movement speed of blobule.
 float moveSpeed = 100.f;
+float terminalVelocity = 20.f;
 
 double mouse_press_x, mouse_press_y;
 
 // Set the width and height of grid in terms of number of tiles.
-static const int grid_width = 8;
-static const int grid_height = 6;
+static const int grid_width = 20;
+static const int grid_height = 15;
 int grid_size = grid_width * grid_height;
 
 int playerMove = 1;
@@ -114,6 +115,12 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	{
 		auto& motion = ECS::registry<Motion>.get(blob);
 		motion.velocity += -motion.velocity * motion.friction;
+		if (-terminalVelocity < motion.velocity.x && motion.velocity.x < terminalVelocity) {
+			motion.velocity.x = 0;
+		}
+		if (-terminalVelocity < motion.velocity.y && motion.velocity.y < terminalVelocity) {
+			motion.velocity.y = 0;
+		}
 	}
 }
 
@@ -137,10 +144,12 @@ void WorldSystem::restart()
     // Generate our default grid first.
     // We will place tiles such that they form a 5 x 8 grid. Each tile will be placed next to one another.
     
+	Tile::createWaterTile({ 0, 0 });
+
     // Make one tile at the origin of the grid first.
     ECS::Entity entity_tile = Tile::createBlueTile({first_loc_x, first_loc_y});
     
-    // Make a 8 x 5 Grid of Tiles.
+    // Make a 20 x 15 Grid of Tiles.
     // First, get the dimensions of one tile defined in tile.cpp.
     auto& motion = ECS::registry<Motion>.get(entity_tile);
     auto width = motion.scale.x;
@@ -171,17 +180,18 @@ void WorldSystem::restart()
     
     // Create blobule characters
 	if (ECS::registry<Blobule>.components.size() <= 4) {
-		player_blobule1 = Blobule::createBlobule({ first_loc_x, first_loc_y }, Yellow);
-		player_blobule2 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y }, Green);
-		player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 510.f }, Red);
-		player_blobule4 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y + 510.f }, Blue);
+		player_blobule1 = Blobule::createBlobule({ first_loc_x, first_loc_y }, blobuleCol::Yellow, "yellow");
+		player_blobule2 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y }, blobuleCol::Green, "green");
+		player_blobule3 = Blobule::createBlobule({ first_loc_x, first_loc_y + 510.f }, blobuleCol::Red, "red");
+		player_blobule4 = Blobule::createBlobule({ first_loc_x + 720.f, first_loc_y + 510.f }, blobuleCol::Blue, "blue");
+		active_player = player_blobule1;
 	}
 
 	//Only one npc for now
-	if (ECS::registry<NPC>.components.size() < 1)
+	if (ECS::registry<Egg>.components.size() < 1)
 	{
 		// Create egg
-		ECS::Entity entity = NPC::createNpc({ first_loc_x + 360.f, first_loc_x + 250.f });
+		ECS::Entity entity = Egg::createEgg({ first_loc_x + 360.f, first_loc_x + 250.f });
 		//add movement things here 
 	}
 }
@@ -200,9 +210,17 @@ void WorldSystem::handle_collisions()
 		// Change friction of blobule based on which tile it is on
 		if (ECS::registry<Blobule>.has(entity)) {
 			if (ECS::registry<Tile>.has(entity_other)) {
+				auto& blob = ECS::registry<Blobule>.get(entity);
 				auto& blobMotion = ECS::registry<Motion>.get(entity);
-				auto& tileMotion = ECS::registry<Motion>.get(entity_other);
-				blobMotion.friction = tileMotion.friction;
+				auto& terrain = ECS::registry<Terrain>.get(entity_other);
+
+				if (terrain.type == Water) {
+					blobMotion.velocity = { 0.f, 0.f };
+					blobMotion.friction = 0.f;
+					blobMotion.position = blob.origin;
+				} else {
+					blobMotion.friction = terrain.friction;
+				}
 			}
 		}
 	}
@@ -221,23 +239,22 @@ bool WorldSystem::is_over() const
 // Check out https://www.glfw.org/docs/3.3/input_guide.html
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
-	auto player = player_blobule1;
 	switch (playerMove) {
 		case 1:
-			player = player_blobule1;
+			active_player = player_blobule1;
 			break;
 		case 2:
-			player = player_blobule2;
+			active_player = player_blobule2;
 			break;
 		case 3:
-			player = player_blobule3;
+			active_player = player_blobule3;
 			break;
 		case 4:
-			player = player_blobule4;
+			active_player = player_blobule4;
 			break;
 	}
 
-	auto& blobule_movement = ECS::registry<Motion>.get(player);
+	auto& blobule_movement = ECS::registry<Motion>.get(active_player);
     auto blobule_position = blobule_movement.position;
             
     // For when you press an arrow key and the salmon starts moving.
@@ -315,7 +332,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
     if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
         glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
-        ECS::registry<Motion>.get(player_blobule1).angle = atan2(mouse_press_y - ECS::registry<Motion>.get(player_blobule1).position.y, mouse_press_x - ECS::registry<Motion>.get(player_blobule1).position.x) - PI;
+        ECS::registry<Motion>.get(active_player).angle = atan2(mouse_press_y - ECS::registry<Motion>.get(active_player).position.y, mouse_press_x - ECS::registry<Motion>.get(active_player).position.x) - PI;
     }
 
     if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
@@ -323,6 +340,6 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
         double mouse_release_x, mouse_release_y;
         glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
         double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
-        ECS::registry<Motion>.get(player_blobule1).velocity = {cos(ECS::registry<Motion>.get(player_blobule1).angle) * drag_distance, sin(ECS::registry<Motion>.get(player_blobule1).angle) * drag_distance};
+        ECS::registry<Motion>.get(active_player).velocity = {cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance};
     }
 }
