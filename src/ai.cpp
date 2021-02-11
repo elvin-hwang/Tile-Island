@@ -57,7 +57,11 @@ void AISystem::EggAiActOnState()
 }
 
 /*
-Updates EggAi State based on various conditions
+Updates EggAi State based on various conditions.
+All EggAi's will gain THE SAME randomized state for the duration of a players turn which lasts until the end of the players turn. 
+Upon the next player's turn, the EggAi will get a new randomized state, which lasts for the duration of the active player's turn.
+The EggAi will trigger that state whenever the active player's blobule moves within range of the EggAi's entity, and will return back to normal state when blobule moves out of range.
+The EggAi ignores all other blobule that does not belong to the active player.
 */
 void AISystem::updateEggAiState()
 {
@@ -75,28 +79,24 @@ void AISystem::updateEggAiState()
 		if (dist < maxDistanceFromEgg)
 		{
 			std::string currentActivePlayer = ECS::registry<Blobule>.get(active_blobule).color;
-			std::cout << currentActivePlayer << std::endl;
 			if (currentActivePlayer != lastActivePlayer)
 			{
 				lastActivePlayer = currentActivePlayer;
-				currentState = rand() % 5;
-				
+				currentState = rand() % 4;
+
 			}
 			switch (currentState)
 			{
 			case 0:
-				eggAi.state = EggState::normal;
-				break;
-			case 1:
 				eggAi.state = EggState::moveDown;
 				break;
-			case 2:
+			case 1:
 				eggAi.state = EggState::moveLeft;
 				break;
-			case 3:
+			case 2:
 				eggAi.state = EggState::moveRight;
 				break;
-			case 4:
+			case 3:
 				eggAi.state = EggState::moveUp;
 				break;
 			}
@@ -124,9 +124,6 @@ float AISystem::euclideanDist(Motion motion1, Motion motion2)
 	float x = motion1.position.x - motion2.position.x;
 	float y = motion1.position.y - motion2.position.y;
 
-	float dist = (float) pow(x, 2) + (float) pow(y, 2);
+	float dist = (float)pow(x, 2) + (float)pow(y, 2);
 	return sqrt(dist);
 }
-
-
-
