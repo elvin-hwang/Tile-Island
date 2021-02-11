@@ -138,6 +138,18 @@ void WorldSystem::restart() {
         // Debugging for memory/component leaks
         ECS::ContainerInterface::list_all_components();
 
+        std::cout << "Restarting\n";
+
+        // Reset the game speed
+        current_speed = 1.f;
+
+        // Remove all entities that we created (those that have a motion component)
+        while (ECS::registry<Motion>.entities.size()>0)
+            ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
+
+        // Debugging for memory/component leaks
+        ECS::ContainerInterface::list_all_components();
+
         // Generate our default grid first.
         // We will place tiles such that they form a 5 x 8 grid. Each tile will be placed next to one another.
 
@@ -358,7 +370,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
         if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
         {
             glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
-            ECS::registry<Motion>.get(player_blobule1).angle = atan2(mouse_press_y - ECS::registry<Motion>.get(player_blobule1).position.y, mouse_press_x - ECS::registry<Motion>.get(player_blobule1).position.x) - PI;
+            ECS::registry<Motion>.get(active_player).angle = atan2(mouse_press_y - ECS::registry<Motion>.get(active_player).position.y, mouse_press_x - ECS::registry<Motion>.get(active_player).position.x) - PI;
         }
 
         if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
@@ -366,7 +378,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
             double mouse_release_x, mouse_release_y;
             glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
             double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
-            ECS::registry<Motion>.get(player_blobule1).velocity = {cos(ECS::registry<Motion>.get(player_blobule1).angle) * drag_distance, sin(ECS::registry<Motion>.get(player_blobule1).angle) * drag_distance};
+            ECS::registry<Motion>.get(active_player).velocity = {cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance};
         }
     }
 }

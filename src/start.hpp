@@ -3,7 +3,7 @@
 #include "common.hpp"
 #include "tiny_ecs.hpp"
 
-// tiles that form the island
+// main menu start screen
 struct Menu
 {
     static ECS::Entity createMenu(vec2 position);
