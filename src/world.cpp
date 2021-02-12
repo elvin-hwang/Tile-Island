@@ -28,6 +28,7 @@ vec2 islandGrid[100][100]; // This will actually be a size of [numWidth][numHeig
 // Movement speed of blobule.
 float moveSpeed = 100.f;
 float terminalVelocity = 20.f;
+float max_blobule_speed = 350.f;
 
 double mouse_press_x, mouse_press_y;
 
@@ -363,7 +364,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 }
 
-
 // On mouse move callback
 void WorldSystem::on_mouse_move(vec2 mouse_pos)
 {
@@ -386,7 +386,12 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 			double mouse_release_x, mouse_release_y;
 			glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
 			double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
-			ECS::registry<Motion>.get(active_player).velocity = { cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance };
+			vec2 launchVelocity = { cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance };
+			
+			launchVelocity.x = launchVelocity.x >= 0.f ? min(max_blobule_speed, launchVelocity.x) : max(-max_blobule_speed, launchVelocity.x);
+			launchVelocity.y = launchVelocity.y >= 0.f ? min(max_blobule_speed, launchVelocity.y) : max(-max_blobule_speed, launchVelocity.y);
+			
+			ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
 		}
 	}
 }

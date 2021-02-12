@@ -11,6 +11,12 @@ vec2 get_bounding_box(const Motion& motion)
 	return { abs(motion.scale.x), abs(motion.scale.y) };
 }
 
+/*
+Our Guide on box circle collisions
+https://www.figma.com/file/K32AjU7kJXHVw9BpALdTY1/Untitled?node-id=0%3A1
+Entities are positioned at the CENTER of their texture, which means that if you place an entity at { 0.f, 0.f }, it would only show the
+bottom right corner of that texture. Use this knowledge to determine where centers and edges of entities are!
+*/
 bool box_circle_collides(const Motion& box, const Motion& circle)
 {
 	// Define edges of box
@@ -51,10 +57,11 @@ bool box_circle_collides(const Motion& box, const Motion& circle)
 		return false;
 }
 
+// circle circle collision check
 bool circle_circle_collides(const Motion& motion1, const Motion& motion2)
 {
-	vec2 motion1_center = { motion1.position.x + motion1.scale.x / 2.f, motion1.position.y + motion1.scale.y / 2.f };
-	vec2 motion2_center = { motion2.position.x + motion2.scale.x / 2.f, motion2.position.y + motion2.scale.y / 2.f };
+	vec2 motion1_center = motion1.position;
+	vec2 motion2_center = motion2.position;
 	vec2 difference_between_centers = motion1_center - motion2_center;
 	float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
 	float motion1_radius = motion1.scale.x / 2.f;
