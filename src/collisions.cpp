@@ -37,7 +37,6 @@ void CollisionSystem::initialize_collisions() {
 
 	blobule_wall_coll.add_observer(reverse_vel);
 	blobule_tile_coll.add_observer(change_blobule_friction);
-
 }
 // Compute collisions between entities
 void CollisionSystem::handle_collisions()

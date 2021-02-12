@@ -6,6 +6,12 @@ struct Subject
 public:
     std::list<std::function<void(ECS::Entity, ECS::Entity)>> observers_list;
     static ECS::Entity createSubject(std::string name);
-    void add_observer(const std::function<void(ECS::Entity, ECS::Entity)>& lambda);
+    template<typename F>
+    void add_observer(F lambda)
+    {
+        observers_list.push_back(lambda);
+    }
     void notify(ECS::Entity entity, ECS::Entity entity_other);
 };
+
+
