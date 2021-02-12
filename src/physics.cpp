@@ -14,36 +14,39 @@ vec2 get_bounding_box(const Motion& motion)
 bool box_circle_collides(const Motion& box, const Motion& circle)
 {
 	// Define edges of box
-	float top_edge = box.position.y;
-	float right_edge = box.position.x + box.scale.x;
-	float bottom_edge = box.position.y + box.scale.y;
-	float left_edge = box.position.x;
+	float top_edge = box.position.y - box.scale.y / 2.f; // y1
+	float right_edge = box.position.x + box.scale.x / 2.f; // x2
+	float bottom_edge = box.position.y + box.scale.y / 2.f; // y2
+	float left_edge = box.position.x - box.scale.x / 2.f; // x1
 
 	// Define circle radius and center of circle position
 	float circle_radius = circle.scale.x / 2.f;
-	vec2 center_of_circle = circle.position - (circle.scale / 2.f);
+	vec2 center_of_circle = circle.position;
 
-	// Different collision scenarios
-	if (abs(right_edge - center_of_circle.x) <= circle_radius
+	// Right edge collision
+	if (center_of_circle.x > right_edge
+		&& abs(right_edge - center_of_circle.x) <= circle_radius
 		&& top_edge - circle_radius <= center_of_circle.y
 		&& center_of_circle.y <= bottom_edge + circle_radius)
-	{
-		std::cout << "right edge: " << right_edge << std::endl;
-		std::cout << "circle leftmost point: " << center_of_circle.x - circle_radius << std::endl;
 		return true;
-	}
-	/*else if (abs(top_edge - center_of_circle.y) <= circle_radius
+	// Top edge collision
+	else if (center_of_circle.y < top_edge
+		&& abs(top_edge - center_of_circle.y) <= circle_radius
 		&& left_edge - circle_radius <= center_of_circle.x
 		&& center_of_circle.x <= right_edge + circle_radius)
 		return true;
-	else if (abs(bottom_edge - center_of_circle.y) <= circle_radius
+	// Bottom edge collision
+	else if (center_of_circle.y > bottom_edge
+		&& abs(bottom_edge - center_of_circle.y) <= circle_radius
 		&& left_edge - circle_radius <= center_of_circle.x
 		&& center_of_circle.x <= right_edge + circle_radius)
 		return true;
-	else if (abs(left_edge - center_of_circle.y) <= circle_radius
+	// Left edge collision
+	else if (center_of_circle.x < left_edge
+		&& abs(left_edge - center_of_circle.x) <= circle_radius
 		&& top_edge - circle_radius <= center_of_circle.y
 		&& center_of_circle.y <= bottom_edge + circle_radius)
-		return true;*/
+		return true;
 	else
 		return false;
 }
@@ -104,7 +107,6 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 			{
 				if (box_circle_collides(motion_j, motion_i))
 				{
-					std::cout << "Box collision 1" << std::endl;
 					ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
 					ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
 				}
@@ -113,7 +115,6 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 			{
 				if (box_circle_collides(motion_i, motion_j))
 				{
-					std::cout << "Box collision 2" << std::endl;
 					ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
 					ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
 				}
