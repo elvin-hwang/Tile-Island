@@ -10,6 +10,7 @@ ECS::Entity Subject::createSubject(std::string name)
     return entity;
 }
 
+
 void Subject::add_observer(const std::function<void(ECS::Entity, ECS::Entity)>& lambda)
 {
 	observers_list.push_back(lambda);

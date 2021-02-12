@@ -7,10 +7,11 @@
 #include "wall.hpp"
 
 void CollisionSystem::initialize_collisions() {
-	Subject* subjectSystem;
+	Subject* subjectSystem; 
+	
+	blobule_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_tile_coll"));	
+	blobule_wall_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_wall_coll"));
 
-	blobule_wall_coll = ECS::registry<Subject>.get(subjectSystem.createSubject("blobule_wall_coll"));
-	blobule_tile_coll = ECS::registry<Subject>.get(subjectSystem.createSubject("blobule_title_coll"));
 
 	auto reverse_vel = [](auto& entity, auto& entity_other) {
 		auto& blobMotion = ECS::registry<Motion>.get(entity);

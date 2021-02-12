@@ -41,6 +41,8 @@ int main()
 	// Set all states to default
 	world.restart();
 	auto t = Clock::now();
+	collision.initialize_collisions();
+
 	// Variable timestep loop
 	while (!world.is_over())
 	{
@@ -57,8 +59,6 @@ int main()
 		world.step(elapsed_ms, window_size_in_game_units);
 		physics.step(elapsed_ms, window_size_in_game_units);
 		world.handle_collisions();
-		collision.initialize_collisions();
-
 		renderer.draw(window_size_in_game_units);
 	}
 
