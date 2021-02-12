@@ -162,7 +162,7 @@ void WorldSystem::restart() {
 			// Vertically...
 			for (int j = tile_width / 2; j <= window_height; j += tile_width)
 			{
-				if (i < 100.f || j < 100.f || i > window_width - borderWidth || j > window_height - borderWidth) {
+				if (i < borderWidth || j < borderWidth || i > window_width - borderWidth || j > window_height - borderWidth) {
 					Tile::createTile({ i, j }, Water);
 					continue;
 				}
