@@ -352,6 +352,19 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				{
 					ECS::registry<Motion>.get(wall).position.y -= 10.f;
 				}
+                // Register position updates in island grid.
+                for (int i = 0; i < 100; i++)
+                {
+                    for (int j = 0; j < 100; j++)
+                    {
+                        islandGrid[i][j].y -= 10.f;
+                    }
+                }
+                // Update blobule origin.
+                ECS::registry<Blobule>.get(player_blobule1).origin.y -= 10.f;
+                ECS::registry<Blobule>.get(player_blobule2).origin.y -= 10.f;
+                ECS::registry<Blobule>.get(player_blobule3).origin.y -= 10.f;
+                ECS::registry<Blobule>.get(player_blobule4).origin.y -= 10.f;
 			}
 			if (key == GLFW_KEY_D)
 			{
@@ -375,6 +388,19 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				{
 					ECS::registry<Motion>.get(wall).position.x -= 10.f;
 				}
+                // Register position updates in island grid.
+                for (int i = 0; i < 100; i++)
+                {
+                    for (int j = 0; j < 100; j++)
+                    {
+                        islandGrid[i][j].x -= 10.f;
+                    }
+                }
+                // Update blobule origin.
+                ECS::registry<Blobule>.get(player_blobule1).origin.x -= 10.f;
+                ECS::registry<Blobule>.get(player_blobule2).origin.x -= 10.f;
+                ECS::registry<Blobule>.get(player_blobule3).origin.x -= 10.f;
+                ECS::registry<Blobule>.get(player_blobule4).origin.x -= 10.f;
 			}
 			if (key == GLFW_KEY_W)
 			{
@@ -398,6 +424,19 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				{
 					ECS::registry<Motion>.get(wall).position.y += 10.f;
 				}
+                // Register position updates in island grid.
+                for (int i = 0; i < 100; i++)
+                {
+                    for (int j = 0; j < 100; j++)
+                    {
+                        islandGrid[i][j].y += 10.f;
+                    }
+                }
+                // Update blobule origin.
+                ECS::registry<Blobule>.get(player_blobule1).origin.y += 10.f;
+                ECS::registry<Blobule>.get(player_blobule2).origin.y += 10.f;
+                ECS::registry<Blobule>.get(player_blobule3).origin.y += 10.f;
+                ECS::registry<Blobule>.get(player_blobule4).origin.y += 10.f;
 			}
 			if (key == GLFW_KEY_A)
 			{
@@ -421,6 +460,19 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				{
 					ECS::registry<Motion>.get(wall).position.x += 10.f;
 				}
+                // Register position updates in island grid.
+                for (int i = 0; i < 100; i++)
+                {
+                    for (int j = 0; j < 100; j++)
+                    {
+                        islandGrid[i][j].x += 10.f;
+                    }
+                }
+                // Update blobule origin.
+                ECS::registry<Blobule>.get(player_blobule1).origin.x += 10.f;
+                ECS::registry<Blobule>.get(player_blobule2).origin.x += 10.f;
+                ECS::registry<Blobule>.get(player_blobule3).origin.x += 10.f;
+                ECS::registry<Blobule>.get(player_blobule4).origin.x += 10.f;
 			}
 		}
 
