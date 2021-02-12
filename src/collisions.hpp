@@ -4,14 +4,14 @@
 #include "subject.hpp"
 #include "tiny_ecs.hpp"
 
-class Collisions
+class CollisionSystem
 {
 public: 
-    static void Collisions::initialize_collisions();
-    void Collisions::handle_collisions();
+    void initialize_collisions();
+    void handle_collisions();
 
 private:
-    Subject blobule_wall_coll;
-    Subject blobule_tile_coll;
+    static Subject& blobule_wall_coll;
+    static Subject& blobule_tile_coll;
 };
 

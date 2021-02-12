@@ -6,10 +6,11 @@
 #include "blobule.hpp"
 #include "wall.hpp"
 
-void Collisions::initialize_collisions() {
+void CollisionSystem::initialize_collisions() {
+	Subject* subjectSystem;
 
-	blobule_wall_coll = Subject::createSubject("blobule_wall_coll");
-	blobule_tile_coll = Subject::createSubject("blobule_title_coll");
+	blobule_wall_coll = ECS::registry<Subject>.get(subjectSystem.createSubject("blobule_wall_coll"));
+	blobule_tile_coll = ECS::registry<Subject>.get(subjectSystem.createSubject("blobule_title_coll"));
 
 	auto reverse_vel = [](auto& entity, auto& entity_other) {
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
@@ -38,7 +39,7 @@ void Collisions::initialize_collisions() {
 
 }
 // Compute collisions between entities
-void Collisions::handle_collisions()
+void CollisionSystem::handle_collisions()
 {
 	// Loop over all collisions detected by the physics system
 	auto& registry = ECS::registry<PhysicsSystem::Collision>;

@@ -12,6 +12,7 @@
 #include "tiny_ecs.hpp"
 #include "render.hpp"
 #include "physics.hpp"
+#include "collisions.hpp"
 #include "ai.hpp"
 #include "debug.hpp"
 
@@ -34,6 +35,7 @@ int main()
 	WorldSystem world(window_size_in_px);
 	RenderSystem renderer(*world.window);
 	PhysicsSystem physics;
+	CollisionSystem collision;
 	AISystem ai;
 
 	// Set all states to default
@@ -55,6 +57,7 @@ int main()
 		world.step(elapsed_ms, window_size_in_game_units);
 		physics.step(elapsed_ms, window_size_in_game_units);
 		world.handle_collisions();
+		collision.initialize_collisions();
 
 		renderer.draw(window_size_in_game_units);
 	}
