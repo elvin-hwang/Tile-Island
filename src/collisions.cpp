@@ -8,9 +8,12 @@
 
 void CollisionSystem::initialize_collisions() {
 	
-	blobule_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_tile_coll"));	
+	//observer for blobule - tile collision
+	blobule_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_tile_coll"));
+	//observer for blobule - wall collision
 	blobule_wall_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_wall_coll"));
 
+	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
 	auto reverse_vel = [](auto entity, auto entity_other) {
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
 		auto& tileMotion = ECS::registry<Motion>.get(entity_other);
@@ -33,6 +36,7 @@ void CollisionSystem::initialize_collisions() {
 		}
 	};
 
+	//add lambdas to the observer lists
 	blobule_tile_coll.add_observer(change_blobule_friction);
 	blobule_wall_coll.add_observer(reverse_vel);
 	
