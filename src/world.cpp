@@ -23,7 +23,7 @@ const float tile_width = 44.46f;
 const int borderWidth = 100;
 int numWidth = 0;
 int numHeight = 0;
-vec2 islandGrid[100][100];
+vec2 islandGrid[100][100]; // This will actually be a size of [numWidth][numHeight] but just using 100 to be safe
 
 // Movement speed of blobule.
 float moveSpeed = 100.f;
@@ -330,149 +330,47 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		// For when you press a WASD key and the camera starts moving.
 		if (action == GLFW_PRESS || action == GLFW_REPEAT)
 		{
-			if (key == GLFW_KEY_S)
-			{
-				// Move all blobules up.
-				for (auto& blob : ECS::registry<Blobule>.entities)
-				{
-					ECS::registry<Motion>.get(blob).position.y -= 10.f;
-				}
-				// Move all tiles up.
-				for (auto& tile : ECS::registry<Tile>.entities)
-				{
-					ECS::registry<Motion>.get(tile).position.y -= 10.f;
-				}
-				// Move all eggs up.
-				for (auto& egg : ECS::registry<Egg>.entities)
-				{
-					ECS::registry<Motion>.get(egg).position.y -= 10.f;
-				}
-				// Move all walls up.
-				for (auto& wall : ECS::registry<Wall>.entities)
-				{
-					ECS::registry<Motion>.get(wall).position.y -= 10.f;
-				}
-                // Register position updates in island grid.
-                for (int i = 0; i < 100; i++)
-                {
-                    for (int j = 0; j < 100; j++)
-                    {
-                        islandGrid[i][j].y -= 10.f;
-                    }
-                }
-                // Update blobule origin.
-                ECS::registry<Blobule>.get(player_blobule1).origin.y -= 10.f;
-                ECS::registry<Blobule>.get(player_blobule2).origin.y -= 10.f;
-                ECS::registry<Blobule>.get(player_blobule3).origin.y -= 10.f;
-                ECS::registry<Blobule>.get(player_blobule4).origin.y -= 10.f;
+			// Note that we don't update the tileIsland grid in this function to save performance
+			// If we need to, then we can store a global variable for the x,y offsets and use it accordingly.
+			int xOffset = 0;
+			int yOffset = 0;
+			switch (key) {
+			case GLFW_KEY_W:
+				yOffset = 10.f;
+				break;
+			case GLFW_KEY_S:
+				yOffset = -10.f;
+				break;
+			case GLFW_KEY_A:
+				xOffset = 10.f;
+				break;
+			case GLFW_KEY_D:
+				xOffset = -10.f;
+				break;
+			default:
+				break;
 			}
-			if (key == GLFW_KEY_D)
+
+			// Move all Blobules
+			for (auto& blob : ECS::registry<Blobule>.entities)
 			{
-				// Move all blobules left.
-				for (auto& blob : ECS::registry<Blobule>.entities)
-				{
-					ECS::registry<Motion>.get(blob).position.x -= 10.f;
-				}
-				// Move all tiles left.
-				for (auto& tile : ECS::registry<Tile>.entities)
-				{
-					ECS::registry<Motion>.get(tile).position.x -= 10.f;
-				}
-				// Move all eggs left.
-				for (auto& egg : ECS::registry<Egg>.entities)
-				{
-					ECS::registry<Motion>.get(egg).position.x -= 10.f;
-				}
-				// Move all walls left.
-				for (auto& wall : ECS::registry<Wall>.entities)
-				{
-					ECS::registry<Motion>.get(wall).position.x -= 10.f;
-				}
-                // Register position updates in island grid.
-                for (int i = 0; i < 100; i++)
-                {
-                    for (int j = 0; j < 100; j++)
-                    {
-                        islandGrid[i][j].x -= 10.f;
-                    }
-                }
-                // Update blobule origin.
-                ECS::registry<Blobule>.get(player_blobule1).origin.x -= 10.f;
-                ECS::registry<Blobule>.get(player_blobule2).origin.x -= 10.f;
-                ECS::registry<Blobule>.get(player_blobule3).origin.x -= 10.f;
-                ECS::registry<Blobule>.get(player_blobule4).origin.x -= 10.f;
+				ECS::registry<Motion>.get(blob).position += vec2({ xOffset, yOffset });
+				ECS::registry<Blobule>.get(blob).origin += vec2({ xOffset, yOffset });
 			}
-			if (key == GLFW_KEY_W)
+			// Move all tiles
+			for (auto& tile : ECS::registry<Tile>.entities)
 			{
-				// Move all blobules down.
-				for (auto& blob : ECS::registry<Blobule>.entities)
-				{
-					ECS::registry<Motion>.get(blob).position.y += 10.f;
-				}
-				// Move all tiles down.
-				for (auto& tile : ECS::registry<Tile>.entities)
-				{
-					ECS::registry<Motion>.get(tile).position.y += 10.f;
-				}
-				// Move all eggs down.
-				for (auto& egg : ECS::registry<Egg>.entities)
-				{
-					ECS::registry<Motion>.get(egg).position.y += 10.f;
-				}
-				// Move all walls down.
-				for (auto& wall : ECS::registry<Wall>.entities)
-				{
-					ECS::registry<Motion>.get(wall).position.y += 10.f;
-				}
-                // Register position updates in island grid.
-                for (int i = 0; i < 100; i++)
-                {
-                    for (int j = 0; j < 100; j++)
-                    {
-                        islandGrid[i][j].y += 10.f;
-                    }
-                }
-                // Update blobule origin.
-                ECS::registry<Blobule>.get(player_blobule1).origin.y += 10.f;
-                ECS::registry<Blobule>.get(player_blobule2).origin.y += 10.f;
-                ECS::registry<Blobule>.get(player_blobule3).origin.y += 10.f;
-                ECS::registry<Blobule>.get(player_blobule4).origin.y += 10.f;
+				ECS::registry<Motion>.get(tile).position += vec2({ xOffset, yOffset });
 			}
-			if (key == GLFW_KEY_A)
+			// Move all eggs
+			for (auto& egg : ECS::registry<Egg>.entities)
 			{
-				// Move all blobules up.
-				for (auto& blob : ECS::registry<Blobule>.entities)
-				{
-					ECS::registry<Motion>.get(blob).position.x += 10.f;
-				}
-				// Move all tiles up.
-				for (auto& tile : ECS::registry<Tile>.entities)
-				{
-					ECS::registry<Motion>.get(tile).position.x += 10.f;
-				}
-				// Move all eggs up.
-				for (auto& egg : ECS::registry<Egg>.entities)
-				{
-					ECS::registry<Motion>.get(egg).position.x += 10.f;
-				}
-				// Move all walls up.
-				for (auto& wall : ECS::registry<Wall>.entities)
-				{
-					ECS::registry<Motion>.get(wall).position.x += 10.f;
-				}
-                // Register position updates in island grid.
-                for (int i = 0; i < 100; i++)
-                {
-                    for (int j = 0; j < 100; j++)
-                    {
-                        islandGrid[i][j].x += 10.f;
-                    }
-                }
-                // Update blobule origin.
-                ECS::registry<Blobule>.get(player_blobule1).origin.x += 10.f;
-                ECS::registry<Blobule>.get(player_blobule2).origin.x += 10.f;
-                ECS::registry<Blobule>.get(player_blobule3).origin.x += 10.f;
-                ECS::registry<Blobule>.get(player_blobule4).origin.x += 10.f;
+				ECS::registry<Motion>.get(egg).position += vec2({ xOffset, yOffset });
+			}
+			// Move all walls
+			for (auto& wall : ECS::registry<Wall>.entities)
+			{
+				ECS::registry<Motion>.get(wall).position += vec2({ xOffset, yOffset });
 			}
 		}
 
