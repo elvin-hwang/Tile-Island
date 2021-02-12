@@ -46,7 +46,7 @@ struct Motion {
 
 // active player shared as global variable
 
-enum class EggState { normal, moveUp, moveDown, moveLeft, moveRight };
+enum class EggState { normal, move };
 
 struct EggAi {
 	EggState state = EggState::normal;
