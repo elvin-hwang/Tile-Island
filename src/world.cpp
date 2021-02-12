@@ -210,14 +210,6 @@ void WorldSystem::restart() {
 			ECS::Entity entity = Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
 			//add movement things here
 		}
-
-		// Create walls (hardcoded for now)
-		ECS::Entity wall = Wall::createWall("wall", { 400.f, 400.f }, 0.f);
-		auto& wall_motion = ECS::registry<Motion>.get(wall);
-		auto wall_height = wall_motion.scale.y;
-		auto wall_width = wall_motion.scale.x;
-		ECS::Entity wall_2 = Wall::createWall("wall_corner", { 400.f, 400.f + wall_height }, 0.f);
-		ECS::Entity wall_3 = Wall::createWall("wall_end", { 400.f + wall_width, 400.f + wall_height }, -PI / 2);
 	}
 }
 

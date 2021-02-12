@@ -2,6 +2,7 @@
 #include "physics.hpp"
 #include "tiny_ecs.hpp"
 #include "debug.hpp"
+#include <iostream>
 
 // Returns the local bounding coordinates scaled by the current size of the entity 
 vec2 get_bounding_box(const Motion& motion)
@@ -10,10 +11,44 @@ vec2 get_bounding_box(const Motion& motion)
 	return { abs(motion.scale.x), abs(motion.scale.y) };
 }
 
-// This is a SUPER APPROXIMATE check that puts a circle around the bounding boxes and sees
-// if the center point of either object is inside the other's bounding-box-circle. You don't
-// need to try to use this technique.
-bool collides(const Motion& motion1, const Motion& motion2)
+bool box_circle_collides(const Motion& box, const Motion& circle)
+{
+	// Define edges of box
+	float top_edge = box.position.y;
+	float right_edge = box.position.x + box.scale.x;
+	float bottom_edge = box.position.y + box.scale.y;
+	float left_edge = box.position.x;
+
+	// Define circle radius and center of circle position
+	float circle_radius = circle.scale.x / 2.f;
+	vec2 center_of_circle = circle.position - (circle.scale / 2.f);
+
+	// Different collision scenarios
+	if (abs(right_edge - center_of_circle.x) <= circle_radius
+		&& top_edge - circle_radius <= center_of_circle.y
+		&& center_of_circle.y <= bottom_edge + circle_radius)
+	{
+		std::cout << "right edge: " << right_edge << std::endl;
+		std::cout << "circle leftmost point: " << center_of_circle.x - circle_radius << std::endl;
+		return true;
+	}
+	/*else if (abs(top_edge - center_of_circle.y) <= circle_radius
+		&& left_edge - circle_radius <= center_of_circle.x
+		&& center_of_circle.x <= right_edge + circle_radius)
+		return true;
+	else if (abs(bottom_edge - center_of_circle.y) <= circle_radius
+		&& left_edge - circle_radius <= center_of_circle.x
+		&& center_of_circle.x <= right_edge + circle_radius)
+		return true;
+	else if (abs(left_edge - center_of_circle.y) <= circle_radius
+		&& top_edge - circle_radius <= center_of_circle.y
+		&& center_of_circle.y <= bottom_edge + circle_radius)
+		return true;*/
+	else
+		return false;
+}
+
+bool circle_circle_collides(const Motion& motion1, const Motion& motion2)
 {
 	vec2 motion1_center = { motion1.position.x + motion1.scale.x / 2.f, motion1.position.y + motion1.scale.y / 2.f };
 	vec2 motion2_center = { motion2.position.x + motion2.scale.x / 2.f, motion2.position.y + motion2.scale.y / 2.f };
@@ -65,12 +100,31 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 			Motion& motion_j = motion_container.components[j];
 			ECS::Entity entity_j = motion_container.entities[j];
 
-			if (collides(motion_i, motion_j))
+			if (motion_i.shape == "circle" && motion_j.shape == "square")
 			{
-				// Create a collision event
-				// Note, we are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity, hence, emplace_with_duplicates
-				ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
-				ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
+				if (box_circle_collides(motion_j, motion_i))
+				{
+					std::cout << "Box collision 1" << std::endl;
+					ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
+					ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
+				}
+			}
+			else if (motion_i.shape == "square" && motion_j.shape == "circle")
+			{
+				if (box_circle_collides(motion_i, motion_j))
+				{
+					std::cout << "Box collision 2" << std::endl;
+					ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
+					ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
+				}
+			}
+			else if (motion_i.shape == "circle" && motion_j.shape == "circle")
+			{
+				if (circle_circle_collides(motion_i, motion_j))
+				{
+					ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
+					ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
+				}
 			}
 		}
 	}
