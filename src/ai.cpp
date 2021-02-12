@@ -2,6 +2,7 @@
 #include "ai.hpp"
 #include "tiny_ecs.hpp"
 #include "blobule.hpp"
+#include "utils.hpp"
 
 #include <iostream>
 #include <cstdlib>
@@ -11,6 +12,11 @@ float maxDistanceFromEgg = 150.f;
 
 float eggSpeed = 75.f;
 
+float responseDelay = 500.f;
+float timer = 0.f;
+float angle = 0.f;
+int randomScope = 90.f; // The scope of possible random angles (in degrees)
+
 void AISystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 {
 	(void)elapsed_ms; // placeholder to silence unused warning until implemented
@@ -19,6 +25,7 @@ void AISystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	// egg ai here
 	updateEggAiState();
 	EggAiActOnState();
+	timer -= elapsed_ms;
 
 	// add other ai steps...
 }
@@ -36,22 +43,15 @@ void AISystem::EggAiActOnState()
 		if (eggAi.state == EggState::normal)
 		{
 			eggMotion.velocity = { 0, 0 };
+			timer = 0.f;
 		}
-		else if (eggAi.state == EggState::moveUp)
+		else if (eggAi.state == EggState::move)
 		{
-			eggMotion.velocity = { 0, -eggSpeed };
-		}
-		else if (eggAi.state == EggState::moveDown)
-		{
-			eggMotion.velocity = { 0, eggSpeed };
-		}
-		else if (eggAi.state == EggState::moveLeft)
-		{
-			eggMotion.velocity = { -eggSpeed, 0 };
-		}
-		else if (eggAi.state == EggState::moveRight)
-		{
-			eggMotion.velocity = { eggSpeed, 0 };
+			if (timer <= 0.f) {
+				angle = (rand() % randomScope + angle - randomScope / 2) * PI / 180;
+				timer = responseDelay;
+				eggMotion.velocity = { cos(angle) * eggSpeed, sin(angle) * eggSpeed };
+			}
 		}
 	}
 }
@@ -71,59 +71,23 @@ void AISystem::updateEggAiState()
 		Motion& eggMotion = ECS::registry<Motion>.get(eggNPC);
 		EggAi& eggAi = ECS::registry<EggAi>.get(eggNPC);
 
-		ECS::Entity& active_blobule = getActivePlayerBlobule();
+		ECS::Entity& active_blobule = Utils::getActivePlayerBlobule();
 
 		Motion& blobMotion = ECS::registry<Motion>.get(active_blobule);
-		float dist = euclideanDist(eggMotion, blobMotion);
+		float dist = Utils::euclideanDist(eggMotion, blobMotion);
 
 		if (dist < maxDistanceFromEgg)
 		{
+			angle = atan2(blobMotion.position.y - eggMotion.position.y, blobMotion.position.x - eggMotion.position.x) * 180 / PI + 180;
 			std::string currentActivePlayer = ECS::registry<Blobule>.get(active_blobule).color;
 			if (currentActivePlayer != lastActivePlayer)
 			{
 				lastActivePlayer = currentActivePlayer;
-				currentState = rand() % 4;
-
 			}
-			switch (currentState)
-			{
-			case 0:
-				eggAi.state = EggState::moveDown;
-				break;
-			case 1:
-				eggAi.state = EggState::moveLeft;
-				break;
-			case 2:
-				eggAi.state = EggState::moveRight;
-				break;
-			case 3:
-				eggAi.state = EggState::moveUp;
-				break;
-			}
+			eggAi.state = EggState::move;
 		}
 		else {
 			eggAi.state = EggState::normal;
 		}
 	}
-}
-
-ECS::Entity& AISystem::getActivePlayerBlobule()
-{
-	for (ECS::Entity& blobule : ECS::registry<Blobule>.entities)
-	{
-		if (ECS::registry<Blobule>.get(blobule).active_player)
-		{
-			return blobule;
-		}
-	}
-	throw "no active player set";
-}
-
-float AISystem::euclideanDist(Motion motion1, Motion motion2)
-{
-	float x = motion1.position.x - motion2.position.x;
-	float y = motion1.position.y - motion2.position.y;
-
-	float dist = (float)pow(x, 2) + (float)pow(y, 2);
-	return sqrt(dist);
 }
