@@ -4,7 +4,7 @@
 #include "debug.hpp"
 #include <iostream>
 
-// Returns the local bounding coordinates scaled by the current size of the entity 
+// Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
 {
 	// fabs is to avoid negative scale due to the facing direction.
@@ -66,13 +66,13 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 {
 	// Move entities based on how much time has passed, this is to (partially) avoid
 	// having entities move at different speed based on the machine.
-	
+
 	for (auto& motion : ECS::registry<Motion>.components)
 	{
 		float step_seconds = 1.0f * (elapsed_ms / 1000.f);
 		motion.position = motion.position + (step_seconds * motion.velocity);
 	}
-	
+
 	(void)elapsed_ms; // placeholder to silence unused warning until implemented
 	(void)window_size_in_game_units;
 
