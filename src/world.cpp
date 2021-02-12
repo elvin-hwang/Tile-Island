@@ -7,8 +7,6 @@
 #include "blobule.hpp"
 #include "start.hpp"
 
-#include "wall.hpp"
-
 // stlib
 #include <string.h>
 #include <cassert>
@@ -317,11 +315,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			for (auto& egg : ECS::registry<Egg>.entities)
 			{
 				ECS::registry<Motion>.get(egg).position += vec2({ xOffset, yOffset });
-			}
-			// Move all walls
-			for (auto& wall : ECS::registry<Wall>.entities)
-			{
-				ECS::registry<Motion>.get(wall).position += vec2({ xOffset, yOffset });
 			}
 		}
 
