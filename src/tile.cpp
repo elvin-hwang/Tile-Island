@@ -14,20 +14,25 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     std::string key = ""; // Key is the texture file name without the ".png"
     float friction = 0.f;
 
+    auto& motion = ECS::registry<Motion>.emplace(entity);
     switch (type) {
     case Water:
         key = "tile_water";
+        motion.isCollidable = true;
         break;
     case Block:
         key = "tile_grey";
+        motion.isCollidable = true;
         break;
     case Ice:
         key = "tile_blue";
         friction = 0.01f;
+        motion.isCollidable = false;
         break;
     case Mud:
         key = "tile_purple";
         friction = 0.04f;
+        motion.isCollidable = false;
         break;
     default:
         break;
@@ -46,12 +51,12 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
 
     // Initialize the position, scale and physics components.
     // The only relevant component is position, as the others will not be used.
-    auto& motion = ECS::registry<Motion>.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = { 0.f, 0.f };
     motion.position = position;
     motion.scale = vec2({ size, size }) * static_cast<vec2>(resource.texture.size);
-
+    motion.shape = "square";
+    
     auto& terrain = ECS::registry<Terrain>.emplace(entity);
     terrain.type = type;
     terrain.friction = friction;
