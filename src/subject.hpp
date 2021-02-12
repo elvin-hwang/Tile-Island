@@ -11,6 +11,7 @@ public:
     {
         observers_list.push_back(lambda);
     }
+
     void notify(ECS::Entity entity, ECS::Entity entity_other);
 };
 

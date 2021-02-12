@@ -15,3 +15,4 @@ void Subject::notify(ECS::Entity entity, ECS::Entity entity_other) {
         o(entity, entity_other);
     }
 }
+
