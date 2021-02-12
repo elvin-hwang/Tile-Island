@@ -162,26 +162,28 @@ void WorldSystem::restart() {
 			// Vertically...
 			for (int j = tile_width / 2; j <= window_height; j += tile_width)
 			{
-				// Place locations in GRID.
-			   /* vec2 new_location_for_tile = {i, j};
-				GRID[count] = new_location_for_tile;
-				count++;*/
-
 				if (i < 100.f || j < 100.f || i > window_width - borderWidth || j > window_height - borderWidth) {
-					Tile::createWaterTile({ i, j });
+					Tile::createTile({ i, j }, Water);
 					continue;
 				}
 				islandGrid[horizontalIndex][verticalIndex] = { i, j };
-				verticalIndex++;
-				isTile = true;
 
-				// Create a tile everywhere on half of the grid.
-				if (i < window_width / 2) {
-					Tile::createBlueTile({ i, j });
+				// Generate map
+				if ((horizontalIndex < numWidth - 2 && horizontalIndex > 2) && (verticalIndex == 0 || verticalIndex == numHeight)) {
+					Tile::createTile({ i, j }, Block); // top, bottom wall
+				}
+				else if ((verticalIndex < numHeight - 2 && verticalIndex > 2) && (horizontalIndex == 0 || horizontalIndex == numWidth)) {
+					Tile::createTile({ i, j }, Block); // left, right wall
+				}
+				else if (i < window_width / 2) {
+					Tile::createTile({ i, j }, Ice);
 				}
 				else {
-					Tile::createPurpleTile({ i, j });
+					Tile::createTile({ i, j }, Mud);
 				}
+
+				verticalIndex++;
+				isTile = true;
 			}
 			if (isTile) {
 				verticalIndex = 0;
@@ -325,6 +327,103 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		}
 
+		// For when you press a WASD key and the camera starts moving.
+		if (action == GLFW_PRESS || action == GLFW_REPEAT)
+		{
+			if (key == GLFW_KEY_S)
+			{
+				// Move all blobules up.
+				for (auto& blob : ECS::registry<Blobule>.entities)
+				{
+					ECS::registry<Motion>.get(blob).position.y -= 10.f;
+				}
+				// Move all tiles up.
+				for (auto& tile : ECS::registry<Tile>.entities)
+				{
+					ECS::registry<Motion>.get(tile).position.y -= 10.f;
+				}
+				// Move all eggs up.
+				for (auto& egg : ECS::registry<Egg>.entities)
+				{
+					ECS::registry<Motion>.get(egg).position.y -= 10.f;
+				}
+				// Move all walls up.
+				for (auto& wall : ECS::registry<Wall>.entities)
+				{
+					ECS::registry<Motion>.get(wall).position.y -= 10.f;
+				}
+			}
+			if (key == GLFW_KEY_D)
+			{
+				// Move all blobules left.
+				for (auto& blob : ECS::registry<Blobule>.entities)
+				{
+					ECS::registry<Motion>.get(blob).position.x -= 10.f;
+				}
+				// Move all tiles left.
+				for (auto& tile : ECS::registry<Tile>.entities)
+				{
+					ECS::registry<Motion>.get(tile).position.x -= 10.f;
+				}
+				// Move all eggs left.
+				for (auto& egg : ECS::registry<Egg>.entities)
+				{
+					ECS::registry<Motion>.get(egg).position.x -= 10.f;
+				}
+				// Move all walls left.
+				for (auto& wall : ECS::registry<Wall>.entities)
+				{
+					ECS::registry<Motion>.get(wall).position.x -= 10.f;
+				}
+			}
+			if (key == GLFW_KEY_W)
+			{
+				// Move all blobules down.
+				for (auto& blob : ECS::registry<Blobule>.entities)
+				{
+					ECS::registry<Motion>.get(blob).position.y += 10.f;
+				}
+				// Move all tiles down.
+				for (auto& tile : ECS::registry<Tile>.entities)
+				{
+					ECS::registry<Motion>.get(tile).position.y += 10.f;
+				}
+				// Move all eggs down.
+				for (auto& egg : ECS::registry<Egg>.entities)
+				{
+					ECS::registry<Motion>.get(egg).position.y += 10.f;
+				}
+				// Move all walls down.
+				for (auto& wall : ECS::registry<Wall>.entities)
+				{
+					ECS::registry<Motion>.get(wall).position.y += 10.f;
+				}
+			}
+			if (key == GLFW_KEY_A)
+			{
+				// Move all blobules up.
+				for (auto& blob : ECS::registry<Blobule>.entities)
+				{
+					ECS::registry<Motion>.get(blob).position.x += 10.f;
+				}
+				// Move all tiles up.
+				for (auto& tile : ECS::registry<Tile>.entities)
+				{
+					ECS::registry<Motion>.get(tile).position.x += 10.f;
+				}
+				// Move all eggs up.
+				for (auto& egg : ECS::registry<Egg>.entities)
+				{
+					ECS::registry<Motion>.get(egg).position.x += 10.f;
+				}
+				// Move all walls up.
+				for (auto& wall : ECS::registry<Wall>.entities)
+				{
+					ECS::registry<Motion>.get(wall).position.x += 10.f;
+				}
+			}
+		}
+
 		// Turn based system
 		if (action == GLFW_PRESS && key == GLFW_KEY_ENTER)
 		{
@@ -346,7 +445,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 
 		// Debugging
-		if (key == GLFW_KEY_D)
+		if (key == GLFW_KEY_Q)
 			DebugSystem::in_debug_mode = (action != GLFW_RELEASE);
 
 		// Control the current speed with `<` `>`
