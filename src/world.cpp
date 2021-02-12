@@ -194,11 +194,11 @@ void WorldSystem::restart() {
 
 		// Create blobule characters
 		if (ECS::registry<Blobule>.components.size() <= 4) {
-			player_blobule1 = Blobule::createBlobule({ islandGrid[0][0].x, islandGrid[0][0].y }, blobuleCol::Yellow, "yellow");
-			player_blobule2 = Blobule::createBlobule({ islandGrid[numWidth][0].x, islandGrid[numWidth][0].y }, blobuleCol::Green,
+			player_blobule1 = Blobule::createBlobule({ islandGrid[1][1].x, islandGrid[1][1].y }, blobuleCol::Yellow, "yellow");
+			player_blobule2 = Blobule::createBlobule({ islandGrid[numWidth - 1][1].x, islandGrid[numWidth - 1][1].y }, blobuleCol::Green,
 				"green");
-			player_blobule3 = Blobule::createBlobule({ islandGrid[0][numHeight].x, islandGrid[0][numHeight].y }, blobuleCol::Red, "red");
-			player_blobule4 = Blobule::createBlobule({ islandGrid[numWidth][numHeight].x , islandGrid[numWidth][numHeight].y },
+			player_blobule3 = Blobule::createBlobule({ islandGrid[1][numHeight - 1].x, islandGrid[1][numHeight - 1].y }, blobuleCol::Red, "red");
+			player_blobule4 = Blobule::createBlobule({ islandGrid[numWidth - 1][numHeight - 1].x , islandGrid[numWidth - 1][numHeight - 1].y },
 				blobuleCol::Blue, "blue");
 			active_player = player_blobule1;
 			ECS::registry<Blobule>.get(active_player).active_player = true;
