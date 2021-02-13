@@ -7,8 +7,6 @@
 #include "blobule.hpp"
 #include "start.hpp"
 
-#include "wall.hpp"
-
 // stlib
 #include <string.h>
 #include <cassert>
@@ -28,6 +26,7 @@ vec2 islandGrid[100][100]; // This will actually be a size of [numWidth][numHeig
 // Movement speed of blobule.
 float moveSpeed = 100.f;
 float terminalVelocity = 20.f;
+float max_blobule_speed = 350.f;
 
 double mouse_press_x, mouse_press_y;
 
@@ -194,11 +193,11 @@ void WorldSystem::restart() {
 
 		// Create blobule characters
 		if (ECS::registry<Blobule>.components.size() <= 4) {
-			player_blobule1 = Blobule::createBlobule({ islandGrid[0][0].x, islandGrid[0][0].y }, blobuleCol::Yellow, "yellow");
-			player_blobule2 = Blobule::createBlobule({ islandGrid[numWidth][0].x, islandGrid[numWidth][0].y }, blobuleCol::Green,
+			player_blobule1 = Blobule::createBlobule({ islandGrid[1][1].x, islandGrid[1][1].y }, blobuleCol::Yellow, "yellow");
+			player_blobule2 = Blobule::createBlobule({ islandGrid[numWidth - 1][1].x, islandGrid[numWidth - 1][1].y }, blobuleCol::Green,
 				"green");
-			player_blobule3 = Blobule::createBlobule({ islandGrid[0][numHeight].x, islandGrid[0][numHeight].y }, blobuleCol::Red, "red");
-			player_blobule4 = Blobule::createBlobule({ islandGrid[numWidth][numHeight].x , islandGrid[numWidth][numHeight].y },
+			player_blobule3 = Blobule::createBlobule({ islandGrid[1][numHeight - 1].x, islandGrid[1][numHeight - 1].y }, blobuleCol::Red, "red");
+			player_blobule4 = Blobule::createBlobule({ islandGrid[numWidth - 1][numHeight - 1].x , islandGrid[numWidth - 1][numHeight - 1].y },
 				blobuleCol::Blue, "blue");
 			active_player = player_blobule1;
 			ECS::registry<Blobule>.get(active_player).active_player = true;
@@ -210,14 +209,6 @@ void WorldSystem::restart() {
 			ECS::Entity entity = Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
 			//add movement things here
 		}
-
-		// Create walls (hardcoded for now)
-		ECS::Entity wall = Wall::createWall("wall", { 400.f, 400.f }, 0.f);
-		auto& wall_motion = ECS::registry<Motion>.get(wall);
-		auto wall_height = wall_motion.scale.y;
-		auto wall_width = wall_motion.scale.x;
-		ECS::Entity wall_2 = Wall::createWall("wall_corner", { 400.f, 400.f + wall_height }, 0.f);
-		ECS::Entity wall_3 = Wall::createWall("wall_end", { 400.f + wall_width, 400.f + wall_height }, -PI / 2);
 	}
 }
 
@@ -325,11 +316,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			{
 				ECS::registry<Motion>.get(egg).position += vec2({ xOffset, yOffset });
 			}
-			// Move all walls
-			for (auto& wall : ECS::registry<Wall>.entities)
-			{
-				ECS::registry<Motion>.get(wall).position += vec2({ xOffset, yOffset });
-			}
 		}
 
 		// Turn based system
@@ -371,7 +357,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 }
 
-
 // On mouse move callback
 void WorldSystem::on_mouse_move(vec2 mouse_pos)
 {
@@ -394,7 +379,12 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 			double mouse_release_x, mouse_release_y;
 			glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
 			double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
-			ECS::registry<Motion>.get(active_player).velocity = { cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance };
+			vec2 launchVelocity = { cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance };
+			
+			launchVelocity.x = launchVelocity.x >= 0.f ? min(max_blobule_speed, launchVelocity.x) : max(-max_blobule_speed, launchVelocity.x);
+			launchVelocity.y = launchVelocity.y >= 0.f ? min(max_blobule_speed, launchVelocity.y) : max(-max_blobule_speed, launchVelocity.y);
+			
+			ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
 		}
 	}
 }

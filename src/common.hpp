@@ -42,6 +42,8 @@ struct Motion {
 	float friction = 0;
 	vec2 velocity = { 0, 0 };
 	vec2 scale = { 0, 0 };
+	bool isCollidable = false;
+	std::string shape = "square";
 };
 
 // active player shared as global variable

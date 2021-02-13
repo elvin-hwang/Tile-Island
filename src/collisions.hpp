@@ -11,7 +11,7 @@ public:
     void handle_collisions();
 
 private:
-    Subject blobule_wall_coll;
     Subject blobule_tile_coll;
+    Subject blobule_blobule_coll;
 };
 

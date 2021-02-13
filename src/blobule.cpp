@@ -44,6 +44,8 @@ ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col, std::string co
     motion.position = position;
     motion.friction = 0.f;
     motion.scale = vec2({0.42f, 0.42f}) * static_cast<vec2>(resource.texture.size);
+    motion.isCollidable = true;
+    motion.shape = "circle";
     
     // Create and (empty) Blobule component to be able to refer to all tiles
     auto& blob = ECS::registry<Blobule>.emplace(entity);
