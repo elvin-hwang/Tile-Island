@@ -38,6 +38,8 @@ public:
 	// Should the game be over ?
 	bool is_over() const;
 
+	bool menuState;
+
 	// OpenGL window handle
 	GLFWwindow* window;
 private:
@@ -59,4 +61,6 @@ private:
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
+
+	ECS::Entity active_player;
 };

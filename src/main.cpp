@@ -12,6 +12,7 @@
 #include "tiny_ecs.hpp"
 #include "render.hpp"
 #include "physics.hpp"
+#include "collisions.hpp"
 #include "ai.hpp"
 #include "debug.hpp"
 
@@ -34,11 +35,14 @@ int main()
 	WorldSystem world(window_size_in_px);
 	RenderSystem renderer(*world.window);
 	PhysicsSystem physics;
+	CollisionSystem collision;
 	AISystem ai;
 
 	// Set all states to default
 	world.restart();
 	auto t = Clock::now();
+	collision.initialize_collisions();
+
 	// Variable timestep loop
 	while (!world.is_over())
 	{
@@ -54,8 +58,7 @@ int main()
 		ai.step(elapsed_ms, window_size_in_game_units);
 		world.step(elapsed_ms, window_size_in_game_units);
 		physics.step(elapsed_ms, window_size_in_game_units);
-		world.handle_collisions();
-
+		collision.handle_collisions();
 		renderer.draw(window_size_in_game_units);
 	}
 

@@ -5,6 +5,7 @@
 
 enum TerrainType {
     Water,
+    Block,
     Ice,
     Mud
 };
@@ -13,13 +14,7 @@ enum TerrainType {
 struct Tile
 {
     // Create all the associated render resources and default transform.
-    static ECS::Entity createWaterTile(vec2 position);
-
-    // Create all the associated render resources and default transform.
-    static ECS::Entity createBlueTile(vec2 position);
-    
-    // Create all the associated render resources and default transform.
-    static ECS::Entity createPurpleTile(vec2 position);
+    static ECS::Entity createTile(vec2 position, TerrainType type);
 };
 
 // All data relevant to the terrain of entities

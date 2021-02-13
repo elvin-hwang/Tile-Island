@@ -2,18 +2,48 @@
 #include "tile.hpp"
 #include "render.hpp"
 
-ECS::Entity Tile::createWaterTile(vec2 position)
+// Initialize size of tiles.
+float size = 0.13f;
+
+ECS::Entity Tile::createTile(vec2 position, TerrainType type)
 {
     // Reserve an entity
     auto entity = ECS::Entity();
 
+    // Type specific variables
+    std::string key = ""; // Key is the texture file name without the ".png"
+    float friction = 0.f;
+
+    auto& motion = ECS::registry<Motion>.emplace(entity);
+    switch (type) {
+    case Water:
+        key = "tile_water";
+        motion.isCollidable = true;
+        break;
+    case Block:
+        key = "tile_grey";
+        motion.isCollidable = true;
+        break;
+    case Ice:
+        key = "tile_blue";
+        friction = 0.01f;
+        motion.isCollidable = false;
+        break;
+    case Mud:
+        key = "tile_purple";
+        friction = 0.04f;
+        motion.isCollidable = false;
+        break;
+    default:
+        break;
+    }
+
     // Create the rendering components
-    std::string key = "tile_water";
     ShadedMesh& resource = cache_resource(key);
     if (resource.effect.program.resource == 0)
     {
         resource = ShadedMesh();
-        RenderSystem::createSprite(resource, textures_path("tile_water.png"), "textured");
+        RenderSystem::createSprite(resource, textures_path(key.append(".png")), "textured");
     }
 
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
@@ -21,85 +51,16 @@ ECS::Entity Tile::createWaterTile(vec2 position)
 
     // Initialize the position, scale and physics components.
     // The only relevant component is position, as the others will not be used.
-    auto& motion = ECS::registry<Motion>.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = { 0.f, 0.f };
     motion.position = position;
-    motion.scale = vec2({ 0.3f, 0.3f }) * static_cast<vec2>(resource.texture.size);
-
+    motion.scale = vec2({ size, size }) * static_cast<vec2>(resource.texture.size);
+    motion.shape = "square";
+    
     auto& terrain = ECS::registry<Terrain>.emplace(entity);
-    terrain.type = Water;
-    terrain.friction = 0.0f;
+    terrain.type = type;
+    terrain.friction = friction;
 
-
-    // Create and (empty) Tile component to be able to refer to all tiles
-    ECS::registry<Tile>.emplace(entity);
-    return entity;
-}
-
-ECS::Entity Tile::createBlueTile(vec2 position)
-{
-    // Reserve an entity
-    auto entity = ECS::Entity();
-    
-    // Create the rendering components
-    std::string key = "tile_blue";
-    ShadedMesh& resource = cache_resource(key);
-    if (resource.effect.program.resource == 0)
-    {
-        resource = ShadedMesh();
-        RenderSystem::createSprite(resource, textures_path("tile_blue.png"), "textured");
-    }
-    
-    // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-    ECS::registry<ShadedMeshRef>.emplace(entity, resource);
-    
-    // Initialize the position, scale and physics components.
-    // The only relevant component is position, as the others will not be used.
-    auto& motion = ECS::registry<Motion>.emplace(entity);
-    motion.angle = 0.f;
-    motion.velocity = {0.f, 0.f};
-    motion.position = position;
-    motion.scale = vec2({0.3f, 0.3f}) * static_cast<vec2>(resource.texture.size);
-
-    auto& terrain = ECS::registry<Terrain>.emplace(entity);
-    terrain.type = Ice;
-    terrain.friction = 0.005f;
-    
-    // Create and (empty) Tile component to be able to refer to all tiles
-    ECS::registry<Tile>.emplace(entity);
-    return entity;
-}
-
-ECS::Entity Tile::createPurpleTile(vec2 position)
-{
-    // Reserve an entity
-    auto entity = ECS::Entity();
-    
-    // Create the rendering components
-    std::string key = "tile_purple";
-    ShadedMesh& resource = cache_resource(key);
-    if (resource.effect.program.resource == 0)
-    {
-        resource = ShadedMesh();
-        RenderSystem::createSprite(resource, textures_path("tile_purple.png"), "textured");
-    }
-    
-    // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-    ECS::registry<ShadedMeshRef>.emplace(entity, resource);
-    
-    // Initialize the position, scale and physics components.
-    // The only relevant component is position, as the others will not be used.
-    auto& motion = ECS::registry<Motion>.emplace(entity);
-    motion.angle = 0.f;
-    motion.velocity = {0.f, 0.f};
-    motion.position = position;
-    motion.scale = vec2({0.3f, 0.3f}) * static_cast<vec2>(resource.texture.size);
-
-    auto& terrain = ECS::registry<Terrain>.emplace(entity);
-    terrain.type = Ice;
-    terrain.friction = 0.02f;
-    
     // Create and (empty) Tile component to be able to refer to all tiles
     ECS::registry<Tile>.emplace(entity);
     return entity;
