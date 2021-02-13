@@ -1,5 +1,7 @@
 #include "tiny_ecs.hpp"
 #include <functional>
+#include <list>
+#include <string>
 
 struct Subject
 {
