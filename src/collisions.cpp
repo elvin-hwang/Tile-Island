@@ -64,6 +64,7 @@ void CollisionSystem::initialize_collisions() {
                     // Subtract 1 from yellow_tiles
                 }
                 // Add 1 to red_tiles
+                red_tiles++;
                 
                 Tile::reloadTile(current_terrain.position, Ice, "red");
                 for (auto& egg : ECS::registry<Egg>.entities) {
