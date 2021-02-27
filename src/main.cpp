@@ -56,7 +56,8 @@ int main()
 
 		DebugSystem::clearDebugComponents();
 		ai.step(elapsed_ms, window_size_in_game_units);
-		world.step(elapsed_ms, window_size_in_game_units);
+		world.step(elapsed_ms, window_size_in_game_units,
+                   collision.yellow_tiles + 1, collision.green_tiles + 1, collision.red_tiles + 1, collision.blue_tiles + 1);
 		physics.step(elapsed_ms, window_size_in_game_units);
 		collision.handle_collisions();
 		renderer.draw(window_size_in_game_units);

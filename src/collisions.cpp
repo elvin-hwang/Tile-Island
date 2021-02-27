@@ -4,6 +4,8 @@
 #include "physics.hpp"
 #include "tile.hpp"
 #include "blobule.hpp"
+#include "world.hpp"
+#include "egg.hpp"
 
 void CollisionSystem::initialize_collisions() {
 	
@@ -40,7 +42,7 @@ void CollisionSystem::initialize_collisions() {
 	};
     
     // Lambda function that changes the colour of the tile based on which blobule is on it.
-    auto change_tile_colour = [](auto entity, auto entity_other) {
+    auto change_tile_colour = [this](auto entity, auto entity_other) {
         auto& player_blobule = ECS::registry<Blobule>.get(entity);
         auto& blobule_motion = ECS::registry<Motion>.get(entity);
         
@@ -49,34 +51,191 @@ void CollisionSystem::initialize_collisions() {
         
         if (current_terrain.type == Ice){
             if (color == "red" && current_terrain.key != "tile_blue_red" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                
+                // Update colour count of tiles.
+                if (current_terrain.key == "tile_blue_blue"){
+                    // Subtract 1 from blue_tiles
+                    blue_tiles--;
+                }
+                else if (current_terrain.key == "tile_blue_green"){
+                    // Subtract 1 from green_tiles
+                }
+                else if (current_terrain.key == "tile_blue_yellow"){
+                    // Subtract 1 from yellow_tiles
+                }
+                // Add 1 to red_tiles
+                
                 Tile::reloadTile(current_terrain.position, Ice, "red");
+                for (auto& egg : ECS::registry<Egg>.entities) {
+                    Egg::reloadEgg(ECS::registry<Motion>.get(egg).position);
+                }
             }
             else if (color == "green" && current_terrain.key != "tile_blue_green" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                
+                // Update colour count of tiles.
+                if (current_terrain.key == "tile_blue_blue"){
+                    // Subtract 1 from blue_tiles
+                    blue_tiles--;
+                }
+                else if (current_terrain.key == "tile_blue_red"){
+                    // Subtract 1 from red_tiles
+                    red_tiles--;
+                }
+                else if (current_terrain.key == "tile_blue_yellow"){
+                    // Subtract 1 from yellow_tiles
+                    yellow_tiles--;
+                }
+                // Add 1 to green_tiles
+                green_tiles++;
+                
                 Tile::reloadTile(current_terrain.position, Ice, "green");
+                for (auto& egg : ECS::registry<Egg>.entities) {
+                    Egg::reloadEgg(ECS::registry<Motion>.get(egg).position);
+                }
             }
             else if (color == "yellow" && current_terrain.key != "tile_blue_yellow" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                
+                // Update colour count of tiles.
+                if (current_terrain.key == "tile_blue_blue"){
+                    // Subtract 1 from blue_tiles
+                    blue_tiles--;
+                }
+                else if (current_terrain.key == "tile_blue_green"){
+                    // Subtract 1 from green_tiles
+                    green_tiles--;
+                }
+                else if (current_terrain.key == "tile_blue_red"){
+                    // Subtract 1 from red_tiles
+                    red_tiles--;
+                }
+                // Add 1 to yellow_tiles
+                yellow_tiles++;
+                
                 Tile::reloadTile(current_terrain.position, Ice, "yellow");
+                for (auto& egg : ECS::registry<Egg>.entities) {
+                    Egg::reloadEgg(ECS::registry<Motion>.get(egg).position);
+                }
             }
             else if (color == "blue" && current_terrain.key != "tile_blue_blue" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                
+                // Update colour count of tiles.
+                if (current_terrain.key == "tile_blue_red"){
+                    // Subtract 1 from red_tiles
+                    red_tiles--;
+                }
+                else if (current_terrain.key == "tile_blue_green"){
+                    // Subtract 1 from green_tiles
+                    green_tiles--;
+                }
+                else if (current_terrain.key == "tile_blue_yellow"){
+                    // Subtract 1 from yellow_tiles
+                    yellow_tiles--;
+                }
+                // Add 1 to blue_tiles
+                blue_tiles++;
+                
                 Tile::reloadTile(current_terrain.position, Ice, "blue");
+                for (auto& egg : ECS::registry<Egg>.entities) {
+                    Egg::reloadEgg(ECS::registry<Motion>.get(egg).position);
+                }
             }
         }
         else if (current_terrain.type == Mud){
             if (color == "red" && current_terrain.key != "tile_purple_red" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                
+                // Update colour count of tiles.
+                if (current_terrain.key == "tile_purple_blue"){
+                    // Subtract 1 from blue_tiles
+                    blue_tiles--;
+                }
+                else if (current_terrain.key == "tile_purple_green"){
+                    // Subtract 1 from green_tiles
+                    green_tiles--;
+                }
+                else if (current_terrain.key == "tile_purple_yellow"){
+                    // Subtract 1 from yellow_tiles
+                    yellow_tiles--;
+                }
+                // Add 1 to red_tiles
+                red_tiles++;
+                
                 Tile::reloadTile(current_terrain.position, Mud, "red");
+                for (auto& egg : ECS::registry<Egg>.entities) {
+                    Egg::reloadEgg(ECS::registry<Motion>.get(egg).position);
+                }
             }
             else if (color == "green" && current_terrain.key != "tile_purple_green" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                
+                // Update colour count of tiles.
+                if (current_terrain.key == "tile_purple_blue"){
+                    // Subtract 1 from blue_tiles
+                    blue_tiles--;
+                }
+                else if (current_terrain.key == "tile_purple_red"){
+                    // Subtract 1 from red_tiles
+                    red_tiles--;
+                }
+                else if (current_terrain.key == "tile_purple_yellow"){
+                    // Subtract 1 from yellow_tiles
+                    yellow_tiles--;
+                }
+                // Add 1 to green_tiles
+                green_tiles++;
+                
                 Tile::reloadTile(current_terrain.position, Mud, "green");
+                for (auto& egg : ECS::registry<Egg>.entities) {
+                    Egg::reloadEgg(ECS::registry<Motion>.get(egg).position);
+                }
             }
             else if (color == "yellow" && current_terrain.key != "tile_purple_yellow" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                
+                // Update colour count of tiles.
+                if (current_terrain.key == "tile_purple_blue"){
+                    // Subtract 1 from blue_tiles
+                    blue_tiles--;
+                }
+                else if (current_terrain.key == "tile_purple_green"){
+                    // Subtract 1 from green_tiles
+                    green_tiles--;
+                }
+                else if (current_terrain.key == "tile_purple_red"){
+                    // Subtract 1 from red_tiles
+                    red_tiles--;
+                }
+                // Add 1 to yellow_tiles
+                yellow_tiles++;
+                
                 Tile::reloadTile(current_terrain.position, Mud, "yellow");
+                for (auto& egg : ECS::registry<Egg>.entities) {
+                    Egg::reloadEgg(ECS::registry<Motion>.get(egg).position);
+                }
             }
             else if (color == "blue" && current_terrain.key != "tile_purple_blue" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                
+                // Update colour count of tiles.
+                if (current_terrain.key == "tile_purple_red"){
+                    // Subtract 1 from red_tiles
+                    red_tiles--;
+                }
+                else if (current_terrain.key == "tile_purple_green"){
+                    // Subtract 1 from green_tiles
+                    green_tiles--;
+                }
+                else if (current_terrain.key == "tile_purple_yellow"){
+                    // Subtract 1 from yellow_tiles
+                    yellow_tiles--;
+                }
+                // Add 1 to blue_tiles
+                blue_tiles++;
+                
                 Tile::reloadTile(current_terrain.position, Mud, "blue");
+                for (auto& egg : ECS::registry<Egg>.entities) {
+                    Egg::reloadEgg(ECS::registry<Motion>.get(egg).position);
+                }
             }
         }
     };
-
+    
 	//add lambdas to the observer lists
 	blobule_tile_coll.add_observer(change_blobule_friction);
     blobule_tile_coll.add_observer(change_tile_colour);

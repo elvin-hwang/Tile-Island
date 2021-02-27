@@ -72,6 +72,7 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type, std::string blobul
     terrain.friction = friction;
     terrain.position = position;
     terrain.key = key;
+    
 
     // Create and (empty) Tile component to be able to refer to all tiles
     ECS::registry<Tile>.emplace(entity);

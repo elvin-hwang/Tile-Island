@@ -6,6 +6,7 @@
 #include "tile.hpp"
 #include "blobule.hpp"
 #include "start.hpp"
+#include "collisions.hpp"
 
 // stlib
 #include <string.h>
@@ -95,14 +96,19 @@ void WorldSystem::init_audio()
 }
 
 // Update our game world
-void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
+void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units,
+                       unsigned int yellow_tiles,
+                       unsigned int green_tiles,
+                       unsigned int red_tiles,
+                       unsigned int blue_tiles)
 {
 	(void)elapsed_ms; // silence unused warning
 	(void)window_size_in_game_units; // silence unused warning
-
+    
 	// Giving our game a title.
 	std::stringstream title_ss;
-	title_ss << "Welcome to Tile Island!";;
+	title_ss << "Welcome to Tile Island!      Yellow: " << yellow_tiles << "  Green: " << green_tiles << "  Red: " << red_tiles << "  Blue: " << blue_tiles;
+    // title_ss << "Welcome to Tile Island!";
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Friction implementation
@@ -136,10 +142,18 @@ void WorldSystem::restart() {
 
 		// Reset the game speed
 		current_speed = 1.f;
-
+        
+        // Reset count for tiles coloured
+        yellow_tiles = 0;
+        green_tiles = 0;
+        red_tiles = 0;
+        blue_tiles = 0;
+        
 		// Remove all entities that we created (those that have a motion component)
 		while (ECS::registry<Motion>.entities.size() > 0)
 			ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
+        
+        
 
 		// Debugging for memory/component leaks
 		ECS::ContainerInterface::list_all_components();
@@ -212,8 +226,8 @@ void WorldSystem::restart() {
 		//Only one npc for now
 		if (ECS::registry<Egg>.components.size() < 1) {
 			// Create egg
-			ECS::Entity entity = Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
-			//add movement things here
+			Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
+            //add movement things here
 		}
 	}
 }
@@ -255,7 +269,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 		ECS::registry<Blobule>.get(active_player).active_player = true;
 		auto& blobule_movement = ECS::registry<Motion>.get(active_player);
-		auto blobule_position = blobule_movement.position;
 
 		// For when you press an arrow key and the salmon starts moving.
 		if (action == GLFW_PRESS || action == GLFW_REPEAT)
@@ -340,7 +353,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		{
 			int w, h;
 			glfwGetWindowSize(window, &w, &h);
-
 			restart();
 		}
 
@@ -394,3 +406,4 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 		}
 	}
 }
+
