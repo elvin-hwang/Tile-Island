@@ -15,7 +15,7 @@ void CollisionSystem::initialize_collisions() {
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
 	auto reverse_vel = [](auto entity, auto entity_other) {
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
-		auto& tileMotion = ECS::registry<Motion>.get(entity_other);
+		// auto& tileMotion = ECS::registry<Motion>.get(entity_other);
 		blobMotion.velocity = -blobMotion.velocity;
 	};
 
@@ -38,9 +38,48 @@ void CollisionSystem::initialize_collisions() {
 			blobMotion.friction = terrain.friction;
 		}
 	};
+    
+    // Lambda function that changes the colour of the tile based on which blobule is on it.
+    auto change_tile_colour = [](auto entity, auto entity_other) {
+        auto& player_blobule = ECS::registry<Blobule>.get(entity);
+        auto& blobule_motion = ECS::registry<Motion>.get(entity);
+        
+        std::string color = player_blobule.color;
+        auto& current_terrain = ECS::registry<Terrain>.get(entity_other);
+        
+        if (current_terrain.type == Ice){
+            if (color == "red" && current_terrain.key != "tile_blue_red" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                Tile::reloadTile(current_terrain.position, Ice, "red");
+            }
+            else if (color == "green" && current_terrain.key != "tile_blue_green" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                Tile::reloadTile(current_terrain.position, Ice, "green");
+            }
+            else if (color == "yellow" && current_terrain.key != "tile_blue_yellow" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                Tile::reloadTile(current_terrain.position, Ice, "yellow");
+            }
+            else if (color == "blue" && current_terrain.key != "tile_blue_blue" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                Tile::reloadTile(current_terrain.position, Ice, "blue");
+            }
+        }
+        else if (current_terrain.type == Mud){
+            if (color == "red" && current_terrain.key != "tile_purple_red" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                Tile::reloadTile(current_terrain.position, Mud, "red");
+            }
+            else if (color == "green" && current_terrain.key != "tile_purple_green" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                Tile::reloadTile(current_terrain.position, Mud, "green");
+            }
+            else if (color == "yellow" && current_terrain.key != "tile_purple_yellow" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                Tile::reloadTile(current_terrain.position, Mud, "yellow");
+            }
+            else if (color == "blue" && current_terrain.key != "tile_purple_blue" && blobule_motion.velocity != vec2{0.f, 0.f}){
+                Tile::reloadTile(current_terrain.position, Mud, "blue");
+            }
+        }
+    };
 
 	//add lambdas to the observer lists
 	blobule_tile_coll.add_observer(change_blobule_friction);
+    blobule_tile_coll.add_observer(change_tile_colour);
 	blobule_blobule_coll.add_observer(reverse_vel);
 	
 }

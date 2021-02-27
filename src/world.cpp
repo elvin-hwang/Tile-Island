@@ -162,23 +162,23 @@ void WorldSystem::restart() {
 			for (int j = tile_width / 2; j <= window_height; j += tile_width)
 			{
 				if (i < borderWidth || j < borderWidth || i > window_width - borderWidth || j > window_height - borderWidth) {
-					Tile::createTile({ i, j }, Water);
+					Tile::createTile({ i, j }, Water, "none");
 					continue;
 				}
 				islandGrid[horizontalIndex][verticalIndex] = { i, j };
 
 				// Generate map
 				if ((horizontalIndex < numWidth - 2 && horizontalIndex > 2) && (verticalIndex == 0 || verticalIndex == numHeight)) {
-					Tile::createTile({ i, j }, Block); // top, bottom wall
+					Tile::createTile({ i, j }, Block, "none"); // top, bottom wall
 				}
 				else if ((verticalIndex < numHeight - 2 && verticalIndex > 2) && (horizontalIndex == 0 || horizontalIndex == numWidth)) {
-					Tile::createTile({ i, j }, Block); // left, right wall
+					Tile::createTile({ i, j }, Block, "none"); // left, right wall
 				}
 				else if (i < window_width / 2) {
-					Tile::createTile({ i, j }, Ice);
+					Tile::createTile({ i, j }, Ice, "none");
 				}
 				else {
-					Tile::createTile({ i, j }, Mud);
+					Tile::createTile({ i, j }, Mud, "none");
 				}
 
 				verticalIndex++;
@@ -190,6 +190,12 @@ void WorldSystem::restart() {
 				isTile = false;
 			}
 		}
+        
+        // Note: Hard-coded type of terrain the players spawn on.
+        Tile::reloadTile({ islandGrid[1][1].x, islandGrid[1][1].y }, Ice, "yellow");
+        Tile::reloadTile({ islandGrid[numWidth - 1][1].x, islandGrid[numWidth - 1][1].y }, Mud, "green");
+        Tile::reloadTile({ islandGrid[1][numHeight - 1].x, islandGrid[1][numHeight - 1].y }, Ice, "red");
+        Tile::reloadTile({ islandGrid[numWidth - 1][numHeight - 1].x , islandGrid[numWidth - 1][numHeight - 1].y }, Mud, "blue");
 
 		// Create blobule characters
 		if (ECS::registry<Blobule>.components.size() <= 4) {
