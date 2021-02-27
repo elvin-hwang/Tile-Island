@@ -152,8 +152,6 @@ void WorldSystem::restart() {
 		// Remove all entities that we created (those that have a motion component)
 		while (ECS::registry<Motion>.entities.size() > 0)
 			ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
-        
-        
 
 		// Debugging for memory/component leaks
 		ECS::ContainerInterface::list_all_components();
