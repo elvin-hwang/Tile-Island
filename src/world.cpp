@@ -32,12 +32,14 @@ float max_blobule_speed = 350.f;
 double mouse_press_x, mouse_press_y;
 
 int playerMove = 1;
+bool turnEnded = false;
 
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
 {
 	menuState = true;
     restarted = false;
+    playerMove = 1;
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 
@@ -244,23 +246,43 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 	}
 	else {
+        /*
 		ECS::registry<Blobule>.get(active_player).active_player = false;
 		switch (playerMove) {
 		case 1:
-			active_player = player_blobule1;
-			break;
+                std::cout << "Controlling blobule 1." << std::endl;
+                active_player = player_blobule1;
+                break;
 		case 2:
-			active_player = player_blobule2;
-			break;
+                std::cout << "Controlling blobule 2." << std::endl;
+                active_player = player_blobule2;
+                break;
 		case 3:
-			active_player = player_blobule3;
-			break;
+                std::cout << "Controlling blobule 3." << std::endl;
+                active_player = player_blobule3;
+                break;
 		case 4:
-			active_player = player_blobule4;
-			break;
+                std::cout << "Controlling blobule 4." << std::endl;
+                active_player = player_blobule4;
+                break;
 		}
+         */
+        
+        // Turn based system
+        /*
+        if (action == GLFW_PRESS && key == GLFW_KEY_ENTER)
+        {
+            if (playerMove != 4) {
+                playerMove++;
+            }
+            else {
+                playerMove = 1;
+            }
+        }
+         */
+        
 
-		ECS::registry<Blobule>.get(active_player).active_player = true;
+		// ECS::registry<Blobule>.get(active_player).active_player = true;
 		auto& blobule_movement = ECS::registry<Motion>.get(active_player);
 
 		// For when you press an arrow key and the salmon starts moving.
@@ -330,23 +352,14 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		}
 
-		// Turn based system
-		if (action == GLFW_PRESS && key == GLFW_KEY_ENTER)
-		{
-			if (playerMove != 4) {
-				playerMove++;
-			}
-			else {
-				playerMove = 1;
-			}
-		}
-
 		// Resetting game
 		if (action == GLFW_RELEASE && key == GLFW_KEY_R)
 		{
 			int w, h;
 			glfwGetWindowSize(window, &w, &h);
             restarted = true;
+            active_player = player_blobule1;
+            playerMove = 1;
 			restart();
 		}
 
@@ -397,6 +410,34 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 			launchVelocity.y = launchVelocity.y >= 0.f ? min(max_blobule_speed, launchVelocity.y) : max(-max_blobule_speed, launchVelocity.y);
 			
 			ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
+            
+            if (playerMove != 4) {
+                playerMove++;
+            }
+            else {
+                playerMove = 1;
+            }
+            
+            switch (playerMove) {
+            case 1:
+                    std::cout << "Controlling blobule 1." << std::endl;
+                    active_player = player_blobule1;
+                    break;
+            case 2:
+                    std::cout << "Controlling blobule 2." << std::endl;
+                    active_player = player_blobule2;
+                    break;
+            case 3:
+                    std::cout << "Controlling blobule 3." << std::endl;
+                    active_player = player_blobule3;
+                    break;
+            case 4:
+                    std::cout << "Controlling blobule 4." << std::endl;
+                    active_player = player_blobule4;
+                    break;
+            }
+            
+            std::cout << "Blobule " << playerMove << " is moving." << std::endl;
 		}
 	}
 }
