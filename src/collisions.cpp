@@ -59,9 +59,11 @@ void CollisionSystem::initialize_collisions() {
                 }
                 else if (current_terrain.key == "tile_blue_green"){
                     // Subtract 1 from green_tiles
+                    green_tiles--;
                 }
                 else if (current_terrain.key == "tile_blue_yellow"){
                     // Subtract 1 from yellow_tiles
+                    yellow_tiles--;
                 }
                 // Add 1 to red_tiles
                 red_tiles++;
@@ -269,4 +271,12 @@ void CollisionSystem::handle_collisions()
 	}
 	// Remove all collisions from this simulation step
 	ECS::registry<PhysicsSystem::Collision>.clear();
+}
+
+void CollisionSystem::resetTileCount()
+{
+    yellow_tiles = 0;
+    green_tiles = 0;
+    red_tiles = 0;
+    blue_tiles = 0;
 }

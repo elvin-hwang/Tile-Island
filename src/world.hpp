@@ -44,6 +44,7 @@ public:
 	bool is_over() const;
 
 	bool menuState;
+    bool restarted;
 
 	// OpenGL window handle
 	GLFWwindow* window;

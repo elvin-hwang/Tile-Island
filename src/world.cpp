@@ -37,6 +37,7 @@ int playerMove = 1;
 WorldSystem::WorldSystem(ivec2 window_size_px)
 {
 	menuState = true;
+    restarted = false;
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 
@@ -142,12 +143,6 @@ void WorldSystem::restart() {
 
 		// Reset the game speed
 		current_speed = 1.f;
-        
-        // Reset count for tiles coloured
-        yellow_tiles = 0;
-        green_tiles = 0;
-        red_tiles = 0;
-        blue_tiles = 0;
         
 		// Remove all entities that we created (those that have a motion component)
 		while (ECS::registry<Motion>.entities.size() > 0)
@@ -351,6 +346,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		{
 			int w, h;
 			glfwGetWindowSize(window, &w, &h);
+            restarted = true;
 			restart();
 		}
 

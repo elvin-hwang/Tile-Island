@@ -10,6 +10,7 @@ class CollisionSystem
 public: 
     void initialize_collisions();
     void handle_collisions();
+    void resetTileCount();
     
     unsigned int yellow_tiles = 0;
     unsigned int green_tiles = 0;
