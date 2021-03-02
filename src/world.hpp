@@ -3,6 +3,7 @@
 // internal
 #include "common.hpp"
 #include "blobule.hpp"
+#include "collisions.hpp"
 
 // stlib
 #include <vector>
@@ -27,7 +28,11 @@ public:
 	void restart();
 
 	// Steps the game ahead by ms milliseconds
-	void step(float elapsed_ms, vec2 window_size_in_game_units);
+	void step(float elapsed_ms, vec2 window_size_in_game_units,
+              unsigned int yellow_tiles,
+              unsigned int green_tiles,
+              unsigned int red_tiles,
+              unsigned int blue_tiles);
 
 	// Check for collisions
 	void handle_collisions();
@@ -39,9 +44,17 @@ public:
 	bool is_over() const;
 
 	bool menuState;
+    bool restarted;
 
 	// OpenGL window handle
 	GLFWwindow* window;
+    
+    // Anything related to counting coloured tiles
+    unsigned int yellow_tiles = 0;
+    unsigned int green_tiles = 0;
+    unsigned int red_tiles = 0;
+    unsigned int blue_tiles = 0;
+    
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
