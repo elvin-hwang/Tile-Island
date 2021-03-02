@@ -6,6 +6,7 @@
 #include "tile.hpp"
 #include "blobule.hpp"
 #include "start.hpp"
+#include "helptool.hpp"
 
 // stlib
 #include <string.h>
@@ -27,6 +28,7 @@ vec2 islandGrid[100][100]; // This will actually be a size of [numWidth][numHeig
 float moveSpeed = 100.f;
 float terminalVelocity = 20.f;
 float max_blobule_speed = 350.f;
+vec2 window_size;
 
 double mouse_press_x, mouse_press_y;
 
@@ -36,6 +38,7 @@ int playerMove = 1;
 WorldSystem::WorldSystem(ivec2 window_size_px)
 {
 	menuState = true;
+	window_size = window_size_px;
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 
@@ -155,6 +158,7 @@ void WorldSystem::restart() {
 		int horizontalIndex = 0;
 		int verticalIndex = 0;
 		bool isTile = false;
+
 		// Horizontally...
 		for (int i = tile_width / 2; i <= window_width; i += tile_width)
 		{
@@ -274,7 +278,24 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				blobule_movement.velocity.x = moveSpeed;
 
 			}
+
+
 		}
+
+		if (key == GLFW_KEY_H) {
+			int hi = ECS::registry<HelpTool>.components.size();
+			if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+				HelpTool::createHelpTool({ window_size.x / 2, window_size.y / 2 });
+			}
+			if (action == GLFW_RELEASE) {
+				if (ECS::registry<HelpTool>.components.size() > 0) {
+					ECS::registry<HelpTool>.clear();
+				}
+				int hi = ECS::registry<HelpTool>.components.size();
+				int hi2 = 0;
+			}
+		}
+
 
 		// For when you press a WASD key and the camera starts moving.
 		if (action == GLFW_PRESS || action == GLFW_REPEAT)
