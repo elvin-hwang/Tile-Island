@@ -81,13 +81,12 @@ private:
 
 class BTIfElseCondition : public BTNode {
 public:
-	BTIfElseCondition(std::shared_ptr<BTNode> child1, std::shared_ptr<BTNode> child2, int steps, std::function<bool(ECS::Entity)> condition) noexcept
-		: m_targetSteps(steps), m_stepsRemaining(0), m_child1(child1), m_child2(child2), m_index(0), m_condition(condition) {
+	BTIfElseCondition(std::shared_ptr<BTNode> child1, std::shared_ptr<BTNode> child2, std::function<bool(ECS::Entity)> condition) noexcept
+		:  m_child1(child1), m_child2(child2), m_index(0), m_condition(condition) {
 	}
 
 private:
 	void init(ECS::Entity e) override {
-		m_stepsRemaining = m_targetSteps;
 		m_index = 0;
 		m_child1->init(e);
 		m_child2->init(e);
@@ -95,28 +94,72 @@ private:
 
 	BTState process(ECS::Entity e) override {
 		// update internal state
-		--m_stepsRemaining;
 
 		if (m_condition(e))
 		{
-			m_child1->init(e);
+			//m_child1->init(e);
 			return m_child1->process(e);
 		}
 		else {
-			m_child2->init(e);
+			//m_child2->init(e);
 			return m_child2->process(e);
 		}
 	}
 
-	int m_targetSteps;
-	int m_stepsRemaining;
 	int m_index;
 	std::function<bool(ECS::Entity)> m_condition;
 	std::shared_ptr<BTNode> m_child1;
 	std::shared_ptr<BTNode> m_child2;
 };
 
+class BTAndSequence : public BTNode {
+public:
+	BTAndSequence(std::vector<std::shared_ptr<BTNode>> children)
+		: m_children(std::move(children)), m_index(0) {
+	}
 
+private:
+	void init(ECS::Entity e) override
+	{
+		m_index = 0;
+		assert(m_index < m_children.size());
+		// initialize the first child
+		const auto& child = m_children[m_index];
+		assert(child);
+		child->init(e);
+	}
+
+	BTState process(ECS::Entity e) override {
+		if (m_index >= m_children.size())
+			return BTState::Success;
+
+		// process current child
+		const auto& child = m_children[m_index];
+		assert(child);
+		BTState state = child->process(e);
+
+		// select a new active child and initialize its internal state
+		if (state == BTState::Success) {
+			++m_index;
+			if (m_index >= m_children.size()) {
+				return BTState::Success;
+			}
+			else {
+				std::cout << "next state" << std::endl;
+				const auto& nextChild = m_children[m_index];
+				assert(nextChild);
+				nextChild->init(e);
+				return BTState::Running;
+			}
+		}
+		else {
+			return state;
+		}
+	}
+
+	int m_index;
+	std::vector<std::shared_ptr<BTNode>> m_children;
+};
 
 
 // Leaf node examples
@@ -191,6 +234,38 @@ private:
 	int m_stepsRemaining;
 };
 
+class TurnX : public BTNode {
+private:
+	void init(ECS::Entity e) override {
+
+	}
+
+	BTState process(ECS::Entity e) override {
+		auto& motion = ECS::registry<Motion>.get(e);
+		//motion.velocity.x = -motion.velocity.x;
+		motion.direction.x = -motion.direction.x;
+		std::cout << "turning " << std::endl;
+
+		return BTState::Success;
+	}
+
+};
+
+class TurnY : public BTNode {
+private:
+	void init(ECS::Entity e) override {
+
+	}
+
+	BTState process(ECS::Entity e) override {
+		auto& motion = ECS::registry<Motion>.get(e);
+		motion.direction.y = -motion.direction.y;
+
+		return BTState::Success;
+	}
+
+};
+
 
 class Flee : public BTNode {
 private:
@@ -220,9 +295,12 @@ private:
 	}
 };
 
-std::shared_ptr <BTNode> moveX = std::make_unique<MoveXDirection>(1);
-std::shared_ptr <BTNode> moveY = std::make_unique<MoveYDirection>(1);
+std::shared_ptr <BTNode> moveX = std::make_unique<MoveXDirection>(20);
+std::shared_ptr <BTNode> moveY = std::make_unique<MoveYDirection>(20);
+std::shared_ptr <BTNode> turnX = std::make_unique<TurnX>();
+std::shared_ptr <BTNode> turnY = std::make_unique<TurnY>();
 std::shared_ptr <BTNode> flee = std::make_unique<Flee>();
+std::shared_ptr <BTNode> moveSquare = std::make_unique<BTAndSequence>(std::vector<std::shared_ptr <BTNode>>({ moveX, turnX, moveY, turnY }));
 
 // TODO: make this euclidean dist check
 auto checkNearbyBlobules = [](ECS::Entity e) {
@@ -236,7 +314,7 @@ auto checkNearbyBlobules = [](ECS::Entity e) {
 	return false;
 };
 
-std::shared_ptr <BTNode> runOrFlee = std::make_unique<BTIfElseCondition>(flee, moveY, 1, checkNearbyBlobules);
+std::shared_ptr <BTNode> runOrFlee = std::make_unique<BTIfElseCondition>(flee, moveSquare, checkNearbyBlobules);
 
 AISystem::AISystem()
 {
