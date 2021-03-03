@@ -55,6 +55,7 @@ void CollisionSystem::initialize_collisions() {
 
 		if (terrain.type == Water || terrain.type == Block)
 		{
+			std::cout << "COLLISION" << std::endl;
 			eggMotion.velocity = -eggMotion.velocity;
 		}
 	};
@@ -102,7 +103,6 @@ void CollisionSystem::handle_collisions()
 		// Egg - collisions
 		else if (ECS::registry<Egg>.has(entity)) {
 			if (ECS::registry<Tile>.has(entity_other)) {
-				std::cout << "COLLISION" << std::endl;
 				egg_tile_coll.notify(entity, entity_other);
 			}
 		}

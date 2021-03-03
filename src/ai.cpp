@@ -7,6 +7,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <random>
+#include <functional>
 
 float maxDistanceFromEgg = 150.f;
 
@@ -69,10 +70,50 @@ private:
 	std::vector<std::shared_ptr<BTNode>> m_children;
 };
 
-// Leaf node examples
-class RunNSteps : public BTNode {
+class BTIfElseCondition : public BTNode {
 public:
-	RunNSteps(int steps) noexcept
+	BTIfElseCondition(std::shared_ptr<BTNode> child1, std::shared_ptr<BTNode> child2, int steps, std::function<bool(ECS::Entity)> condition) noexcept
+		: m_targetSteps(steps), m_stepsRemaining(0), m_child1(child1), m_child2(child2), m_index(0), m_condition(condition) {
+	}
+
+private:
+	void init(ECS::Entity e) override {
+		m_stepsRemaining = m_targetSteps;
+		m_index = 0;
+		m_child1->init(e);
+		m_child2->init(e);
+	}
+
+	BTState process(ECS::Entity e) override {
+		// update internal state
+		--m_stepsRemaining;
+
+		if (m_condition(e))
+		{
+			//std::cout << "IF case true" << std::endl;
+			return m_child1->process(e);
+		}
+		else {
+			//std::cout << "ELSE case true" << std::endl;
+			return m_child2->process(e);
+		}
+	}
+
+	int m_targetSteps;
+	int m_stepsRemaining;
+	int m_index;
+	std::function<bool(ECS::Entity)> m_condition;
+	std::shared_ptr<BTNode> m_child1;
+	std::shared_ptr<BTNode> m_child2;
+};
+
+
+
+
+// Leaf node examples
+class MoveXDirection : public BTNode {
+public:
+	MoveXDirection(int steps) noexcept
 		: m_targetSteps(steps), m_stepsRemaining(0) {
 	}
 
@@ -89,7 +130,39 @@ private:
 		auto& motion = ECS::registry<Motion>.get(e);
 		motion.position.x += motion.velocity.x;
 
-		//std::cout << "moving" << std::endl;
+		// return progress
+		if (m_stepsRemaining > 0) {
+			return BTState::Running;
+		}
+		else {
+			return BTState::Success;
+		}
+	}
+
+private:
+	int m_targetSteps;
+	int m_stepsRemaining;
+};
+
+// Leaf node examples
+class MoveYDirection : public BTNode {
+public:
+	MoveYDirection(int steps) noexcept
+		: m_targetSteps(steps), m_stepsRemaining(0) {
+	}
+
+private:
+	void init(ECS::Entity e) override {
+		m_stepsRemaining = m_targetSteps;
+	}
+
+	BTState process(ECS::Entity e) override {
+		// update internal state
+		--m_stepsRemaining;
+
+		// modify world
+		auto& motion = ECS::registry<Motion>.get(e);
+		motion.position.y += motion.velocity.y;
 
 		// return progress
 		if (m_stepsRemaining > 0) {
@@ -113,7 +186,7 @@ private:
 
 	BTState process(ECS::Entity e) override {
 		// modify world
-		auto& vel = ECS::registry<Motion>.get(e).velocity.x;
+		auto& vel = ECS::registry<Motion>.get(e).velocity;
 		vel = -vel;
 		std::cout << "turning around" << std::endl;
 
@@ -122,16 +195,37 @@ private:
 	}
 };
 
-std::shared_ptr <BTNode> run = std::make_unique<RunNSteps>(100);
-std::shared_ptr <BTNode> turn = std::make_unique<TurnAround>();
+std::shared_ptr <BTNode> moveX = std::make_unique<MoveXDirection>(100);
+std::shared_ptr <BTNode> moveY = std::make_unique<MoveYDirection>(100);
+std::shared_ptr <BTNode> turnX = std::make_unique<TurnAround>();
 
+auto euclideanDist = [](Motion& fishMotion, Motion& turtleMotion)
+{
+	float x = fishMotion.position.x - turtleMotion.position.x;
+	float y = fishMotion.position.y - turtleMotion.position.y;
+
+	float dist = (float)pow(x, 2) + (float)pow(y, 2);
+	return sqrt(dist);
+};
+
+// TODO: make this euclidean dist check
+auto checkNearbyBlobules = [](ECS::Entity e) {
+	for (ECS::Entity& blob : ECS::registry<Blobule>.entities)
+	{
+		Motion& eggMotion = ECS::registry<Motion>.get(e);
+		Motion& blobMotion = ECS::registry<Motion>.get(blob);
+		if (euclideanDist(eggMotion, blobMotion) <= 200.f)
+			return true;
+	}
+	return false;
+};
+
+std::shared_ptr <BTNode> runOrFlee = std::make_unique<BTIfElseCondition>(moveX, moveY, 10, checkNearbyBlobules);
 
 AISystem::AISystem()
 {
 	// initializing 
-	root_run_and_return = std::make_unique<BTRepeatingSequence>(std::vector<std::shared_ptr <BTNode>>({ run, turn, run, turn }));
-	std::cout << "init ai" << std::endl;
-	std::cout << ECS::registry<EggAi>.entities.size() << std::endl;
+	root_run_and_return = std::make_unique<BTRepeatingSequence>(std::vector<std::shared_ptr <BTNode>>({ runOrFlee, turnX, runOrFlee, turnX }));
 }
 
 void AISystem::step(float elapsed_ms, vec2 window_size_in_game_units)
@@ -143,7 +237,6 @@ void AISystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	/*updateEggAiState();
 	EggAiActOnState();*/
 	timer -= elapsed_ms;
-	//std::cout << "ai thinking" << std::endl;
 
 	for (ECS::Entity& eggNPC : ECS::registry<EggAi>.entities)
 	{
