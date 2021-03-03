@@ -24,9 +24,10 @@ ECS::Entity Egg::createEgg(vec2 position)
     // The only relevant component is position, as the others will not be used.
     auto& motion = ECS::registry<Motion>.emplace(entity);
     motion.angle = 0.f;
-    motion.velocity = {5.f, 5.f};
+    motion.velocity = {0.f, 0.f};
     motion.position = position;
     motion.scale = vec2({0.5f, 0.5f}) * static_cast<vec2>(resource.texture.size);
+    motion.direction = { 1.f, 1.f };
     motion.shape = "circle";
     
     ECS::registry<Egg>.emplace(entity);

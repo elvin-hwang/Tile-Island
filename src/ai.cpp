@@ -18,6 +18,15 @@ float timer = 0.f;
 float angle = 0.f;
 int randomScope = 90.f; // The scope of possible random angles (in degrees)
 
+auto euclideanDist = [](Motion& fishMotion, Motion& turtleMotion)
+{
+	float x = fishMotion.position.x - turtleMotion.position.x;
+	float y = fishMotion.position.y - turtleMotion.position.y;
+
+	float dist = (float)pow(x, 2) + (float)pow(y, 2);
+	return sqrt(dist);
+};
+
 // A composite node that loops through all children and exits when one fails
 class BTRepeatingSequence : public BTNode {
 public:
@@ -90,9 +99,11 @@ private:
 
 		if (m_condition(e))
 		{
+			m_child1->init(e);
 			return m_child1->process(e);
 		}
 		else {
+			m_child2->init(e);
 			return m_child2->process(e);
 		}
 	}
@@ -118,7 +129,7 @@ public:
 private:
 	void init(ECS::Entity e) override {
 		m_stepsRemaining = m_targetSteps;
-		ECS::registry<Motion>.get(e).velocity = { 5.f, 0.f };
+		//ECS::registry<Motion>.get(e).velocity = { 5.f, 0.f };
 	}
 
 	BTState process(ECS::Entity e) override {
@@ -127,7 +138,8 @@ private:
 
 		// modify world
 		auto& motion = ECS::registry<Motion>.get(e);
-		motion.position.x += motion.velocity.x;
+		motion.velocity.y = 0;
+		motion.velocity.x = motion.direction.x * 100;
 
 		// return progress
 		if (m_stepsRemaining > 0) {
@@ -153,7 +165,6 @@ public:
 private:
 	void init(ECS::Entity e) override {
 		m_stepsRemaining = m_targetSteps;
-		ECS::registry<Motion>.get(e).velocity = { 0.f, 5.f };
 	}
 
 	BTState process(ECS::Entity e) override {
@@ -162,7 +173,9 @@ private:
 
 		// modify world
 		auto& motion = ECS::registry<Motion>.get(e);
-		motion.position.y += motion.velocity.y;
+		motion.velocity.x = 0;
+		motion.velocity.y = motion.direction.y * 100;
+		//motion.position.y += motion.velocity.y;
 
 		// return progress
 		if (m_stepsRemaining > 0) {
@@ -179,34 +192,37 @@ private:
 };
 
 
-class TurnAround : public BTNode {
+class Flee : public BTNode {
 private:
 	void init(ECS::Entity e) override {
 	}
 
 	BTState process(ECS::Entity e) override {
 		// modify world
-		auto& vel = ECS::registry<Motion>.get(e).velocity.x;
-		vel = -vel;
-		std::cout << "turning around" << std::endl;
+		auto& motion = ECS::registry<Motion>.get(e);
+		float angle = 0;
+		float closestDist = 1000000.f;
+
+		for (ECS::Entity blob : ECS::registry<Blobule>.entities)
+		{
+			Motion& blobMotion = ECS::registry<Motion>.get(blob);
+			float dist = euclideanDist(blobMotion, motion);
+			if (dist < closestDist) {
+				closestDist = dist;
+				angle = -atan2(blobMotion.position.y - motion.position.y, blobMotion.position.x - motion.position.x);
+			}
+		}
+		motion.velocity = { -cos(angle) * 100.f, sin(angle) * 100.f };
+		motion.direction = { motion.velocity.x / abs(motion.velocity.x), motion.velocity.y / abs(motion.velocity.y) };
 
 		// return progress
 		return BTState::Success;
 	}
 };
 
-std::shared_ptr <BTNode> moveX = std::make_unique<MoveXDirection>(100);
-std::shared_ptr <BTNode> moveY = std::make_unique<MoveYDirection>(100);
-std::shared_ptr <BTNode> turnX = std::make_unique<TurnAround>();
-
-auto euclideanDist = [](Motion& fishMotion, Motion& turtleMotion)
-{
-	float x = fishMotion.position.x - turtleMotion.position.x;
-	float y = fishMotion.position.y - turtleMotion.position.y;
-
-	float dist = (float)pow(x, 2) + (float)pow(y, 2);
-	return sqrt(dist);
-};
+std::shared_ptr <BTNode> moveX = std::make_unique<MoveXDirection>(1);
+std::shared_ptr <BTNode> moveY = std::make_unique<MoveYDirection>(1);
+std::shared_ptr <BTNode> flee = std::make_unique<Flee>();
 
 // TODO: make this euclidean dist check
 auto checkNearbyBlobules = [](ECS::Entity e) {
@@ -214,18 +230,18 @@ auto checkNearbyBlobules = [](ECS::Entity e) {
 	{
 		Motion& eggMotion = ECS::registry<Motion>.get(e);
 		Motion& blobMotion = ECS::registry<Motion>.get(blob);
-		if (euclideanDist(eggMotion, blobMotion) <= 300.f)
+		if (euclideanDist(eggMotion, blobMotion) <= 100.f)
 			return true;
 	}
 	return false;
 };
 
-std::shared_ptr <BTNode> runOrFlee = std::make_unique<BTIfElseCondition>(moveX, moveY, 10, checkNearbyBlobules);
+std::shared_ptr <BTNode> runOrFlee = std::make_unique<BTIfElseCondition>(flee, moveY, 1, checkNearbyBlobules);
 
 AISystem::AISystem()
 {
 	// initializing 
-	root_run_and_return = std::make_unique<BTRepeatingSequence>(std::vector<std::shared_ptr <BTNode>>({ runOrFlee, turnX, runOrFlee, turnX }));
+	root_run_and_return = std::make_unique<BTRepeatingSequence>(std::vector<std::shared_ptr <BTNode>>({ runOrFlee }));
 	std::cout << ECS::registry<EggAi>.entities.size() << std::endl;
 }
 
@@ -247,23 +263,8 @@ void AISystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 			root_run_and_return->init(eggNPC);
 			eggAi.initBehaviour = true;
 		}
-		auto state = root_run_and_return->process(eggNPC);
-		if (state == BTState::Running)
-		{
-			/*	std::cout << "running!!" << std::endl;
-				std::cout << "  velocity = " << ECS::registry<Motion>.get(eggNPC).velocity.x << '\n';
-				std::cout << "  position = " << ECS::registry<Motion>.get(eggNPC).position.x << '\n';
-
-				std::cout << "  state = " << static_cast<std::underlying_type<BTState>::type>(state) << '\n';*/
-		}
-		/*else
-		{
-			std::cout << "done!!" << std::endl;
-			std::cout << "  velocity = " << ECS::registry<Motion>.get(eggNPC).velocity.x << '\n';
-			std::cout << "  position = " << ECS::registry<Motion>.get(eggNPC).position.x << '\n';
-		}*/
+		root_run_and_return->process(eggNPC);
 	}
-
 
 	// add other ai steps...
 }

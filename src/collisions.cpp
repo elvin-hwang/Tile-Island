@@ -57,6 +57,7 @@ void CollisionSystem::initialize_collisions() {
 		{
 			std::cout << "COLLISION" << std::endl;
 			eggMotion.velocity = -eggMotion.velocity;
+			eggMotion.direction = -eggMotion.direction;
 		}
 	};
 
