@@ -52,4 +52,5 @@ enum class EggState { normal, move };
 
 struct EggAi {
 	EggState state = EggState::normal;
+	bool initBehaviour = false;
 };
