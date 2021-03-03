@@ -37,6 +37,7 @@ double mouse_press_x, mouse_press_y;
 
 int playerMove = 1;
 bool turnEnded = false;
+bool mouse_move = false;
 
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
@@ -403,6 +404,10 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 // On mouse move callback
 void WorldSystem::on_mouse_move(vec2 mouse_pos)
 {
+    if (ECS::registry<Blobule>.has(active_player) && mouse_move)
+    {
+        ECS::registry<Motion>.get(active_player).angle = atan2(mouse_pos.y - mouse_press_y, mouse_pos.x - mouse_press_x) - PI;
+    }
 	(void)mouse_pos;
 }
 
@@ -421,13 +426,15 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 		{
 		    // store position of left click coordinates in mouse_press_x and mouse_press_y
 			glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
+			mouse_move = mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary;
 		}
 
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
 		{
 		    // check if left mouse click was on the asset
-            if (mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary)
+            if (mouse_move)
             {
+                mouse_move = false;
                 // store position of left mouse release coordinates
                 double mouse_release_x, mouse_release_y;
                 glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
