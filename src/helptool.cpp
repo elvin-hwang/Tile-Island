@@ -23,7 +23,7 @@ ECS::Entity HelpTool::createHelpTool(vec2 position)
     // The only relevant component is position, as the others will not be used.
     auto& motion = ECS::registry<Motion>.emplace(entity);
     motion.position = position;
-    motion.scale = vec2({ 0.65f, 0.65f }) * static_cast<vec2>(resource.texture.size);
+    motion.scale = vec2({ 0.75f, 0.75f }) * static_cast<vec2>(resource.texture.size);
 
     ECS::registry<HelpTool>.emplace(entity);
 
