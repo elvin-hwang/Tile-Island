@@ -88,13 +88,7 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	{
 		for (auto& motion : ECS::registry<Motion>.components)
 		{
-			// draw a cross at the position of all objects
-			auto scale_horizontal_line = motion.scale;
-			scale_horizontal_line.y *= 0.1f;
-			auto scale_vertical_line = motion.scale;
-			scale_vertical_line.x *= 0.1f;
-			DebugSystem::createLine(motion.position, scale_horizontal_line);
-			DebugSystem::createLine(motion.position, scale_vertical_line);
+			DebugSystem::createBox(motion.position, motion.scale);
 		}
 	}
 

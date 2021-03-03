@@ -69,5 +69,30 @@ namespace DebugSystem
         }
 	}
 
+	void createBox(vec2 position, vec2 size)
+	{
+		auto scale_horizontal_line = size;
+		scale_horizontal_line.y *= 0.05f;
+		auto scale_vertical_line = size;
+		scale_vertical_line.x *= 0.05f;
+
+		vec2 topPoint = position;
+		topPoint.y -= size.y / 2;
+
+		vec2 bottomPoint = position;
+		bottomPoint.y += size.y / 2;
+
+		vec2 leftPoint = position;
+		leftPoint.x -= size.x / 2;
+
+		vec2 rightPoint = position;
+		rightPoint.x += size.x / 2;
+
+		DebugSystem::createLine(topPoint, scale_horizontal_line);
+		DebugSystem::createLine(bottomPoint, scale_horizontal_line);
+		DebugSystem::createLine(leftPoint, scale_vertical_line);
+		DebugSystem::createLine(rightPoint, scale_vertical_line);
+	}
+
 	bool in_debug_mode = false;
 }

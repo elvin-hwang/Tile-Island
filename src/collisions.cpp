@@ -4,6 +4,7 @@
 #include "physics.hpp"
 #include "tile.hpp"
 #include "blobule.hpp"
+#include <egg.hpp>
 
 void CollisionSystem::initialize_collisions() {
 	
@@ -11,6 +12,8 @@ void CollisionSystem::initialize_collisions() {
 	blobule_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_tile_coll"));
 	//observer for blobule - blobule collision
 	blobule_blobule_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_blobule_coll"));
+	// observer for blobule - egg collision
+	blobule_egg_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_egg_coll"));
 
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
 	auto reverse_vel = [](auto entity, auto entity_other) {
@@ -39,10 +42,15 @@ void CollisionSystem::initialize_collisions() {
 		}
 	};
 
+	// egg disappears on collision with blob (only use the second param)
+	auto remove_egg = [](auto entity, auto eggEntity) {
+		ECS::ContainerInterface::remove_all_components_of(eggEntity);
+	};
+
 	//add lambdas to the observer lists
 	blobule_tile_coll.add_observer(change_blobule_friction);
 	blobule_blobule_coll.add_observer(reverse_vel);
-	
+	blobule_egg_coll.add_observer(remove_egg);
 }
 // Compute collisions between entities
 void CollisionSystem::handle_collisions()
@@ -65,6 +73,11 @@ void CollisionSystem::handle_collisions()
 			// Blobule - blobule collisions
 			if (ECS::registry<Blobule>.has(entity_other)) {
 				blobule_blobule_coll.notify(entity, entity_other);
+			}
+
+			// blobule - egg collisions
+			if (ECS::registry<Egg>.has(entity_other)) {
+				blobule_egg_coll.notify(entity, entity_other);
 			}
 		}
 	}
