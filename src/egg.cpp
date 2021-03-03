@@ -32,16 +32,3 @@ ECS::Entity Egg::createEgg(vec2 position)
     return entity;
 }
 
-void Egg::reloadEgg(vec2 position)
-{
-    // Look for the tile in the registry.
-    for (auto& egg : ECS::registry<Egg>.entities)
-    {
-        // Remove old egg.
-        ECS::ContainerInterface::remove_all_components_of(egg);
-            
-        // Replace old egg with new one with old egg's position.
-        createEgg(position);
-    }
-}
-

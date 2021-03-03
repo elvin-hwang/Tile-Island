@@ -5,7 +5,7 @@
 // Initialize size of tiles.
 float size = 0.13f;
 
-ECS::Entity Tile::createTile(vec2 position, TerrainType type, std::string blobule_color)
+ECS::Entity Tile::createTile(vec2 position, TerrainType type)
 {
     // Reserve an entity
     auto entity = ECS::Entity();
@@ -25,22 +25,12 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type, std::string blobul
         motion.isCollidable = true;
         break;
     case Ice:
-            if (blobule_color != "none"){
-                key = "tile_blue_" + blobule_color;
-            }
-            else{
-                key = "tile_blue";
-            }
+        key = "tile_blue";
         friction = 0.01f;
         motion.isCollidable = false;
         break;
     case Mud:
-            if (blobule_color != "none"){
-                key = "tile_purple_" + blobule_color;
-            }
-            else{
-                key = "tile_purple";
-            }
+        key = "tile_purple";
         friction = 0.04f;
         motion.isCollidable = false;
         break;
@@ -70,30 +60,8 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type, std::string blobul
     auto& terrain = ECS::registry<Terrain>.emplace(entity);
     terrain.type = type;
     terrain.friction = friction;
-    terrain.position = position;
-    terrain.key = key;
-    
 
     // Create and (empty) Tile component to be able to refer to all tiles
     ECS::registry<Tile>.emplace(entity);
     return entity;
 }
-
-void Tile::reloadTile(vec2 position, TerrainType type, std::string blobule_color)
-{
-    // Look for the tile in the registry.
-    for (auto& tile : ECS::registry<Tile>.entities)
-    {
-        // Calculate approximate location of blobule relative to the tile.
-        if (ECS::registry<Terrain>.get(tile).position == position
-            && ECS::registry<Terrain>.get(tile).type == type){
-            
-            // Remove old tile.
-            ECS::ContainerInterface::remove_all_components_of(tile);
-            
-            // Replace old tile with new one with updated blobule_color.
-            createTile(position, type, blobule_color);
-        }
-    }
-}
-

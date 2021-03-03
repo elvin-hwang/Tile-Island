@@ -36,15 +36,14 @@ ECS::Entity help_tool;
 double mouse_press_x, mouse_press_y;
 
 int playerMove = 1;
-bool turnEnded = false;
 
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
 {
 	menuState = true;
 	window_size = window_size_px;
-    restarted = false;
     playerMove = 1;
+
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 
@@ -104,19 +103,14 @@ void WorldSystem::init_audio()
 }
 
 // Update our game world
-void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units,
-                       unsigned int yellow_tiles,
-                       unsigned int green_tiles,
-                       unsigned int red_tiles,
-                       unsigned int blue_tiles)
+void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 {
 	(void)elapsed_ms; // silence unused warning
 	(void)window_size_in_game_units; // silence unused warning
-    
+
 	// Giving our game a title.
 	std::stringstream title_ss;
-	title_ss << "Welcome to Tile Island!      Yellow: " << yellow_tiles << "  Green: " << green_tiles << "  Red: " << red_tiles << "  Blue: " << blue_tiles;
-    // title_ss << "Welcome to Tile Island!";
+	title_ss << "Welcome to Tile Island!";;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Friction implementation
@@ -150,7 +144,7 @@ void WorldSystem::restart() {
 
 		// Reset the game speed
 		current_speed = 1.f;
-        
+
 		// Remove all entities that we created (those that have a motion component)
 		while (ECS::registry<Motion>.entities.size() > 0)
 			ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
@@ -177,23 +171,23 @@ void WorldSystem::restart() {
 			for (int j = tile_width / 2; j <= window_height; j += tile_width)
 			{
 				if (i < borderWidth || j < borderWidth || i > window_width - borderWidth || j > window_height - borderWidth) {
-					Tile::createTile({ i, j }, Water, "none");
+					Tile::createTile({ i, j }, Water);
 					continue;
 				}
 				islandGrid[horizontalIndex][verticalIndex] = { i, j };
 
 				// Generate map
 				if ((horizontalIndex < numWidth - 2 && horizontalIndex > 2) && (verticalIndex == 0 || verticalIndex == numHeight)) {
-					Tile::createTile({ i, j }, Block, "none"); // top, bottom wall
+					Tile::createTile({ i, j }, Block); // top, bottom wall
 				}
 				else if ((verticalIndex < numHeight - 2 && verticalIndex > 2) && (horizontalIndex == 0 || horizontalIndex == numWidth)) {
-					Tile::createTile({ i, j }, Block, "none"); // left, right wall
+					Tile::createTile({ i, j }, Block); // left, right wall
 				}
 				else if (i < window_width / 2) {
-					Tile::createTile({ i, j }, Ice, "none");
+					Tile::createTile({ i, j }, Ice);
 				}
 				else {
-					Tile::createTile({ i, j }, Mud, "none");
+					Tile::createTile({ i, j }, Mud);
 				}
 
 				verticalIndex++;
@@ -205,12 +199,6 @@ void WorldSystem::restart() {
 				isTile = false;
 			}
 		}
-        
-        // Note: Hard-coded type of terrain the players spawn on.
-        Tile::reloadTile({ islandGrid[1][1].x, islandGrid[1][1].y }, Ice, "yellow");
-        Tile::reloadTile({ islandGrid[numWidth - 1][1].x, islandGrid[numWidth - 1][1].y }, Mud, "green");
-        Tile::reloadTile({ islandGrid[1][numHeight - 1].x, islandGrid[1][numHeight - 1].y }, Ice, "red");
-        Tile::reloadTile({ islandGrid[numWidth - 1][numHeight - 1].x , islandGrid[numWidth - 1][numHeight - 1].y }, Mud, "blue");
 
 		// Create blobule characters
 		if (ECS::registry<Blobule>.components.size() <= 4) {
@@ -227,8 +215,8 @@ void WorldSystem::restart() {
 		//Only one npc for now
 		if (ECS::registry<Egg>.components.size() < 1) {
 			// Create egg
-			Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
-            //add movement things here
+			ECS::Entity entity = Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
+			//add movement things here
 		}
 	}
 }
@@ -252,44 +240,25 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		}
 	}
 	else {
-        /*
 		ECS::registry<Blobule>.get(active_player).active_player = false;
 		switch (playerMove) {
 		case 1:
-                std::cout << "Controlling blobule 1." << std::endl;
-                active_player = player_blobule1;
-                break;
+			active_player = player_blobule1;
+			break;
 		case 2:
-                std::cout << "Controlling blobule 2." << std::endl;
-                active_player = player_blobule2;
-                break;
+			active_player = player_blobule2;
+			break;
 		case 3:
-                std::cout << "Controlling blobule 3." << std::endl;
-                active_player = player_blobule3;
-                break;
+			active_player = player_blobule3;
+			break;
 		case 4:
-                std::cout << "Controlling blobule 4." << std::endl;
-                active_player = player_blobule4;
-                break;
+			active_player = player_blobule4;
+			break;
 		}
-         */
-        
-        // Turn based system
-        /*
-        if (action == GLFW_PRESS && key == GLFW_KEY_ENTER)
-        {
-            if (playerMove != 4) {
-                playerMove++;
-            }
-            else {
-                playerMove = 1;
-            }
-        }
-         */
-        
 
-		// ECS::registry<Blobule>.get(active_player).active_player = true;
+		ECS::registry<Blobule>.get(active_player).active_player = true;
 		auto& blobule_movement = ECS::registry<Motion>.get(active_player);
+		auto blobule_position = blobule_movement.position;
 
 		// For when you press an arrow key and the salmon starts moving.
 		if (action == GLFW_PRESS || action == GLFW_REPEAT)
@@ -370,14 +339,23 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			}
 		}
 
+		// Turn based system
+		if (action == GLFW_PRESS && key == GLFW_KEY_ENTER)
+		{
+			if (playerMove != 4) {
+				playerMove++;
+			}
+			else {
+				playerMove = 1;
+			}
+		}
+
 		// Resetting game
 		if (action == GLFW_RELEASE && key == GLFW_KEY_R)
 		{
 			int w, h;
 			glfwGetWindowSize(window, &w, &h);
-            restarted = true;
-            active_player = player_blobule1;
-            playerMove = 1;
+
 			restart();
 		}
 
@@ -441,36 +419,6 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 launchVelocity.y = launchVelocity.y >= 0.f ? min(max_blobule_speed, launchVelocity.y) : max(-max_blobule_speed, launchVelocity.y);
 
                 ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
-
-                if (playerMove != 4) {
-                    playerMove++;
-                }
-                else {
-                    playerMove = 1;
-                }
-
-                switch (playerMove) {
-                    case 1:
-                        std::cout << "Controlling blobule 1." << std::endl;
-                        active_player = player_blobule1;
-                        break;
-                    case 2:
-                        std::cout << "Controlling blobule 2." << std::endl;
-                        active_player = player_blobule2;
-                        break;
-                    case 3:
-                        std::cout << "Controlling blobule 3." << std::endl;
-                        active_player = player_blobule3;
-                        break;
-                    case 4:
-                        std::cout << "Controlling blobule 4." << std::endl;
-                        active_player = player_blobule4;
-                        break;
-                }
-
-                std::cout << "Blobule " << playerMove << " is moving." << std::endl;
-            }
 		}
 	}
 }
-
