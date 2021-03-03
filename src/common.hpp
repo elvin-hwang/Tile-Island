@@ -53,3 +53,9 @@ enum class EggState { normal, move };
 struct EggAi {
 	EggState state = EggState::normal;
 };
+
+// Components to keep track of each color's splat count
+struct RedSplat {};
+struct BlueSplat {};
+struct GreenSplat {};
+struct YellowSplat {};
