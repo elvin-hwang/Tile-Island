@@ -90,11 +90,9 @@ private:
 
 		if (m_condition(e))
 		{
-			//std::cout << "IF case true" << std::endl;
 			return m_child1->process(e);
 		}
 		else {
-			//std::cout << "ELSE case true" << std::endl;
 			return m_child2->process(e);
 		}
 	}
@@ -120,6 +118,7 @@ public:
 private:
 	void init(ECS::Entity e) override {
 		m_stepsRemaining = m_targetSteps;
+		ECS::registry<Motion>.get(e).velocity = { 5.f, 0.f };
 	}
 
 	BTState process(ECS::Entity e) override {
@@ -154,6 +153,7 @@ public:
 private:
 	void init(ECS::Entity e) override {
 		m_stepsRemaining = m_targetSteps;
+		ECS::registry<Motion>.get(e).velocity = { 0.f, 5.f };
 	}
 
 	BTState process(ECS::Entity e) override {
@@ -186,7 +186,7 @@ private:
 
 	BTState process(ECS::Entity e) override {
 		// modify world
-		auto& vel = ECS::registry<Motion>.get(e).velocity;
+		auto& vel = ECS::registry<Motion>.get(e).velocity.x;
 		vel = -vel;
 		std::cout << "turning around" << std::endl;
 
@@ -214,7 +214,7 @@ auto checkNearbyBlobules = [](ECS::Entity e) {
 	{
 		Motion& eggMotion = ECS::registry<Motion>.get(e);
 		Motion& blobMotion = ECS::registry<Motion>.get(blob);
-		if (euclideanDist(eggMotion, blobMotion) <= 200.f)
+		if (euclideanDist(eggMotion, blobMotion) <= 300.f)
 			return true;
 	}
 	return false;
@@ -226,6 +226,7 @@ AISystem::AISystem()
 {
 	// initializing 
 	root_run_and_return = std::make_unique<BTRepeatingSequence>(std::vector<std::shared_ptr <BTNode>>({ runOrFlee, turnX, runOrFlee, turnX }));
+	std::cout << ECS::registry<EggAi>.entities.size() << std::endl;
 }
 
 void AISystem::step(float elapsed_ms, vec2 window_size_in_game_units)
