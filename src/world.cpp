@@ -393,51 +393,65 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 {
 	if (!menuState)
 	{
+        // compute the horizontal and vertical boundaries of the player asset
+        auto left_boundary = ECS::registry<Motion>.get(active_player).position.x - (ECS::registry<Motion>.get(active_player).scale.x / 2);
+        auto right_boundary = ECS::registry<Motion>.get(active_player).position.x + (ECS::registry<Motion>.get(active_player).scale.x / 2);
+        auto top_boundary = ECS::registry<Motion>.get(active_player).position.y - (ECS::registry<Motion>.get(active_player).scale.y / 2);
+        auto bottom_boundary = ECS::registry<Motion>.get(active_player).position.y + (ECS::registry<Motion>.get(active_player).scale.y / 2);
+
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 		{
+		    // store position of left click coordinates in mouse_press_x and mouse_press_y
 			glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
-			ECS::registry<Motion>.get(active_player).angle = atan2(mouse_press_y - ECS::registry<Motion>.get(active_player).position.y, mouse_press_x - ECS::registry<Motion>.get(active_player).position.x) - PI;
 		}
 
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
 		{
-			double mouse_release_x, mouse_release_y;
-			glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
-			double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
-			vec2 launchVelocity = { cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance };
-			
-			launchVelocity.x = launchVelocity.x >= 0.f ? min(max_blobule_speed, launchVelocity.x) : max(-max_blobule_speed, launchVelocity.x);
-			launchVelocity.y = launchVelocity.y >= 0.f ? min(max_blobule_speed, launchVelocity.y) : max(-max_blobule_speed, launchVelocity.y);
-			
-			ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
-            
-            if (playerMove != 4) {
-                playerMove++;
+		    // check if left mouse click was on the asset
+            if (mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary)
+            {
+                // store position of left mouse release coordinates
+                double mouse_release_x, mouse_release_y;
+                glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
+
+                // player moves in the angle opposite to the angle between mouse click and release
+                ECS::registry<Motion>.get(active_player).angle = atan2(mouse_release_y - mouse_press_y, mouse_release_x - mouse_press_x) - PI;
+                double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
+                vec2 launchVelocity = { cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance };
+
+                launchVelocity.x = launchVelocity.x >= 0.f ? min(max_blobule_speed, launchVelocity.x) : max(-max_blobule_speed, launchVelocity.x);
+                launchVelocity.y = launchVelocity.y >= 0.f ? min(max_blobule_speed, launchVelocity.y) : max(-max_blobule_speed, launchVelocity.y);
+
+                ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
+
+                if (playerMove != 4) {
+                    playerMove++;
+                }
+                else {
+                    playerMove = 1;
+                }
+
+                switch (playerMove) {
+                    case 1:
+                        std::cout << "Controlling blobule 1." << std::endl;
+                        active_player = player_blobule1;
+                        break;
+                    case 2:
+                        std::cout << "Controlling blobule 2." << std::endl;
+                        active_player = player_blobule2;
+                        break;
+                    case 3:
+                        std::cout << "Controlling blobule 3." << std::endl;
+                        active_player = player_blobule3;
+                        break;
+                    case 4:
+                        std::cout << "Controlling blobule 4." << std::endl;
+                        active_player = player_blobule4;
+                        break;
+                }
+
+                std::cout << "Blobule " << playerMove << " is moving." << std::endl;
             }
-            else {
-                playerMove = 1;
-            }
-            
-            switch (playerMove) {
-            case 1:
-                    std::cout << "Controlling blobule 1." << std::endl;
-                    active_player = player_blobule1;
-                    break;
-            case 2:
-                    std::cout << "Controlling blobule 2." << std::endl;
-                    active_player = player_blobule2;
-                    break;
-            case 3:
-                    std::cout << "Controlling blobule 3." << std::endl;
-                    active_player = player_blobule3;
-                    break;
-            case 4:
-                    std::cout << "Controlling blobule 4." << std::endl;
-                    active_player = player_blobule4;
-                    break;
-            }
-            
-            std::cout << "Blobule " << playerMove << " is moving." << std::endl;
 		}
 	}
 }
