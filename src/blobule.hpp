@@ -19,6 +19,6 @@ struct Blobule
 
     // Create all the associated render resources and default transform.
     static ECS::Entity createBlobule(vec2 position, blobuleCol col, std::string colString);
-
 };
+
 
