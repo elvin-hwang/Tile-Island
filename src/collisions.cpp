@@ -44,8 +44,8 @@ void CollisionSystem::initialize_collisions() {
 		auto blobMotion = ECS::registry<Motion>.get(entity);
 		vec2 difference_between_centers = tileMotion.position - blobMotion.position;
 		float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
-		float blobMotion_hit_radius = blobMotion.scale.x / 1.5f;
-		if (distance_between_centers < blobMotion_hit_radius) {
+		float blobMotion_hit_radius = blobMotion.scale.x / 1.3f;
+		if (distance_between_centers <= blobMotion_hit_radius) {
 			auto& blob = ECS::registry<Blobule>.get(entity);
 			Tile::setSplat(entity_other, blob.colEnum);
 		}

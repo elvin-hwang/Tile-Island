@@ -113,10 +113,10 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	// Giving our game a title.
 	std::stringstream title_ss;
 	title_ss << "Welcome to Tile Island!" <<
-		"Yellow: " << ECS::registry<YellowSplat>.entities.size() <<
-		"Green: " << ECS::registry<GreenSplat>.entities.size() << 
-		"Red: " << ECS::registry<RedSplat>.entities.size() << 
-		"Blue: " << ECS::registry<BlueSplat>.entities.size();
+		"  Yellow: " << ECS::registry<YellowSplat>.entities.size() <<
+		"  Green: " << ECS::registry<GreenSplat>.entities.size() << 
+		"  Red: " << ECS::registry<RedSplat>.entities.size() << 
+		"  Blue: " << ECS::registry<BlueSplat>.entities.size();
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Friction implementation
