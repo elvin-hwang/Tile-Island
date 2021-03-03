@@ -72,7 +72,7 @@ void CollisionSystem::handle_collisions()
 		if (ECS::registry<Blobule>.has(entity)) {
 			// Change friction of blobule based on which tile it is on
 			if (ECS::registry<Tile>.has(entity_other)) {
-				blobule_tile_coll.notify(entity, entity_other); \
+				blobule_tile_coll.notify(entity, entity_other);
 			}
 
 			// Blobule - blobule collisions
