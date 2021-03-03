@@ -406,7 +406,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_pos)
 {
     if (ECS::registry<Blobule>.has(active_player) && mouse_move)
     {
-        ECS::registry<Motion>.get(active_player).angle = atan2(mouse_pos.y - ECS::registry<Motion>.get(active_player).position.y, mouse_pos.x - ECS::registry<Motion>.get(active_player).position.x);
+        ECS::registry<Motion>.get(active_player).angle = atan2(mouse_pos.y - mouse_press_y, mouse_pos.x - mouse_press_x) - PI;
     }
 	(void)mouse_pos;
 }
@@ -432,7 +432,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
 		{
 		    // check if left mouse click was on the asset
-            if (mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary)
+            if (mouse_move)
             {
                 mouse_move = false;
                 // store position of left mouse release coordinates
