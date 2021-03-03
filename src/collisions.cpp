@@ -6,7 +6,7 @@
 #include "blobule.hpp"
 
 void CollisionSystem::initialize_collisions() {
-	
+
 	//observer for blobule - tile collision
 	blobule_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_tile_coll"));
 	//observer for blobule - blobule collision
@@ -39,10 +39,23 @@ void CollisionSystem::initialize_collisions() {
 		}
 	};
 
+	auto change_tile_color = [](auto entity, auto entity_other) {
+		auto tileMotion = ECS::registry<Motion>.get(entity_other);
+		auto blobMotion = ECS::registry<Motion>.get(entity);
+		vec2 difference_between_centers = tileMotion.position - blobMotion.position;
+		float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
+		float blobMotion_hit_radius = blobMotion.scale.x / 1.5f;
+		if (distance_between_centers < blobMotion_hit_radius) {
+			auto& blob = ECS::registry<Blobule>.get(entity);
+			Tile::setSplat(entity_other, blob.colEnum);
+		}
+	};
+
 	//add lambdas to the observer lists
 	blobule_tile_coll.add_observer(change_blobule_friction);
+	blobule_tile_coll.add_observer(change_tile_color);
 	blobule_blobule_coll.add_observer(reverse_vel);
-	
+
 }
 // Compute collisions between entities
 void CollisionSystem::handle_collisions()
@@ -59,7 +72,7 @@ void CollisionSystem::handle_collisions()
 		if (ECS::registry<Blobule>.has(entity)) {
 			// Change friction of blobule based on which tile it is on
 			if (ECS::registry<Tile>.has(entity_other)) {
-				blobule_tile_coll.notify(entity,entity_other);
+				blobule_tile_coll.notify(entity, entity_other); \
 			}
 
 			// Blobule - blobule collisions

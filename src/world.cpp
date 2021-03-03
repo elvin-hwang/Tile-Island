@@ -110,7 +110,11 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 
 	// Giving our game a title.
 	std::stringstream title_ss;
-	title_ss << "Welcome to Tile Island!";;
+	title_ss << "Welcome to Tile Island!" <<
+		"Yellow: " << ECS::registry<YellowSplat>.entities.size() <<
+		"Green: " << ECS::registry<GreenSplat>.entities.size() << 
+		"Red: " << ECS::registry<RedSplat>.entities.size() << 
+		"Blue: " << ECS::registry<BlueSplat>.entities.size();
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Friction implementation
@@ -404,21 +408,22 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
 		{
 		    // check if left mouse click was on the asset
-            if (mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary)
-            {
-                // store position of left mouse release coordinates
-                double mouse_release_x, mouse_release_y;
-                glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
+			if (mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary)
+			{
+				// store position of left mouse release coordinates
+				double mouse_release_x, mouse_release_y;
+				glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
 
-                // player moves in the angle opposite to the angle between mouse click and release
-                ECS::registry<Motion>.get(active_player).angle = atan2(mouse_release_y - mouse_press_y, mouse_release_x - mouse_press_x) - PI;
-                double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
-                vec2 launchVelocity = { cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance };
+				// player moves in the angle opposite to the angle between mouse click and release
+				ECS::registry<Motion>.get(active_player).angle = atan2(mouse_release_y - mouse_press_y, mouse_release_x - mouse_press_x) - PI;
+				double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
+				vec2 launchVelocity = { cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance };
 
-                launchVelocity.x = launchVelocity.x >= 0.f ? min(max_blobule_speed, launchVelocity.x) : max(-max_blobule_speed, launchVelocity.x);
-                launchVelocity.y = launchVelocity.y >= 0.f ? min(max_blobule_speed, launchVelocity.y) : max(-max_blobule_speed, launchVelocity.y);
+				launchVelocity.x = launchVelocity.x >= 0.f ? min(max_blobule_speed, launchVelocity.x) : max(-max_blobule_speed, launchVelocity.x);
+				launchVelocity.y = launchVelocity.y >= 0.f ? min(max_blobule_speed, launchVelocity.y) : max(-max_blobule_speed, launchVelocity.y);
 
-                ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
+				ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
+			}
 		}
 	}
 }

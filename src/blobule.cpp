@@ -51,6 +51,7 @@ ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col, std::string co
     auto& blob = ECS::registry<Blobule>.emplace(entity);
     blob.origin = position;
     blob.color = colString;
+    blob.colEnum = col;
 
     return entity;
 }
