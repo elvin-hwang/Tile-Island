@@ -5,15 +5,18 @@
 #include "tile.hpp"
 #include "blobule.hpp"
 #include <egg.hpp>
+#include <iostream>
 
 void CollisionSystem::initialize_collisions() {
 	
-	//observer for blobule - tile collision
+	// observer for blobule - tile collision ()
 	blobule_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_tile_coll"));
-	//observer for blobule - blobule collision
+	// observer for blobule - blobule collision (circle-circle)
 	blobule_blobule_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_blobule_coll"));
-	// observer for blobule - egg collision
+	// observer for blobule - egg collision (circle-preciseCollision)
 	blobule_egg_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_egg_coll"));
+
+	egg_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("egg_tile_coll"));
 
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
 	auto reverse_vel = [](auto entity, auto entity_other) {
@@ -22,7 +25,7 @@ void CollisionSystem::initialize_collisions() {
 		blobMotion.velocity = -blobMotion.velocity;
 	};
 
-	auto change_blobule_friction = [](auto entity, auto entity_other) {
+	auto blobule_tile_interaction = [](auto entity, auto entity_other) {
 		//subject tile to wall
 		auto& blob = ECS::registry<Blobule>.get(entity);
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
@@ -35,10 +38,24 @@ void CollisionSystem::initialize_collisions() {
 		}
 		else if (terrain.type == Block)
 		{
-			blobMotion.velocity = { 0.f, 0.f };
+			// TODO: Implement more advanced particle collision rebounding effect
+			//blobMotion.velocity = { 0.f, 0.f };
+			blobMotion.velocity = -blobMotion.velocity;
+
 		}
 		else {
 			blobMotion.friction = terrain.friction;
+		}
+	};
+
+	auto egg_tile_interaction = [](auto entity, auto entity_other) {
+
+		auto& eggMotion = ECS::registry<Motion>.get(entity);
+		auto& terrain = ECS::registry<Terrain>.get(entity_other);
+
+		if (terrain.type == Water || terrain.type == Block)
+		{
+			eggMotion.velocity = -eggMotion.velocity;
 		}
 	};
 
@@ -48,9 +65,10 @@ void CollisionSystem::initialize_collisions() {
 	};
 
 	//add lambdas to the observer lists
-	blobule_tile_coll.add_observer(change_blobule_friction);
+	blobule_tile_coll.add_observer(blobule_tile_interaction);
 	blobule_blobule_coll.add_observer(reverse_vel);
 	blobule_egg_coll.add_observer(remove_egg);
+	egg_tile_coll.add_observer(egg_tile_interaction);
 }
 // Compute collisions between entities
 void CollisionSystem::handle_collisions()
@@ -78,6 +96,14 @@ void CollisionSystem::handle_collisions()
 			// blobule - egg collisions
 			if (ECS::registry<Egg>.has(entity_other)) {
 				blobule_egg_coll.notify(entity, entity_other);
+			}
+		}
+
+		// Egg - collisions
+		else if (ECS::registry<Egg>.has(entity)) {
+			if (ECS::registry<Tile>.has(entity_other)) {
+				std::cout << "COLLISION" << std::endl;
+				egg_tile_coll.notify(entity, entity_other);
 			}
 		}
 	}

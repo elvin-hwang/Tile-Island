@@ -89,7 +89,7 @@ private:
 		auto& motion = ECS::registry<Motion>.get(e);
 		motion.position.x += motion.velocity.x;
 
-		std::cout << "moving" << std::endl;
+		//std::cout << "moving" << std::endl;
 
 		// return progress
 		if (m_stepsRemaining > 0) {
@@ -122,15 +122,14 @@ private:
 	}
 };
 
-std::shared_ptr <BTNode> run3 = std::make_unique<RunNSteps>(10);
+std::shared_ptr <BTNode> run = std::make_unique<RunNSteps>(100);
 std::shared_ptr <BTNode> turn = std::make_unique<TurnAround>();
-std::shared_ptr <BTNode> run1 = std::make_unique<RunNSteps>(10);
 
 
 AISystem::AISystem()
 {
 	// initializing 
-	root_run_and_return = std::make_unique<BTRepeatingSequence>(std::vector<std::shared_ptr <BTNode>>({ run3, turn, run1, turn }));
+	root_run_and_return = std::make_unique<BTRepeatingSequence>(std::vector<std::shared_ptr <BTNode>>({ run, turn, run, turn }));
 	std::cout << "init ai" << std::endl;
 	std::cout << ECS::registry<EggAi>.entities.size() << std::endl;
 }

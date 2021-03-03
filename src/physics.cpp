@@ -3,6 +3,7 @@
 #include "tiny_ecs.hpp"
 #include "debug.hpp"
 #include <iostream>
+#include <egg.hpp>
 
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
@@ -69,6 +70,11 @@ bool circle_circle_collides(const Motion& motion1, const Motion& motion2)
 	return distance_between_centers < motion1_radius + motion2_radius;
 }
 
+//bool box_box_collides(const Motion& motion1, const Motion& motion2)
+//{
+//
+//}
+
 void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 {
 	// Move entities based on how much time has passed, this is to (partially) avoid
@@ -99,11 +105,14 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	{
 		Motion& motion_i = motion_container.components[i];
 		ECS::Entity entity_i = motion_container.entities[i];
-		for (unsigned int j=i+1; j<motion_container.components.size(); j++)
+
+		for (unsigned int j = i + 1; j < motion_container.components.size(); j++)
 		{
 			Motion& motion_j = motion_container.components[j];
 			ECS::Entity entity_j = motion_container.entities[j];
 
+			// temporarily egg is considered a circle and follows circle/circle and circle/square collisions, 
+			// in m3 we need to implement precise collision with the egg mesh and handle the collision check differently
 			if (motion_i.shape == "circle" && motion_j.shape == "square")
 			{
 				if (box_circle_collides(motion_j, motion_i))
@@ -128,6 +137,11 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 					ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
 				}
 			}
+
+			//else if (motion_i.shape == "square" && motion_j.shape == "square")
+			//{
+			//	//std::cout << "egg collision wall" << std::endl;
+			//}
 		}
 	}
 }
