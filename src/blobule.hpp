@@ -23,6 +23,7 @@ struct Blobule
 	static ECS::Entity createBlobule(vec2 position, blobuleCol col, std::string colString);
 
 	static void setTrajectory(ECS::Entity entity);
+
 	static void removeTrajectory(ECS::Entity entity);
 
 private:
