@@ -36,7 +36,7 @@ ECS::Entity help_tool;
 double mouse_press_x, mouse_press_y;
 
 int playerMove = 1;
-bool turnEnded = false;
+bool blobuleMoved = false;
 bool mouse_move = false;
 
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
@@ -359,6 +359,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			else {
 				playerMove = 1;
 			}
+			blobuleMoved = false;
 		}
 
 		// Resetting game
@@ -413,14 +414,14 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
         auto top_boundary = ECS::registry<Motion>.get(active_player).position.y - (ECS::registry<Motion>.get(active_player).scale.y / 2);
         auto bottom_boundary = ECS::registry<Motion>.get(active_player).position.y + (ECS::registry<Motion>.get(active_player).scale.y / 2);
 
-		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !blobuleMoved)
 		{
 		    // store position of left click coordinates in mouse_press_x and mouse_press_y
 			glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
 			mouse_move = mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary;
 		}
 
-		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE && !blobuleMoved)
 		{
 		    // check if left mouse click was on the asset
 			if (mouse_move)
@@ -440,6 +441,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 
 				ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
 				Blobule::removeTrajectory(active_player);
+				blobuleMoved = true;
 			}
 		}
 	}
