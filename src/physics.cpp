@@ -2,6 +2,7 @@
 #include "physics.hpp"
 #include "tiny_ecs.hpp"
 #include "debug.hpp"
+#include "blobule.hpp"
 #include <iostream>
 #include <egg.hpp>
 
@@ -18,7 +19,7 @@ https://www.figma.com/file/K32AjU7kJXHVw9BpALdTY1/Untitled?node-id=0%3A1
 Entities are positioned at the CENTER of their texture, which means that if you place an entity at { 0.f, 0.f }, it would only show the
 bottom right corner of that texture. Use this knowledge to determine where centers and edges of entities are!
 */
-bool box_circle_collides(const Motion& box, const Motion& circle)
+Direction box_circle_collides(const Motion& box, const Motion& circle)
 {
 	// Define edges of box
 	float top_edge = box.position.y - box.scale.y / 2.f; // y1
@@ -35,27 +36,27 @@ bool box_circle_collides(const Motion& box, const Motion& circle)
 		&& abs(right_edge - center_of_circle.x) <= circle_radius
 		&& top_edge - circle_radius <= center_of_circle.y
 		&& center_of_circle.y <= bottom_edge + circle_radius)
-		return true;
+		return Direction::Right;
 	// Top edge collision
 	else if (center_of_circle.y < top_edge
 		&& abs(top_edge - center_of_circle.y) <= circle_radius
 		&& left_edge - circle_radius <= center_of_circle.x
 		&& center_of_circle.x <= right_edge + circle_radius)
-		return true;
+		return Direction::Top;
 	// Bottom edge collision
 	else if (center_of_circle.y > bottom_edge
 		&& abs(bottom_edge - center_of_circle.y) <= circle_radius
 		&& left_edge - circle_radius <= center_of_circle.x
 		&& center_of_circle.x <= right_edge + circle_radius)
-		return true;
+		return Direction::Bottom;
 	// Left edge collision
 	else if (center_of_circle.x < left_edge
 		&& abs(left_edge - center_of_circle.x) <= circle_radius
 		&& top_edge - circle_radius <= center_of_circle.y
 		&& center_of_circle.y <= bottom_edge + circle_radius)
-		return true;
+		return Direction::Left;
 	else
-		return false;
+		return Direction::unknown;
 }
 
 // circle circle collision check
@@ -98,50 +99,52 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 		}
 	}
 
+	// Go through the list of Blobules rather Motion
+	// For each blobule check what its colliding with using the collision detection functions above for each Motion
+	// We need nested for loop, inner loop goes through all of the motion, double check that the inner loop doesn't go through the blobule it's currently on (entity.id)
+	// 
+
+
 	// Check for collisions between all moving entities
+	auto& blobule_container = ECS::registry<Blobule>;
 	auto& motion_container = ECS::registry<Motion>;
 	// for (auto [i, motion_i] : enumerate(motion_container.components)) // in c++ 17 we will be able to do this instead of the next three lines
-	for (unsigned int i=0; i<motion_container.components.size(); i++)
+	for (unsigned int i=0; i<blobule_container.components.size(); i++)
 	{
-		Motion& motion_i = motion_container.components[i];
-		ECS::Entity entity_i = motion_container.entities[i];
+		ECS::Entity blob_entity_i = blobule_container.entities[i];
+		Motion& blob_motion_i = ECS::registry<Motion>.get(blob_entity_i);
 
-		for (unsigned int j = i + 1; j < motion_container.components.size(); j++)
+		for (unsigned int j = 0; j < motion_container.components.size(); j++)
 		{
 			Motion& motion_j = motion_container.components[j];
 			ECS::Entity entity_j = motion_container.entities[j];
 
-			// temporarily egg is considered a circle and follows circle/circle and circle/square collisions, 
-			// in m3 we need to implement precise collision with the egg mesh and handle the collision check differently
-			if (motion_i.shape == "circle" && motion_j.shape == "square")
-			{
-				if (box_circle_collides(motion_j, motion_i))
-				{
-					ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
-					ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
-				}
-			}
-			else if (motion_i.shape == "square" && motion_j.shape == "circle")
-			{
-				if (box_circle_collides(motion_i, motion_j))
-				{
-					ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
-					ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
-				}
-			}
-			else if (motion_i.shape == "circle" && motion_j.shape == "circle")
-			{
-				if (circle_circle_collides(motion_i, motion_j))
-				{
-					ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
-					ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
-				}
+			if (entity_j.id == blob_entity_i.id) {
+				continue;
 			}
 
-			//else if (motion_i.shape == "square" && motion_j.shape == "square")
-			//{
-			//	//std::cout << "egg collision wall" << std::endl;
-			//}
+			// motion_j can be square, circle (later might be egg shaped)
+
+			// temporarily egg is considered a circle and follows circle/circle and circle/square collisions, 
+			// in m3 we need to implement precise collision with the egg mesh and handle the collision check differently
+			if (motion_j.shape == "square")
+			{
+				// Blobule vs Tile
+				Direction collisionEdge = box_circle_collides(blob_motion_i, motion_j);
+				if (collisionEdge != Direction::unknown)
+				{
+					auto& collision = ECS::registry<Collision>.emplace_with_duplicates(blob_entity_i, entity_j);
+					collision.direction = collisionEdge;
+				}
+			}
+			else if (motion_j.shape == "circle")
+			{
+				// Blobule vs Blobule
+				if (circle_circle_collides(blob_motion_i, motion_j))
+				{
+					ECS::registry<Collision>.emplace_with_duplicates(blob_entity_i, entity_j);
+				}
+			}
 		}
 	}
 }
@@ -150,3 +153,50 @@ PhysicsSystem::Collision::Collision(ECS::Entity& other)
 {
 	this->other = other;
 }
+
+
+//auto& motion_container = ECS::registry<Motion>;
+//// for (auto [i, motion_i] : enumerate(motion_container.components)) // in c++ 17 we will be able to do this instead of the next three lines
+//for (unsigned int i = 0; i < motion_container.components.size(); i++)
+//{
+//	Motion& motion_i = motion_container.components[i];
+//	ECS::Entity entity_i = motion_container.entities[i];
+//
+//	for (unsigned int j = i + 1; j < motion_container.components.size(); j++)
+//	{
+//		Motion& motion_j = motion_container.components[j];
+//		ECS::Entity entity_j = motion_container.entities[j];
+//
+//		// temporarily egg is considered a circle and follows circle/circle and circle/square collisions, 
+//		// in m3 we need to implement precise collision with the egg mesh and handle the collision check differently
+//		if (motion_i.shape == "circle" && motion_j.shape == "square")
+//		{
+//			if (box_circle_collides(motion_j, motion_i))
+//			{
+//				ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
+//				ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
+//			}
+//		}
+//		else if (motion_i.shape == "square" && motion_j.shape == "circle")
+//		{
+//			if (box_circle_collides(motion_i, motion_j))
+//			{
+//				ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
+//				ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
+//			}
+//		}
+//		else if (motion_i.shape == "circle" && motion_j.shape == "circle")
+//		{
+//			if (circle_circle_collides(motion_i, motion_j))
+//			{
+//				ECS::registry<Collision>.emplace_with_duplicates(entity_i, entity_j);
+//				ECS::registry<Collision>.emplace_with_duplicates(entity_j, entity_i);
+//			}
+//		}
+//
+//		//else if (motion_i.shape == "square" && motion_j.shape == "square")
+//		//{
+//		//	//std::cout << "egg collision wall" << std::endl;
+//		//}
+//	}
+//}
