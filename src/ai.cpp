@@ -3,16 +3,16 @@
 #include "tiny_ecs.hpp"
 #include "blobule.hpp"
 #include "utils.hpp"
+#include "behaviourTree.hpp"
 
 #include <iostream>
 #include <cstdlib>
 #include <random>
 #include <functional>
 
-float maxDistanceFromEgg = 150.f;
+float maxDistanceFromEgg = 100.f;
 
 float eggSpeed = 75.f;
-
 
 auto euclideanDist = [](Motion& fishMotion, Motion& turtleMotion)
 {
@@ -32,58 +32,6 @@ auto checkNearbyBlobules = [](ECS::Entity e) {
 			return true;
 	}
 	return false;
-};
-
-// A composite node that loops through all children and exits when one fails
-class BTRepeatingSequence : public BTNode {
-public:
-	BTRepeatingSequence(std::vector<std::shared_ptr<BTNode>> children)
-		: m_children(std::move(children)), m_index(0) {
-	}
-
-private:
-	void init(ECS::Entity e) override
-	{
-		m_index = 0;
-		assert(m_index < m_children.size());
-		// initialize the first child
-		const auto& child = m_children[m_index];
-		assert(child);
-		child->init(e);
-	}
-
-	BTState process(ECS::Entity e) override {
-		if (m_index >= m_children.size())
-		{
-			init(e);
-			return BTState::Running;
-		}
-
-		// process current child
-		const auto& child = m_children[m_index];
-		assert(child);
-		BTState state = child->process(e);
-
-		// select a new active child and initialize its internal state
-		if (state == BTState::Success) {
-			++m_index;
-			if (m_index >= m_children.size()) {
-				init(e);
-			}
-			else {
-				const auto& nextChild = m_children[m_index];
-				assert(nextChild);
-				nextChild->init(e);
-			}
-			return BTState::Running;
-		}
-		else {
-			return state;
-		}
-	}
-
-	int m_index;
-	std::vector<std::shared_ptr<BTNode>> m_children;
 };
 
 // will perform one of the 2 child nodes depending on the result of lambda condition fn
@@ -303,14 +251,14 @@ std::shared_ptr <BTNode> moveY = std::make_unique<MoveYDirection>(20);
 std::shared_ptr <BTNode> turnX = std::make_unique<TurnX>();
 std::shared_ptr <BTNode> turnY = std::make_unique<TurnY>();
 std::shared_ptr <BTNode> flee = std::make_unique<Flee>();
-std::shared_ptr <BTNode> moveSquare = std::make_unique<BTAndSequence>(std::vector<std::shared_ptr <BTNode>>({ moveX, turnX, moveY, turnY }));
-std::shared_ptr <BTNode> moveOrFlee = std::make_unique<BTIfElseCondition>(flee, moveSquare, checkNearbyBlobules);
+
+std::shared_ptr <BTNode> SquareMovementPattern = std::make_unique<BTAndSequence>(std::vector<std::shared_ptr <BTNode>>({ moveX, turnX, moveY, turnY }));
+std::shared_ptr <BTNode> moveOrFlee = std::make_unique<BTIfElseCondition>(flee, SquareMovementPattern, checkNearbyBlobules);
+std::shared_ptr <BTNode> eggBehaviour = std::make_unique<BTRepeatingSequence>(std::vector<std::shared_ptr <BTNode>>({ moveOrFlee }));
 
 AISystem::AISystem()
 {
-	// initializing 
-	root_run_and_return = std::make_unique<BTRepeatingSequence>(std::vector<std::shared_ptr <BTNode>>({ moveOrFlee }));
-	std::cout << ECS::registry<EggAi>.entities.size() << std::endl;
+
 }
 
 void AISystem::step(float elapsed_ms, vec2 window_size_in_game_units)
@@ -323,10 +271,10 @@ void AISystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 		EggAi& eggAi = ECS::registry<EggAi>.get(eggNPC);
 		if (!eggAi.initBehaviour)
 		{
-			root_run_and_return->init(eggNPC);
+			eggBehaviour->init(eggNPC);
 			eggAi.initBehaviour = true;
 		}
-		root_run_and_return->process(eggNPC);
+		eggBehaviour->process(eggNPC);
 	}
 
 	// add other ai steps...

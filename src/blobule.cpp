@@ -41,7 +41,6 @@ ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col, std::string co
     auto& motion = ECS::registry<Motion>.emplace(entity);
     motion.angle = 0.f;
     motion.velocity = {0.f, 0.f};
-    //motion.direction = { 1.f, 1.f };
     motion.position = position;
     motion.friction = 0.f;
     motion.scale = vec2({0.42f, 0.42f}) * static_cast<vec2>(resource.texture.size);
