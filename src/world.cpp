@@ -110,13 +110,19 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	(void)elapsed_ms; // silence unused warning
 	(void)window_size_in_game_units; // silence unused warning
 
+	std::string activeColor = "";
+	if (ECS::registry<Blobule>.has(active_player)) {
+		activeColor = ECS::registry<Blobule>.get(active_player).color;
+	}
+
 	// Giving our game a title.
 	std::stringstream title_ss;
 	title_ss << "Welcome to Tile Island!" <<
 		"  Yellow: " << ECS::registry<YellowSplat>.entities.size() <<
 		"  Green: " << ECS::registry<GreenSplat>.entities.size() << 
 		"  Red: " << ECS::registry<RedSplat>.entities.size() << 
-		"  Blue: " << ECS::registry<BlueSplat>.entities.size();
+		"  Blue: " << ECS::registry<BlueSplat>.entities.size() <<
+		"  Current Player: " << activeColor;
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Friction implementation
@@ -124,11 +130,10 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	{
 		auto& motion = ECS::registry<Motion>.get(blob);
 		motion.velocity += -motion.velocity * motion.friction;
-		if (-terminalVelocity < motion.velocity.x && motion.velocity.x < terminalVelocity) {
-			motion.velocity.x = 0;
-		}
-		if (-terminalVelocity < motion.velocity.y && motion.velocity.y < terminalVelocity) {
-			motion.velocity.y = 0;
+
+		float velocityMagnitude = sqrt(motion.velocity.x * motion.velocity.x + motion.velocity.y * motion.velocity.y);
+		if (velocityMagnitude < terminalVelocity) {
+			motion.velocity = { 0.f, 0.f };
 		}
 	}
 }
@@ -389,7 +394,10 @@ void WorldSystem::on_mouse_move(vec2 mouse_pos)
 {
     if (ECS::registry<Blobule>.has(active_player) && mouse_move)
     {
-        ECS::registry<Motion>.get(active_player).angle = atan2(mouse_pos.y - mouse_press_y, mouse_pos.x - mouse_press_x) - PI;
+		auto& blobMotion = ECS::registry<Motion>.get(active_player);
+		blobMotion.angle = atan2(mouse_pos.y - mouse_press_y, mouse_pos.x - mouse_press_x) - PI;
+		blobMotion.dragDistance = (((mouse_pos.y - mouse_press_y) * (mouse_pos.y - mouse_press_y)) + ((mouse_pos.x - mouse_press_x) * (mouse_pos.x - mouse_press_x))) * 0.01;
+		Blobule::setTrajectory(active_player);
     }
 	(void)mouse_pos;
 }
@@ -418,19 +426,20 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 			if (mouse_move)
 			{
 				mouse_move = false;
-				// store position of left mouse release coordinates
-				double mouse_release_x, mouse_release_y;
-				glfwGetCursorPos(wnd, &mouse_release_x, &mouse_release_y);
 
-				// player moves in the angle opposite to the angle between mouse click and release
-				ECS::registry<Motion>.get(active_player).angle = atan2(mouse_release_y - mouse_press_y, mouse_release_x - mouse_press_x) - PI;
-				double drag_distance = (((mouse_release_y - mouse_press_y) * (mouse_release_y - mouse_press_y)) + ((mouse_release_x - mouse_press_x) * (mouse_release_x - mouse_press_x))) * 0.01;
-				vec2 launchVelocity = { cos(ECS::registry<Motion>.get(active_player).angle) * drag_distance, sin(ECS::registry<Motion>.get(active_player).angle) * drag_distance };
+				auto& blobMotion = ECS::registry<Motion>.get(active_player);
+				float blobAngle = blobMotion.angle;
+				float blobPower = blobMotion.dragDistance;
 
-				launchVelocity.x = launchVelocity.x >= 0.f ? min(max_blobule_speed, launchVelocity.x) : max(-max_blobule_speed, launchVelocity.x);
-				launchVelocity.y = launchVelocity.y >= 0.f ? min(max_blobule_speed, launchVelocity.y) : max(-max_blobule_speed, launchVelocity.y);
+				vec2 launchVelocity = { cos(blobAngle) * blobPower, sin(blobAngle) * blobPower };
+
+				float velocityMagnitude = sqrt(launchVelocity.x * launchVelocity.x + launchVelocity.y * launchVelocity.y);
+				if (velocityMagnitude > max_blobule_speed) {
+					launchVelocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
+				}
 
 				ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
+				Blobule::removeTrajectory(active_player);
 			}
 		}
 	}

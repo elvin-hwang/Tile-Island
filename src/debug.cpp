@@ -58,6 +58,7 @@ namespace DebugSystem
 		motion.velocity = { 0, 0 };
 		motion.position = position;
 		motion.scale = scale;
+		motion.isCollidable = false;
 
 		ECS::registry<DebugComponent>.emplace(entity);
 	}

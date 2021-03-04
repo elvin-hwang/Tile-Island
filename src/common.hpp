@@ -40,6 +40,7 @@ struct Motion {
 	vec2 position = { 0, 0 };
 	float angle = 0;
 	float friction = 0;
+	float dragDistance = 0;
 	vec2 velocity = { 0, 0 };
 	vec2 scale = { 0, 0 };
 	bool isCollidable = false;
