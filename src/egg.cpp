@@ -27,6 +27,8 @@ ECS::Entity Egg::createEgg(vec2 position)
     motion.velocity = {0.f, 0.f};
     motion.position = position;
     motion.scale = vec2({0.5f, 0.5f}) * static_cast<vec2>(resource.texture.size);
+    motion.direction = { 1.f, 1.f };
+    motion.shape = "circle";
     
     ECS::registry<Egg>.emplace(entity);
     return entity;

@@ -13,5 +13,7 @@ public:
 private:
     Subject blobule_tile_coll;
     Subject blobule_blobule_coll;
+    Subject blobule_egg_coll;
+    Subject egg_tile_coll;
 };
 
