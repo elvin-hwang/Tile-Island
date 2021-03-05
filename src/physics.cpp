@@ -3,6 +3,7 @@
 #include "tiny_ecs.hpp"
 #include "debug.hpp"
 #include "blobule.hpp"
+#include "utils.hpp"
 #include <iostream>
 #include <egg.hpp>
 
@@ -19,42 +20,33 @@ https://www.figma.com/file/K32AjU7kJXHVw9BpALdTY1/Untitled?node-id=0%3A1
 Entities are positioned at the CENTER of their texture, which means that if you place an entity at { 0.f, 0.f }, it would only show the
 bottom right corner of that texture. Use this knowledge to determine where centers and edges of entities are!
 */
+
 Direction box_circle_collides(const Motion& box, const Motion& circle)
 {
 	// Define edges of box
-	float top_edge = box.position.y - box.scale.y / 2.f; // y1
-	float right_edge = box.position.x + box.scale.x / 2.f; // x2
-	float bottom_edge = box.position.y + box.scale.y / 2.f; // y2
-	float left_edge = box.position.x - box.scale.x / 2.f; // x1
+	float boxHalfWidth = box.scale.x / 2;
+	float top_edge = box.position.y - boxHalfWidth; // y1
+	float right_edge = box.position.x + boxHalfWidth; // x2
+	float bottom_edge = box.position.y + boxHalfWidth; // y2
+	float left_edge = box.position.x - boxHalfWidth; // x1
 
 	// Define circle radius and center of circle position
 	float circle_radius = circle.scale.x / 2.f;
 	vec2 center_of_circle = circle.position;
 
-	// Right edge collision
-	if (center_of_circle.x > right_edge
-		&& abs(right_edge - center_of_circle.x) <= circle_radius
-		&& top_edge - circle_radius <= center_of_circle.y
-		&& center_of_circle.y <= bottom_edge + circle_radius)
-		return Direction::Right;
+	// Temporary "improvement" by using 4???
 	// Top edge collision
-	else if (center_of_circle.y < top_edge
-		&& abs(top_edge - center_of_circle.y) <= circle_radius
-		&& left_edge - circle_radius <= center_of_circle.x
-		&& center_of_circle.x <= right_edge + circle_radius)
+	if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ box.position.x - boxHalfWidth, top_edge }, vec2{ box.position.x + boxHalfWidth, top_edge }))
 		return Direction::Top;
 	// Bottom edge collision
-	else if (center_of_circle.y > bottom_edge
-		&& abs(bottom_edge - center_of_circle.y) <= circle_radius
-		&& left_edge - circle_radius <= center_of_circle.x
-		&& center_of_circle.x <= right_edge + circle_radius)
+	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ box.position.x - boxHalfWidth, bottom_edge }, vec2{ box.position.x + boxHalfWidth, bottom_edge }))
 		return Direction::Bottom;
 	// Left edge collision
-	else if (center_of_circle.x < left_edge
-		&& abs(left_edge - center_of_circle.x) <= circle_radius
-		&& top_edge - circle_radius <= center_of_circle.y
-		&& center_of_circle.y <= bottom_edge + circle_radius)
+	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ left_edge, box.position.y - boxHalfWidth }, vec2{ left_edge, box.position.y + boxHalfWidth }))
 		return Direction::Left;
+	// Right edge collision
+	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ right_edge, box.position.y - boxHalfWidth }, vec2{ right_edge, box.position.y + boxHalfWidth }))
+		return Direction::Right;
 	else
 		return Direction::unknown;
 }
@@ -109,7 +101,7 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	auto& blobule_container = ECS::registry<Blobule>;
 	auto& motion_container = ECS::registry<Motion>;
 	// for (auto [i, motion_i] : enumerate(motion_container.components)) // in c++ 17 we will be able to do this instead of the next three lines
-	for (unsigned int i=0; i<blobule_container.components.size(); i++)
+	for (unsigned int i = 0; i < blobule_container.components.size(); i++)
 	{
 		ECS::Entity blob_entity_i = blobule_container.entities[i];
 		Motion& blob_motion_i = ECS::registry<Motion>.get(blob_entity_i);
@@ -130,7 +122,7 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 			if (motion_j.shape == "square")
 			{
 				// Blobule vs Tile
-				Direction collisionEdge = box_circle_collides(blob_motion_i, motion_j);
+				Direction collisionEdge = box_circle_collides(motion_j, blob_motion_i);
 				if (collisionEdge != Direction::unknown)
 				{
 					auto& collision = ECS::registry<Collision>.emplace_with_duplicates(blob_entity_i, entity_j);

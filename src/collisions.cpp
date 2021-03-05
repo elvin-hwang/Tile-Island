@@ -4,6 +4,7 @@
 #include "physics.hpp"
 #include "tile.hpp"
 #include "blobule.hpp"
+#include "utils.hpp"
 #include <egg.hpp>
 #include <iostream>
 
@@ -19,17 +20,34 @@ void CollisionSystem::initialize_collisions() {
 	egg_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("egg_tile_coll"));
 
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
-	auto reverse_vel = [](auto entity, auto entity_other, Direction dir) {
+	auto blob_blob_collision = [](auto entity, auto entity_other, Direction dir) {
+		// entity_other is colliding with entity
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
-		auto& tileMotion = ECS::registry<Motion>.get(entity_other);
-		blobMotion.velocity = -blobMotion.velocity;
+		auto& otherBlobMotion = ECS::registry<Motion>.get(entity_other);
+
+		float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
+		float otherBlobMagnitude = Utils::getVelocityMagnitude(otherBlobMotion);
+		float finalVelocity = (blobMagnitude + otherBlobMagnitude) / 2;
+
+		float originalAngle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
+
+		// This position determines everything
+		float otherBlobAngle = -atan2(blobMotion.position.y - otherBlobMotion.position.y, blobMotion.position.x - otherBlobMotion.position.x);
+		// Need to calculate change in angle (positive or negative) to see if I should add or remove 90 degrees
+		// Need to check which one has a faster speed too?
+		float blobAngle = otherBlobAngle > originalAngle ? otherBlobAngle - PI / 2 : otherBlobAngle + PI / 2;
+
+		blobMotion.velocity = { cos(blobAngle) * finalVelocity, sin(blobAngle) * finalVelocity };
+		otherBlobMotion.velocity = { cos(otherBlobAngle) * finalVelocity, sin(otherBlobAngle) * finalVelocity };
 	};
+
 
 	auto blobule_tile_interaction = [](auto entity, auto entity_other, Direction dir) {
 		//subject tile to wall
 		auto& blob = ECS::registry<Blobule>.get(entity);
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
 		auto& terrain = ECS::registry<Terrain>.get(entity_other);
+		auto& tileMotion = ECS::registry<Motion>.get(entity_other);
 
 		if (terrain.type == Water) {
 			blobMotion.velocity = { 0.f, 0.f };
@@ -40,7 +58,30 @@ void CollisionSystem::initialize_collisions() {
 		{
 			// TODO: Implement more advanced particle collision rebounding effect
 			//blobMotion.velocity = { 0.f, 0.f };
-			blobMotion.velocity = -blobMotion.velocity;
+			// Top and Bot walls reflect x axis (given by default)
+			// Left and Right walls reflect y axis (add 90 to previous angle), reflect, add 90 again
+			float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
+
+
+			float angle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
+
+			// Wall collision detected edge
+			switch (dir)
+			{
+			case Direction::Left:
+			case Direction::Right:
+				angle = -angle - PI;
+				break;
+			case Direction::Top:
+			case Direction::Bottom:
+				angle *= -1;
+				break;
+			default:
+				break;
+			}
+
+			blobMotion.velocity = { cos(angle) * blobMagnitude, sin(angle) * blobMagnitude };
+			//blobMotion.velocity = -blobMotion.velocity;
 
 		}
 		else {
@@ -81,7 +122,7 @@ void CollisionSystem::initialize_collisions() {
 	//add lambdas to the observer lists
 	blobule_tile_coll.add_observer(blobule_tile_interaction);
 	blobule_tile_coll.add_observer(change_tile_color);
-	blobule_blobule_coll.add_observer(reverse_vel);
+	blobule_blobule_coll.add_observer(blob_blob_collision);
 	blobule_egg_coll.add_observer(remove_egg);
 	egg_tile_coll.add_observer(egg_tile_interaction);
 }

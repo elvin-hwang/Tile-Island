@@ -78,6 +78,7 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     // Create and (empty) Tile component to be able to refer to all tiles
     auto& tile = ECS::registry<Tile>.emplace(entity);
     tile.splatEntity = ECS::Entity();
+    ECS::registry<Motion>.emplace(tile.splatEntity);
     return entity;
 }
 

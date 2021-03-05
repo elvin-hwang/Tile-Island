@@ -66,7 +66,10 @@ void Blobule::setTrajectory(ECS::Entity entity) {
     auto& blobMotion = ECS::registry<Motion>.get(entity);
     auto& trajMotion = ECS::registry<Motion>.get(blob.trajectoryEntity);
 
-    float powerScale = abs(blobMotion.dragDistance) * 0.01;
+    float powerScale = min(abs(blobMotion.dragDistance) * 0.01, 3.5);
+    if (powerScale < 0.2) {
+        powerScale = 0;
+    }
 
     trajMotion.angle = blobMotion.angle + PI / 2;
     trajMotion.scale = static_cast<vec2>(trajMesh.texture.size) * vec2{ 1.f, sqrt(powerScale) };

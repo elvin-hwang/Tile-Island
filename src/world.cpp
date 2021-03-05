@@ -8,6 +8,7 @@
 #include "start.hpp"
 #include "helptool.hpp"
 #include "collisions.hpp"
+#include "utils.hpp"
 
 // stlib
 #include <string.h>
@@ -27,7 +28,7 @@ int numHeight = 0;
 vec2 islandGrid[100][100]; // This will actually be a size of [numWidth][numHeight] but just using 100 to be safe
 
 // Movement speed of blobule.
-float moveSpeed = 100.f;
+float moveSpeed = 200.f;
 float terminalVelocity = 20.f;
 float max_blobule_speed = 350.f;
 vec2 window_size;
@@ -131,7 +132,7 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 		auto& motion = ECS::registry<Motion>.get(blob);
 		motion.velocity += -motion.velocity * motion.friction;
 
-		float velocityMagnitude = sqrt(motion.velocity.x * motion.velocity.x + motion.velocity.y * motion.velocity.y);
+		float velocityMagnitude = Utils::getVelocityMagnitude(motion);
 		if (velocityMagnitude < terminalVelocity) {
 			motion.velocity = { 0.f, 0.f };
 		}
@@ -153,6 +154,11 @@ void WorldSystem::restart() {
 
 		std::cout << "Restarting\n";
 
+		// Reset other stuff
+		playerMove = 1;
+		blobuleMoved = false;
+		mouse_move = false;
+
 		// Reset the game speed
 		current_speed = 1.f;
 
@@ -168,7 +174,7 @@ void WorldSystem::restart() {
 		glfwGetWindowSize(window, &window_width, &window_height);
 
 		// Make a 20 x 15 Grid of Tiles.
-		numWidth = (window_width - borderWidth * 2) / tile_width;
+		numWidth = (window_width - borderWidth * 2) / tile_width + 1;
 		numHeight = (window_height - borderWidth * 2) / tile_width;
 
 		int horizontalIndex = 0;
@@ -176,10 +182,10 @@ void WorldSystem::restart() {
 		bool isTile = false;
 
 		// Horizontally...
-		for (int i = tile_width / 2; i <= window_width; i += tile_width)
+		for (int i = tile_width / 2 - borderWidth*5; i <= window_width + borderWidth*5; i += tile_width)
 		{
 			// Vertically...
-			for (int j = tile_width / 2; j <= window_height; j += tile_width)
+			for (int j = tile_width / 2 - borderWidth*5; j <= window_height + borderWidth*5; j += tile_width)
 			{
 				if (i < borderWidth || j < borderWidth || i > window_width - borderWidth || j > window_height - borderWidth) {
 					Tile::createTile({ i, j }, Water);
@@ -341,7 +347,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			// Move all tiles
 			for (auto& tile : ECS::registry<Tile>.entities)
 			{
+				auto& tileComponent = ECS::registry<Tile>.get(tile);
 				ECS::registry<Motion>.get(tile).position += vec2({ xOffset, yOffset });
+				ECS::registry<Motion>.get(tileComponent.splatEntity).position += vec2({ xOffset, yOffset });
 			}
 			// Move all eggs
 			for (auto& egg : ECS::registry<Egg>.entities)
@@ -432,16 +440,15 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 				float blobAngle = blobMotion.angle;
 				float blobPower = blobMotion.dragDistance;
 
-				vec2 launchVelocity = { cos(blobAngle) * blobPower, sin(blobAngle) * blobPower };
+				blobMotion.velocity = { cos(blobAngle) * blobPower, sin(blobAngle) * blobPower };
 
-				float velocityMagnitude = sqrt(launchVelocity.x * launchVelocity.x + launchVelocity.y * launchVelocity.y);
+				float velocityMagnitude = Utils::getVelocityMagnitude(blobMotion);
 				if (velocityMagnitude > max_blobule_speed) {
-					launchVelocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
+					blobMotion.velocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
 				}
 
-				ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
 				Blobule::removeTrajectory(active_player);
-				blobuleMoved = true;
+				blobuleMoved = false;
 			}
 		}
 	}
