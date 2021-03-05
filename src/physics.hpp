@@ -8,7 +8,8 @@ enum class Direction {
 	Left,
 	Right,
 	Top,
-	Bottom
+	Bottom,
+	Corner
 };
 
 // A simple physics system that moves rigid bodies and checks for collision

@@ -18,6 +18,8 @@ struct Utils
 
     static bool circleIntersectsLine(vec2 center, float radius, vec2 lineStart, vec2 lineEnd);
 
+    static bool circleTouchesCorner(vec2 center, float radius, vec2 boxCenter, float halfWidth);
+
     static vec2 Utils::getPerpendicularPoint(vec2 center, vec2 lineStart, vec2 lineEnd);
 
 };

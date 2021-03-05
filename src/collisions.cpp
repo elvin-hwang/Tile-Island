@@ -75,6 +75,12 @@ void CollisionSystem::initialize_collisions() {
 			case Direction::Top:
 			case Direction::Bottom:
 				angle *= -1;
+				if (angle == 0) {
+					angle += PI;
+				}
+				break;
+			case Direction::Corner:
+				angle += PI;
 				break;
 			default:
 				break;

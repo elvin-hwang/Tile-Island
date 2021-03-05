@@ -47,7 +47,9 @@ Direction box_circle_collides(const Motion& box, const Motion& circle)
 	// Right edge collision
 	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ right_edge, box.position.y - boxHalfWidth }, vec2{ right_edge, box.position.y + boxHalfWidth }))
 		return Direction::Right;
-	else
+	else if (Utils::circleTouchesCorner(center_of_circle, circle_radius, box.position, boxHalfWidth))
+		return Direction::Corner;
+	else 
 		return Direction::unknown;
 }
 
