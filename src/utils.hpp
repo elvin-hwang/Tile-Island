@@ -11,5 +11,8 @@ struct Utils
 
     // Get Euclidean distance between two motions
     static float euclideanDist(Motion motion1, Motion motion2);
+
+    static float Utils::getVelocityMagnitude(Motion motion);
+
 };
 

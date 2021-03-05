@@ -8,6 +8,7 @@
 #include "start.hpp"
 #include "helptool.hpp"
 #include "collisions.hpp"
+#include "utils.hpp"
 
 // stlib
 #include <string.h>
@@ -131,7 +132,7 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 		auto& motion = ECS::registry<Motion>.get(blob);
 		motion.velocity += -motion.velocity * motion.friction;
 
-		float velocityMagnitude = sqrt(motion.velocity.x * motion.velocity.x + motion.velocity.y * motion.velocity.y);
+		float velocityMagnitude = Utils::getVelocityMagnitude(motion);
 		if (velocityMagnitude < terminalVelocity) {
 			motion.velocity = { 0.f, 0.f };
 		}
@@ -152,6 +153,11 @@ void WorldSystem::restart() {
 		ECS::ContainerInterface::list_all_components();
 
 		std::cout << "Restarting\n";
+
+		// Reset other stuff
+		playerMove = 1;
+		blobuleMoved = false;
+		mouse_move = false;
 
 		// Reset the game speed
 		current_speed = 1.f;
@@ -432,14 +438,13 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 				float blobAngle = blobMotion.angle;
 				float blobPower = blobMotion.dragDistance;
 
-				vec2 launchVelocity = { cos(blobAngle) * blobPower, sin(blobAngle) * blobPower };
+				blobMotion.velocity = { cos(blobAngle) * blobPower, sin(blobAngle) * blobPower };
 
-				float velocityMagnitude = sqrt(launchVelocity.x * launchVelocity.x + launchVelocity.y * launchVelocity.y);
+				float velocityMagnitude = Utils::getVelocityMagnitude(blobMotion);
 				if (velocityMagnitude > max_blobule_speed) {
-					launchVelocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
+					blobMotion.velocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
 				}
 
-				ECS::registry<Motion>.get(active_player).velocity = launchVelocity;
 				Blobule::removeTrajectory(active_player);
 				blobuleMoved = true;
 			}

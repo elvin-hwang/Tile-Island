@@ -25,3 +25,8 @@ float Utils::euclideanDist(Motion motion1, Motion motion2)
 	float dist = (float)pow(x, 2) + (float)pow(y, 2);
 	return sqrt(dist);
 }
+
+float Utils::getVelocityMagnitude(Motion motion)
+{
+	return sqrt((float)pow(motion.velocity.x, 2) + (float)pow(motion.velocity.y, 2));
+}
