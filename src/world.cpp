@@ -28,7 +28,7 @@ int numHeight = 0;
 vec2 islandGrid[100][100]; // This will actually be a size of [numWidth][numHeight] but just using 100 to be safe
 
 // Movement speed of blobule.
-float moveSpeed = 100.f;
+float moveSpeed = 200.f;
 float terminalVelocity = 20.f;
 float max_blobule_speed = 350.f;
 vec2 window_size;
@@ -182,10 +182,10 @@ void WorldSystem::restart() {
 		bool isTile = false;
 
 		// Horizontally...
-		for (int i = tile_width / 2; i <= window_width; i += tile_width)
+		for (int i = tile_width / 2 - borderWidth*5; i <= window_width + borderWidth*5; i += tile_width)
 		{
 			// Vertically...
-			for (int j = tile_width / 2; j <= window_height; j += tile_width)
+			for (int j = tile_width / 2 - borderWidth*5; j <= window_height + borderWidth*5; j += tile_width)
 			{
 				if (i < borderWidth || j < borderWidth || i > window_width - borderWidth || j > window_height - borderWidth) {
 					Tile::createTile({ i, j }, Water);
@@ -347,7 +347,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			// Move all tiles
 			for (auto& tile : ECS::registry<Tile>.entities)
 			{
+				auto& tileComponent = ECS::registry<Tile>.get(tile);
 				ECS::registry<Motion>.get(tile).position += vec2({ xOffset, yOffset });
+				ECS::registry<Motion>.get(tileComponent.splatEntity).position += vec2({ xOffset, yOffset });
 			}
 			// Move all eggs
 			for (auto& egg : ECS::registry<Egg>.entities)

@@ -20,20 +20,22 @@ void CollisionSystem::initialize_collisions() {
 	egg_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("egg_tile_coll"));
 
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
-	auto blob_blob_collision = [](auto entity, auto entity_other) {
+	auto blob_blob_collision = [](auto entity, auto entity_other, Direction dir) {
 		// entity_other is colliding with entity
-		auto& blobMotion = ECS::registry<Motion>.get(entity_other);
-		auto& otherBlobMotion = ECS::registry<Motion>.get(entity);
+		auto& blobMotion = ECS::registry<Motion>.get(entity);
+		auto& otherBlobMotion = ECS::registry<Motion>.get(entity_other);
 
 		float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
 		float otherBlobMagnitude = Utils::getVelocityMagnitude(otherBlobMotion);
 		float finalVelocity = (blobMagnitude + otherBlobMagnitude) / 2;
 
+		float originalAngle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
+
 		// This position determines everything
 		float otherBlobAngle = -atan2(blobMotion.position.y - otherBlobMotion.position.y, blobMotion.position.x - otherBlobMotion.position.x);
 		// Need to calculate change in angle (positive or negative) to see if I should add or remove 90 degrees
 		// Need to check which one has a faster speed too?
-		float blobAngle = otherBlobAngle - PI / 2;
+		float blobAngle = otherBlobAngle > originalAngle ? otherBlobAngle - PI / 2 : otherBlobAngle + PI / 2;
 
 		blobMotion.velocity = { cos(blobAngle) * finalVelocity, sin(blobAngle) * finalVelocity };
 		otherBlobMotion.velocity = { cos(otherBlobAngle) * finalVelocity, sin(otherBlobAngle) * finalVelocity };
@@ -55,16 +57,34 @@ void CollisionSystem::initialize_collisions() {
 		{
 			// TODO: Implement more advanced particle collision rebounding effect
 			//blobMotion.velocity = { 0.f, 0.f };
-			auto& wall = ECS::registry<Motion>.get(entity_other);
-			float wallWidth = wall.scale.x / 2;
 			// Top and Bot walls reflect x axis (given by default)
 			// Left and Right walls reflect y axis (add 90 to previous angle), reflect, add 90 again
-
 			float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
-			float angle = acos(blobMotion.velocity.y / blobMagnitude);
-			float currentAngle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
-			float calculatedAngle = -currentAngle; //currentAngle - angle * 2;
-			blobMotion.velocity = { cos(calculatedAngle) * blobMagnitude, sin(calculatedAngle) * blobMagnitude };
+
+			float anotherAngle = acos(blobMotion.velocity.y / blobMagnitude);
+
+			float angle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
+
+			// Wall collision detected edge
+			switch (dir)
+			{
+			case Direction::Left:
+			case Direction::Right:
+				angle = -angle - PI;
+				std::cout << "LEFT OR RIGHT" << "\n";
+				std::cout << angle << "\n";
+				break;
+			case Direction::Top:
+			case Direction::Bottom:
+				angle *= -1;
+				std::cout << "UP OR DOWN" << "\n";
+				std::cout << angle << "\n";
+				break;
+			default:
+				break;
+			}
+
+			blobMotion.velocity = { cos(angle) * blobMagnitude, sin(angle) * blobMagnitude };
 			//blobMotion.velocity = -blobMotion.velocity;
 
 		}
