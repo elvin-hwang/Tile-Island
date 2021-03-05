@@ -21,24 +21,39 @@ void CollisionSystem::initialize_collisions() {
 
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
 	auto blob_blob_collision = [](auto entity, auto entity_other, Direction dir) {
+
+		bool switched = false;
+		Motion& incomingMotion;
 		// entity_other is colliding with entity
-		auto& blobMotion = ECS::registry<Motion>.get(entity);
-		auto& otherBlobMotion = ECS::registry<Motion>.get(entity_other);
+		auto& blobMotion1 = ECS::registry<Motion>.get(entity);
+		auto& blobMotion2 = ECS::registry<Motion>.get(entity_other);
 
 		float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
 		float otherBlobMagnitude = Utils::getVelocityMagnitude(otherBlobMotion);
 		float finalVelocity = (blobMagnitude + otherBlobMagnitude) / 2;
 
-		float originalAngle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
+		if (blobMagnitude > otherBlobMagnitude) {
+			incomingMotion = blobMotion1;
+		}
+		else {
+			incomingMotion = blobMotion2;
+			switched = true;
+		}
 
-		// This position determines everything
-		float otherBlobAngle = -atan2(blobMotion.position.y - otherBlobMotion.position.y, blobMotion.position.x - otherBlobMotion.position.x);
-		// Need to calculate change in angle (positive or negative) to see if I should add or remove 90 degrees
-		// Need to check which one has a faster speed too?
-		float blobAngle = otherBlobAngle > originalAngle ? otherBlobAngle - PI / 2 : otherBlobAngle + PI / 2;
+		// Calculate angles
+		float originalAngle = atan2(incomingMotion.velocity.y, incomingMotion.velocity.x);
+		float impactAngle = atan2(blobMotion1.position.y - blobMotion2.position.y, blobMotion1.position.x - blobMotion2.position.x);
+		impactAngle = switched ? -impactAngle : impactAngle;
+		float derivedAngle = impactAngle > originalAngle ? impactAngle + PI / 2 : impactAngle - PI / 2;
 
-		blobMotion.velocity = { cos(blobAngle) * finalVelocity, sin(blobAngle) * finalVelocity };
-		otherBlobMotion.velocity = { cos(otherBlobAngle) * finalVelocity, sin(otherBlobAngle) * finalVelocity };
+		if (!switch) {
+			blobMotion1.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
+			blobMotion2.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
+		}
+		else {
+			blobMotion2.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
+			blobMotion1.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
+		}
 	};
 
 
