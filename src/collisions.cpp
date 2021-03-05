@@ -47,6 +47,7 @@ void CollisionSystem::initialize_collisions() {
 		auto& blob = ECS::registry<Blobule>.get(entity);
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
 		auto& terrain = ECS::registry<Terrain>.get(entity_other);
+		auto& tileMotion = ECS::registry<Motion>.get(entity_other);
 
 		if (terrain.type == Water) {
 			blobMotion.velocity = { 0.f, 0.f };
@@ -61,7 +62,6 @@ void CollisionSystem::initialize_collisions() {
 			// Left and Right walls reflect y axis (add 90 to previous angle), reflect, add 90 again
 			float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
 
-			float anotherAngle = acos(blobMotion.velocity.y / blobMagnitude);
 
 			float angle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
 

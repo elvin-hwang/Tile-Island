@@ -174,7 +174,7 @@ void WorldSystem::restart() {
 		glfwGetWindowSize(window, &window_width, &window_height);
 
 		// Make a 20 x 15 Grid of Tiles.
-		numWidth = (window_width - borderWidth * 2) / tile_width;
+		numWidth = (window_width - borderWidth * 2) / tile_width + 1;
 		numHeight = (window_height - borderWidth * 2) / tile_width;
 
 		int horizontalIndex = 0;
@@ -448,7 +448,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 				}
 
 				Blobule::removeTrajectory(active_player);
-				blobuleMoved = true;
+				blobuleMoved = false;
 			}
 		}
 	}
