@@ -71,14 +71,10 @@ void CollisionSystem::initialize_collisions() {
 			case Direction::Left:
 			case Direction::Right:
 				angle = -angle - PI;
-				std::cout << "LEFT OR RIGHT" << "\n";
-				std::cout << angle << "\n";
 				break;
 			case Direction::Top:
 			case Direction::Bottom:
 				angle *= -1;
-				std::cout << "UP OR DOWN" << "\n";
-				std::cout << angle << "\n";
 				break;
 			default:
 				break;

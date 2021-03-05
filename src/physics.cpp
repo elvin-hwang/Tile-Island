@@ -36,61 +36,20 @@ Direction box_circle_collides(const Motion& box, const Motion& circle)
 
 	// Temporary "improvement" by using 4???
 	// Top edge collision
-	if (Utils::circleIntersectsLine(center_of_circle, circle_radius, box.position.x - boxHalfWidth + 4, top_edge, box.position.x + boxHalfWidth - 4, top_edge))
+	if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ box.position.x - boxHalfWidth, top_edge }, vec2{ box.position.x + boxHalfWidth, top_edge }))
 		return Direction::Top;
 	// Bottom edge collision
-	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, box.position.x - boxHalfWidth + 4, bottom_edge, box.position.x + boxHalfWidth - 4, bottom_edge))
+	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ box.position.x - boxHalfWidth, bottom_edge }, vec2{ box.position.x + boxHalfWidth, bottom_edge }))
 		return Direction::Bottom;
 	// Left edge collision
-	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, left_edge, box.position.y - boxHalfWidth + 4, left_edge, box.position.y + boxHalfWidth - 4))
+	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ left_edge, box.position.y - boxHalfWidth }, vec2{ left_edge, box.position.y + boxHalfWidth }))
 		return Direction::Left;
 	// Right edge collision
-	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, right_edge, box.position.y - boxHalfWidth + 4, right_edge, box.position.y + boxHalfWidth - 4))
+	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ right_edge, box.position.y - boxHalfWidth }, vec2{ right_edge, box.position.y + boxHalfWidth }))
 		return Direction::Right;
 	else
 		return Direction::unknown;
 }
-
-
-//Direction box_circle_collides(const Motion& box, const Motion& circle)
-//{
-//	// Define edges of box
-//	float top_edge = box.position.y - box.scale.y / 2.f; // y1
-//	float right_edge = box.position.x + box.scale.x / 2.f; // x2
-//	float bottom_edge = box.position.y + box.scale.y / 2.f; // y2
-//	float left_edge = box.position.x - box.scale.x / 2.f; // x1
-//
-//	// Define circle radius and center of circle position
-//	float circle_radius = circle.scale.x / 2.f;
-//	vec2 center_of_circle = circle.position;
-//
-//	// Right edge collision
-//	if (center_of_circle.x > right_edge
-//		&& abs(right_edge - center_of_circle.x) <= circle_radius
-//		&& top_edge - circle_radius <= center_of_circle.y
-//		&& center_of_circle.y <= bottom_edge + circle_radius)
-//		return Direction::Right;
-//	// Top edge collision
-//	else if (center_of_circle.y < top_edge
-//		&& abs(top_edge - center_of_circle.y) <= circle_radius
-//		&& left_edge - circle_radius <= center_of_circle.x
-//		&& center_of_circle.x <= right_edge + circle_radius)
-//		return Direction::Top;
-//	// Bottom edge collision
-//	else if (center_of_circle.y > bottom_edge
-//		&& abs(bottom_edge - center_of_circle.y) <= circle_radius
-//		&& left_edge - circle_radius <= center_of_circle.x
-//		&& center_of_circle.x <= right_edge + circle_radius)
-//		return Direction::Bottom;
-//	// Left edge collision
-//	else if (center_of_circle.x < left_edge
-//		&& abs(left_edge - center_of_circle.x) <= circle_radius
-//		&& top_edge - circle_radius <= center_of_circle.y
-//		&& center_of_circle.y <= bottom_edge + circle_radius)
-//		return Direction::Left;
-//	else
-//		return Direction::unknown;
-//}
 
 // circle circle collision check
 bool circle_circle_collides(const Motion& motion1, const Motion& motion2)
