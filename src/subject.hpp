@@ -1,4 +1,5 @@
 #include "tiny_ecs.hpp"
+#include "physics.hpp"
 #include <functional>
 #include <list>
 #include <string>
@@ -6,7 +7,7 @@
 struct Subject
 {
 public:
-    std::list<std::function<void(ECS::Entity, ECS::Entity)>> observers_list;
+    std::list<std::function<void(ECS::Entity, ECS::Entity, Direction dir)>> observers_list;
     static ECS::Entity createSubject(std::string name);
     template<typename F>
     void add_observer(F lambda)
@@ -14,7 +15,7 @@ public:
         observers_list.push_back(lambda);
     }
 
-    void notify(ECS::Entity entity, ECS::Entity entity_other);
+    void notify(ECS::Entity entity, ECS::Entity entity_other, Direction direction);
 };
 
 

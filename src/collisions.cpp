@@ -19,13 +19,13 @@ void CollisionSystem::initialize_collisions() {
 	egg_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("egg_tile_coll"));
 
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
-	auto reverse_vel = [](auto entity, auto entity_other) {
+	auto reverse_vel = [](auto entity, auto entity_other, Direction dir) {
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
 		auto& tileMotion = ECS::registry<Motion>.get(entity_other);
 		blobMotion.velocity = -blobMotion.velocity;
 	};
 
-	auto blobule_tile_interaction = [](auto entity, auto entity_other) {
+	auto blobule_tile_interaction = [](auto entity, auto entity_other, Direction dir) {
 		//subject tile to wall
 		auto& blob = ECS::registry<Blobule>.get(entity);
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
@@ -48,7 +48,7 @@ void CollisionSystem::initialize_collisions() {
 		}
 	};
 
-	auto change_tile_color = [](auto entity, auto entity_other) {
+	auto change_tile_color = [](auto entity, auto entity_other, Direction dir) {
 		auto tileMotion = ECS::registry<Motion>.get(entity_other);
 		auto blobMotion = ECS::registry<Motion>.get(entity);
 		vec2 difference_between_centers = tileMotion.position - blobMotion.position;
@@ -60,7 +60,7 @@ void CollisionSystem::initialize_collisions() {
 		}
 	};
 
-	auto egg_tile_interaction = [](auto entity, auto entity_other) {
+	auto egg_tile_interaction = [](auto entity, auto entity_other, Direction dir) {
 
 		auto& eggMotion = ECS::registry<Motion>.get(entity);
 		auto& terrain = ECS::registry<Terrain>.get(entity_other);
@@ -74,7 +74,7 @@ void CollisionSystem::initialize_collisions() {
 	};
 
 	// egg disappears on collision with blob (only use the second param)
-	auto remove_egg = [](auto entity, auto eggEntity) {
+	auto remove_egg = [](auto entity, auto eggEntity, Direction dir) {
 		ECS::ContainerInterface::remove_all_components_of(eggEntity);
 	};
 
@@ -92,32 +92,33 @@ void CollisionSystem::handle_collisions()
 	auto& registry = ECS::registry<PhysicsSystem::Collision>;
 	for (unsigned int i = 0; i < registry.components.size(); i++)
 	{
+		auto& collision = registry.components[i];
 		// The entity and its collider
 		auto entity = registry.entities[i];
-		auto entity_other = registry.components[i].other;
+		auto entity_other = collision.other;
 
 		// Blobule collisions
 		if (ECS::registry<Blobule>.has(entity)) {
 			// Change friction of blobule based on which tile it is on
 			if (ECS::registry<Tile>.has(entity_other)) {
-				blobule_tile_coll.notify(entity, entity_other);
+				blobule_tile_coll.notify(entity, entity_other, collision.direction);
 			}
 
 			// Blobule - blobule collisions
 			if (ECS::registry<Blobule>.has(entity_other)) {
-				blobule_blobule_coll.notify(entity, entity_other);
+				blobule_blobule_coll.notify(entity, entity_other, collision.direction);
 			}
 
 			// blobule - egg collisions
 			if (ECS::registry<Egg>.has(entity_other)) {
-				blobule_egg_coll.notify(entity, entity_other);
+				blobule_egg_coll.notify(entity, entity_other, collision.direction);
 			}
 		}
 
 		// Egg - collisions
 		else if (ECS::registry<Egg>.has(entity)) {
 			if (ECS::registry<Tile>.has(entity_other)) {
-				egg_tile_coll.notify(entity, entity_other);
+				egg_tile_coll.notify(entity, entity_other, collision.direction);
 			}
 		}
 	}
