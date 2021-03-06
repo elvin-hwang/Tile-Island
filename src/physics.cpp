@@ -66,11 +66,6 @@ bool circle_circle_collides(const Motion& motion1, const Motion& motion2)
 	return distance_between_centers < motion1_radius + motion2_radius;
 }
 
-//bool box_box_collides(const Motion& motion1, const Motion& motion2)
-//{
-//
-//}
-
 void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 {
 	// Move entities based on how much time has passed, this is to (partially) avoid
@@ -143,6 +138,46 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 					detectedBlobs.insert(entity_j.id);
 				}
 			}
+		}
+	}
+	auto& egg_container = ECS::registry<Egg>;
+	for (unsigned int i = 0; i < egg_container.components.size(); i++)
+	{
+		ECS::Entity egg_entity_i = egg_container.entities[i];
+		Motion& egg_motion_i = ECS::registry<Motion>.get(egg_entity_i);
+
+		for (unsigned int j = 0; j < motion_container.components.size(); j++)
+		{
+			Motion& motion_j = motion_container.components[j];
+			ECS::Entity entity_j = motion_container.entities[j];
+
+			if (entity_j.id == egg_entity_i.id) {
+				continue;
+			}
+
+			// temporarily egg is considered a circle and follows circle/circle and circle/square collisions, 
+			// in m3 we need to implement precise collision with the egg mesh and handle the collision check differently
+			if (motion_j.shape == "square")
+			{
+				// Egg vs Tile
+				Direction collisionEdge = box_circle_collides(motion_j, egg_motion_i);
+				if (collisionEdge != Direction::unknown)
+				{
+					auto& collision = ECS::registry<Collision>.emplace_with_duplicates(egg_entity_i, entity_j);
+					collision.direction = collisionEdge;
+				}
+			}
+			else if (motion_j.shape == "circle")
+			{
+				// Blobule vs Blobule
+				if (circle_circle_collides(egg_motion_i, motion_j) && !(detectedBlobs.find(egg_entity_i.id) != detectedBlobs.end() && detectedBlobs.find(entity_j.id) != detectedBlobs.end()))
+				{
+					ECS::registry<Collision>.emplace_with_duplicates(egg_entity_i, entity_j);
+					detectedBlobs.insert(egg_entity_i.id);
+					detectedBlobs.insert(entity_j.id);
+				}
+			}
+
 		}
 	}
 }

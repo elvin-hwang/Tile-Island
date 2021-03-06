@@ -130,14 +130,11 @@ void CollisionSystem::initialize_collisions() {
 				closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
 				dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
 				penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
-
 			}
 
 			// Top and Bot walls reflect x axis (given by default)
 			// Left and Right walls reflect y axis (add 90 to previous angle), reflect, add 90 again
 			float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
-
-
 			float angle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
 
 			// Wall collision detected edge
@@ -163,7 +160,6 @@ void CollisionSystem::initialize_collisions() {
 
 			blobMotion.velocity = { cos(angle) * blobMagnitude, sin(angle) * blobMagnitude };
 			//blobMotion.velocity = { 0.f, 0.f};
-
 		}
 		else {
 			blobMotion.friction = terrain.friction;
