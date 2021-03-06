@@ -26,6 +26,17 @@ void CollisionSystem::initialize_collisions() {
 		auto& blobMotion1 = ECS::registry<Motion>.get(entity);
 		auto& blobMotion2 = ECS::registry<Motion>.get(entity_other);
 
+		// take the vector difference between the centers
+		vec2 difference_between_centers = blobMotion1.position - blobMotion2.position;
+		// compute the length of this vector
+		float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
+
+		// compute the amount you need to move
+		float motion1_radius = blobMotion1.scale.x / 2.f;
+		float motion2_radius = blobMotion2.scale.x / 2.f;
+		float step = motion1_radius + motion2_radius - distance_between_centers;
+		vec2 unitDirection = difference_between_centers / distance_between_centers;
+
 		float blobMagnitude = Utils::getVelocityMagnitude(blobMotion1);
 		float otherBlobMagnitude = Utils::getVelocityMagnitude(blobMotion2);
 		float finalVelocity = (blobMagnitude + otherBlobMagnitude) / 2;
@@ -38,16 +49,13 @@ void CollisionSystem::initialize_collisions() {
 		float impactAngle = !switched ?
 			atan2(blobMotion2.position.y - blobMotion1.position.y, blobMotion2.position.x - blobMotion1.position.x) :
 			atan2(blobMotion1.position.y - blobMotion2.position.y, blobMotion1.position.x - blobMotion2.position.x);
-		//impactAngle = switched ? -impactAngle : impactAngle;
+
 		if (impactAngle < 0 && originalAngle > 0)
 			originalAngle = originalAngle - 2*PI;
 		else if (impactAngle > 0 && originalAngle < 0)
 			originalAngle = originalAngle + 2*PI;
 
 		float derivedAngle = impactAngle > originalAngle ? impactAngle - PI / 2 : impactAngle + PI / 2;
-		//std::cout << originalAngle << ": Direction of incoming blob\n";
-		//std::cout << impactAngle << ": Direction of collided blob\n";
-		//std::cout << derivedAngle << ": Direction of deflected blob\n";
 
 		if (!switched) {
 			blobMotion1.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
@@ -56,6 +64,28 @@ void CollisionSystem::initialize_collisions() {
 		else {
 			blobMotion2.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
 			blobMotion1.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
+		}
+
+		if (blobMotion1.position.x > blobMotion2.position.x)
+		{
+			blobMotion1.position.x += unitDirection.x * step / 2;
+			blobMotion2.position.x -= unitDirection.x * step / 2;
+		}
+		else
+		{
+			blobMotion1.position.x += unitDirection.x * step / 2;
+			blobMotion2.position.x -= unitDirection.x * step / 2;
+		}
+
+		if (blobMotion1.position.y > blobMotion2.position.y)
+		{
+			blobMotion1.position.y += unitDirection.y * step / 2;
+			blobMotion2.position.y -= unitDirection.y * step / 2;
+		}
+		else
+		{
+			blobMotion1.position.y += unitDirection.y * step / 2;
+			blobMotion2.position.y -= unitDirection.y * step / 2;
 		}
 	};
 
