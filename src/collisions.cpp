@@ -104,6 +104,11 @@ void CollisionSystem::initialize_collisions() {
 		}
 		else if (terrain.type == Block)
 		{
+			if (blobMotion.velocity.x == 0 && blobMotion.velocity.y == 0)
+			{
+				//std::cout << "resolving error state" << std::endl;
+				return;
+			}
 			float leftEdge = tileMotion.position.x - tileMotion.scale.x / 2;
 			float rightEdge = tileMotion.position.x + tileMotion.scale.x / 2;
 			float topEdge = tileMotion.position.y - tileMotion.scale.y / 2;
@@ -111,17 +116,13 @@ void CollisionSystem::initialize_collisions() {
 
 			float closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
 			float closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
-			std::cout << "closestX: " << closestX << "closestY: " << closestY << std::endl;
-
 
 			vec2 dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
-			std::cout << "distX: " << dist.x << "distY: " << dist.y << std::endl;
 
 			float penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
 			const vec2 reverseUnitVel = -(blobMotion.velocity / glm::length(blobMotion.velocity));
-			while (penetrationDepth > 2)
+			while (penetrationDepth > 1)
 			{
-				std::cout << "pendepth: " << penetrationDepth << std::endl;
 				float shiftX = blobMotion.position.x + reverseUnitVel.x * 2;
 				float shiftY = blobMotion.position.y + reverseUnitVel.y * 2;
 				blobMotion.position = vec2(shiftX, shiftY);
@@ -131,7 +132,6 @@ void CollisionSystem::initialize_collisions() {
 				penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
 
 			}
-			std::cout << "final pos: " << blobMotion.position.x << " " << blobMotion.position.y << std::endl;
 
 			// Top and Bot walls reflect x axis (given by default)
 			// Left and Right walls reflect y axis (add 90 to previous angle), reflect, add 90 again
