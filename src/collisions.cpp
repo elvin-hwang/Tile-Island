@@ -104,8 +104,35 @@ void CollisionSystem::initialize_collisions() {
 		}
 		else if (terrain.type == Block)
 		{
-			// TODO: Implement more advanced particle collision rebounding effect
-			//blobMotion.velocity = { 0.f, 0.f };
+			float leftEdge = tileMotion.position.x - tileMotion.scale.x / 2;
+			float rightEdge = tileMotion.position.x + tileMotion.scale.x / 2;
+			float topEdge = tileMotion.position.y - tileMotion.scale.y / 2;
+			float bottomEdge = tileMotion.position.y + tileMotion.scale.y / 2;
+
+			float closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
+			float closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+			std::cout << "closestX: " << closestX << "closestY: " << closestY << std::endl;
+
+
+			vec2 dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
+			std::cout << "distX: " << dist.x << "distY: " << dist.y << std::endl;
+
+			float penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
+			const vec2 reverseUnitVel = -(blobMotion.velocity / glm::length(blobMotion.velocity));
+			while (penetrationDepth > 2)
+			{
+				std::cout << "pendepth: " << penetrationDepth << std::endl;
+				float shiftX = blobMotion.position.x + reverseUnitVel.x * 2;
+				float shiftY = blobMotion.position.y + reverseUnitVel.y * 2;
+				blobMotion.position = vec2(shiftX, shiftY);
+				closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
+				closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+				dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
+				penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
+
+			}
+			std::cout << "final pos: " << blobMotion.position.x << " " << blobMotion.position.y << std::endl;
+
 			// Top and Bot walls reflect x axis (given by default)
 			// Left and Right walls reflect y axis (add 90 to previous angle), reflect, add 90 again
 			float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
@@ -135,7 +162,7 @@ void CollisionSystem::initialize_collisions() {
 			}
 
 			blobMotion.velocity = { cos(angle) * blobMagnitude, sin(angle) * blobMagnitude };
-			//blobMotion.velocity = -blobMotion.velocity;
+			//blobMotion.velocity = { 0.f, 0.f};
 
 		}
 		else {
