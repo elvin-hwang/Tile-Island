@@ -6,6 +6,7 @@
 #include "utils.hpp"
 #include <iostream>
 #include <egg.hpp>
+#include <set>
 
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
@@ -47,7 +48,9 @@ Direction box_circle_collides(const Motion& box, const Motion& circle)
 	// Right edge collision
 	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ right_edge, box.position.y - boxHalfWidth }, vec2{ right_edge, box.position.y + boxHalfWidth }))
 		return Direction::Right;
-	else
+	else if (Utils::circleTouchesCorner(center_of_circle, circle_radius, box.position, boxHalfWidth))
+		return Direction::Corner;
+	else 
 		return Direction::unknown;
 }
 
@@ -96,6 +99,7 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	// We need nested for loop, inner loop goes through all of the motion, double check that the inner loop doesn't go through the blobule it's currently on (entity.id)
 	// 
 
+	std::set<int> detectedBlobs = {};
 
 	// Check for collisions between all moving entities
 	auto& blobule_container = ECS::registry<Blobule>;
@@ -132,9 +136,11 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 			else if (motion_j.shape == "circle")
 			{
 				// Blobule vs Blobule
-				if (circle_circle_collides(blob_motion_i, motion_j))
+				if (circle_circle_collides(blob_motion_i, motion_j) && !(detectedBlobs.find(blob_entity_i.id) != detectedBlobs.end() && detectedBlobs.find(entity_j.id) != detectedBlobs.end()))
 				{
 					ECS::registry<Collision>.emplace_with_duplicates(blob_entity_i, entity_j);
+					detectedBlobs.insert(blob_entity_i.id);
+					detectedBlobs.insert(entity_j.id);
 				}
 			}
 		}

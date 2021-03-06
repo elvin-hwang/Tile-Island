@@ -30,7 +30,7 @@ vec2 islandGrid[100][100]; // This will actually be a size of [numWidth][numHeig
 // Movement speed of blobule.
 float moveSpeed = 200.f;
 float terminalVelocity = 20.f;
-float max_blobule_speed = 350.f;
+float max_blobule_speed = 750.f;
 vec2 window_size;
 ECS::Entity help_tool;
 

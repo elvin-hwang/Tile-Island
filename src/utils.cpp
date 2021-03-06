@@ -40,6 +40,17 @@ bool Utils::circleIntersectsLine(vec2 center, float radius, vec2 lineStart, vec2
 	return radius > dist && onLineSegment;
 }
 
+bool Utils::circleTouchesCorner(vec2 center, float radius, vec2 boxCenter, float halfWidth)
+{
+	halfWidth -= 10;
+	float bottomLeft = getDist(center, {boxCenter.x - halfWidth, boxCenter.y - halfWidth});
+	float topLeft = getDist(center, { boxCenter.x - halfWidth, boxCenter.y + halfWidth });
+	float topRight = getDist(center, { boxCenter.x + halfWidth, boxCenter.y + halfWidth });
+	float bottomRight = getDist(center, { boxCenter.x + halfWidth, boxCenter.y - halfWidth });
+
+	return bottomLeft < radius || topLeft < radius || topRight < radius || bottomRight < radius;
+}
+
 float Utils::getVelocityMagnitude(Motion motion)
 {
 	return sqrt((float)pow(motion.velocity.x, 2) + (float)pow(motion.velocity.y, 2));

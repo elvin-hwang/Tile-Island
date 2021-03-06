@@ -21,24 +21,72 @@ void CollisionSystem::initialize_collisions() {
 
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
 	auto blob_blob_collision = [](auto entity, auto entity_other, Direction dir) {
-		// entity_other is colliding with entity
-		auto& blobMotion = ECS::registry<Motion>.get(entity);
-		auto& otherBlobMotion = ECS::registry<Motion>.get(entity_other);
 
-		float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
-		float otherBlobMagnitude = Utils::getVelocityMagnitude(otherBlobMotion);
+		// entity_other is colliding with entity
+		auto& blobMotion1 = ECS::registry<Motion>.get(entity);
+		auto& blobMotion2 = ECS::registry<Motion>.get(entity_other);
+
+		// take the vector difference between the centers
+		vec2 difference_between_centers = blobMotion1.position - blobMotion2.position;
+		// compute the length of this vector
+		float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
+
+		// compute the amount you need to move
+		float motion1_radius = blobMotion1.scale.x / 2.f;
+		float motion2_radius = blobMotion2.scale.x / 2.f;
+		float step = motion1_radius + motion2_radius - distance_between_centers;
+		vec2 unitDirection = difference_between_centers / distance_between_centers;
+
+		float blobMagnitude = Utils::getVelocityMagnitude(blobMotion1);
+		float otherBlobMagnitude = Utils::getVelocityMagnitude(blobMotion2);
 		float finalVelocity = (blobMagnitude + otherBlobMagnitude) / 2;
 
-		float originalAngle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
+		bool switched = otherBlobMagnitude > blobMagnitude;
+		Motion& incomingMotion = !switched ? blobMotion1 : blobMotion2;
 
-		// This position determines everything
-		float otherBlobAngle = -atan2(blobMotion.position.y - otherBlobMotion.position.y, blobMotion.position.x - otherBlobMotion.position.x);
-		// Need to calculate change in angle (positive or negative) to see if I should add or remove 90 degrees
-		// Need to check which one has a faster speed too?
-		float blobAngle = otherBlobAngle > originalAngle ? otherBlobAngle - PI / 2 : otherBlobAngle + PI / 2;
+		// Calculate angles
+		float originalAngle = atan2(incomingMotion.velocity.y, incomingMotion.velocity.x);
+		float impactAngle = !switched ?
+			atan2(blobMotion2.position.y - blobMotion1.position.y, blobMotion2.position.x - blobMotion1.position.x) :
+			atan2(blobMotion1.position.y - blobMotion2.position.y, blobMotion1.position.x - blobMotion2.position.x);
 
-		blobMotion.velocity = { cos(blobAngle) * finalVelocity, sin(blobAngle) * finalVelocity };
-		otherBlobMotion.velocity = { cos(otherBlobAngle) * finalVelocity, sin(otherBlobAngle) * finalVelocity };
+		if (impactAngle < 0 && originalAngle > 0)
+			originalAngle = originalAngle - 2*PI;
+		else if (impactAngle > 0 && originalAngle < 0)
+			originalAngle = originalAngle + 2*PI;
+
+		float derivedAngle = impactAngle > originalAngle ? impactAngle - PI / 2 : impactAngle + PI / 2;
+
+		if (!switched) {
+			blobMotion1.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
+			blobMotion2.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
+		}
+		else {
+			blobMotion2.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
+			blobMotion1.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
+		}
+
+		if (blobMotion1.position.x > blobMotion2.position.x)
+		{
+			blobMotion1.position.x += unitDirection.x * step / 2;
+			blobMotion2.position.x -= unitDirection.x * step / 2;
+		}
+		else
+		{
+			blobMotion1.position.x += unitDirection.x * step / 2;
+			blobMotion2.position.x -= unitDirection.x * step / 2;
+		}
+
+		if (blobMotion1.position.y > blobMotion2.position.y)
+		{
+			blobMotion1.position.y += unitDirection.y * step / 2;
+			blobMotion2.position.y -= unitDirection.y * step / 2;
+		}
+		else
+		{
+			blobMotion1.position.y += unitDirection.y * step / 2;
+			blobMotion2.position.y -= unitDirection.y * step / 2;
+		}
 	};
 
 
@@ -56,8 +104,35 @@ void CollisionSystem::initialize_collisions() {
 		}
 		else if (terrain.type == Block)
 		{
-			// TODO: Implement more advanced particle collision rebounding effect
-			//blobMotion.velocity = { 0.f, 0.f };
+			if (blobMotion.velocity.x == 0 && blobMotion.velocity.y == 0)
+			{
+				//std::cout << "resolving error state" << std::endl;
+				return;
+			}
+			float leftEdge = tileMotion.position.x - tileMotion.scale.x / 2;
+			float rightEdge = tileMotion.position.x + tileMotion.scale.x / 2;
+			float topEdge = tileMotion.position.y - tileMotion.scale.y / 2;
+			float bottomEdge = tileMotion.position.y + tileMotion.scale.y / 2;
+
+			float closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
+			float closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+
+			vec2 dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
+
+			float penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
+			const vec2 reverseUnitVel = -(blobMotion.velocity / glm::length(blobMotion.velocity));
+			while (penetrationDepth > 1)
+			{
+				float shiftX = blobMotion.position.x + reverseUnitVel.x * 2;
+				float shiftY = blobMotion.position.y + reverseUnitVel.y * 2;
+				blobMotion.position = vec2(shiftX, shiftY);
+				closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
+				closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+				dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
+				penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
+
+			}
+
 			// Top and Bot walls reflect x axis (given by default)
 			// Left and Right walls reflect y axis (add 90 to previous angle), reflect, add 90 again
 			float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
@@ -75,13 +150,19 @@ void CollisionSystem::initialize_collisions() {
 			case Direction::Top:
 			case Direction::Bottom:
 				angle *= -1;
+				if (angle == 0) {
+					angle += PI;
+				}
+				break;
+			case Direction::Corner:
+				angle += PI;
 				break;
 			default:
 				break;
 			}
 
 			blobMotion.velocity = { cos(angle) * blobMagnitude, sin(angle) * blobMagnitude };
-			//blobMotion.velocity = -blobMotion.velocity;
+			//blobMotion.velocity = { 0.f, 0.f};
 
 		}
 		else {
