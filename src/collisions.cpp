@@ -22,31 +22,34 @@ void CollisionSystem::initialize_collisions() {
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
 	auto blob_blob_collision = [](auto entity, auto entity_other, Direction dir) {
 
-		bool switched = false;
-		Motion& incomingMotion;
 		// entity_other is colliding with entity
 		auto& blobMotion1 = ECS::registry<Motion>.get(entity);
 		auto& blobMotion2 = ECS::registry<Motion>.get(entity_other);
 
-		float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
-		float otherBlobMagnitude = Utils::getVelocityMagnitude(otherBlobMotion);
+		float blobMagnitude = Utils::getVelocityMagnitude(blobMotion1);
+		float otherBlobMagnitude = Utils::getVelocityMagnitude(blobMotion2);
 		float finalVelocity = (blobMagnitude + otherBlobMagnitude) / 2;
 
-		if (blobMagnitude > otherBlobMagnitude) {
-			incomingMotion = blobMotion1;
-		}
-		else {
-			incomingMotion = blobMotion2;
-			switched = true;
-		}
+		bool switched = otherBlobMagnitude > blobMagnitude;
+		Motion& incomingMotion = !switched ? blobMotion1 : blobMotion2;
 
 		// Calculate angles
 		float originalAngle = atan2(incomingMotion.velocity.y, incomingMotion.velocity.x);
-		float impactAngle = atan2(blobMotion1.position.y - blobMotion2.position.y, blobMotion1.position.x - blobMotion2.position.x);
-		impactAngle = switched ? -impactAngle : impactAngle;
-		float derivedAngle = impactAngle > originalAngle ? impactAngle + PI / 2 : impactAngle - PI / 2;
+		float impactAngle = !switched ?
+			atan2(blobMotion2.position.y - blobMotion1.position.y, blobMotion2.position.x - blobMotion1.position.x) :
+			atan2(blobMotion1.position.y - blobMotion2.position.y, blobMotion1.position.x - blobMotion2.position.x);
+		//impactAngle = switched ? -impactAngle : impactAngle;
+		if (impactAngle < 0 && originalAngle > 0)
+			originalAngle = originalAngle - 2*PI;
+		else if (impactAngle > 0 && originalAngle < 0)
+			originalAngle = originalAngle + 2*PI;
 
-		if (!switch) {
+		float derivedAngle = impactAngle > originalAngle ? impactAngle - PI / 2 : impactAngle + PI / 2;
+		//std::cout << originalAngle << ": Direction of incoming blob\n";
+		//std::cout << impactAngle << ": Direction of collided blob\n";
+		//std::cout << derivedAngle << ": Direction of deflected blob\n";
+
+		if (!switched) {
 			blobMotion1.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
 			blobMotion2.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
 		}
