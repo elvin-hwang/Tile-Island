@@ -120,6 +120,8 @@ struct ShadedMesh
 	Mesh mesh;
 	Effect effect;
 	Texture texture;
+	float num_rows = 1.f;
+	float num_columns = 1.f;
 };
 
 // Cache for ShadedMesh resources (mesh consisting of vertex and index buffer, the vertex and fragment shaders, and the texture)
