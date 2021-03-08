@@ -66,7 +66,7 @@ int main()
         
 		physics.step(elapsed_ms, window_size_in_game_units);
 		collision.handle_collisions();
-		renderer.draw(window_size_in_game_units);
+		renderer.draw(elapsed_ms, window_size_in_game_units);
 	}
 
 	return EXIT_SUCCESS;

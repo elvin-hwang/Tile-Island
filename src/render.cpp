@@ -2,8 +2,13 @@
 #include "render.hpp"
 #include "render_components.hpp"
 #include "tiny_ecs.hpp"
+#include "blobule.hpp"
 
 #include <iostream>
+
+float ANIMATION_FREQUENCY = 500.f; // Milliseconds between sprite frame updates
+float time_elapsed = 0.f;
+float frame_number = 1.f; // Start all sprite sheets at first frame
 
 void RenderSystem::drawTexturedMesh(ECS::Entity entity, const mat3& projection)
 {
@@ -32,6 +37,38 @@ void RenderSystem::drawTexturedMesh(ECS::Entity entity, const mat3& projection)
 
 	// Setting vertex and index buffers
 	glBindBuffer(GL_ARRAY_BUFFER, texmesh.mesh.vbo);
+
+	// If the texmesh has more than one row and column (ie. is a sprite sheet)
+	if (texmesh.num_rows > 1.f && texmesh.num_columns > 1.f)
+	{
+		TexturedVertex vertices[4];
+		vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
+		vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
+		vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
+		vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
+
+		// Blobule specific animations
+		if (ECS::registry<Blobule>.has(entity))
+		{
+			// If the blobule is moving we're using the first row in the sprite sheet
+			if (abs(motion.velocity.x) > 0.f || abs(motion.velocity.y) > 0.f)
+			{
+				vertices[0].texcoord = { (frame_number - 1.f) / texmesh.num_columns, 1.f };
+				vertices[1].texcoord = { frame_number / texmesh.num_columns, 1.f };
+				vertices[2].texcoord = { frame_number / texmesh.num_columns, 1.f / texmesh.num_rows };
+				vertices[3].texcoord = { (frame_number - 1.f) / texmesh.num_columns, 1.f / texmesh.num_rows };
+			}
+			// If the blobule is not moving we're using the second row in the sprite sheet
+			else
+			{
+				vertices[0].texcoord = { (frame_number - 1.f) / texmesh.num_columns, 1.f / texmesh.num_rows };
+				vertices[1].texcoord = { frame_number / texmesh.num_columns, 1.f / texmesh.num_rows };
+				vertices[2].texcoord = { frame_number / texmesh.num_columns, 0.f };
+				vertices[3].texcoord = { (frame_number - 1.f) / texmesh.num_columns, 0.f };
+			}
+		}
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	}
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, texmesh.mesh.ibo);
 	gl_has_errors();
 
@@ -85,7 +122,7 @@ void RenderSystem::drawTexturedMesh(ECS::Entity entity, const mat3& projection)
 }
 
 // Draw the intermediate texture to the screen, with some distortion to simulate water
-void RenderSystem::drawToScreen() 
+void RenderSystem::drawToScreen()
 {
 	// Setting shaders
 	glUseProgram(screen_sprite.effect.program);
@@ -102,7 +139,7 @@ void RenderSystem::drawToScreen()
 	glClearDepth(1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	gl_has_errors();
-	
+
 	// Disable alpha channel for mapping the screen texture onto the real screen
 	glDisable(GL_BLEND); // we have a single texture without transparency. Areas with alpha <1 cab arise around the texture transparency boundary, enabling blending would make them visible.
 	glDisable(GL_DEPTH_TEST);
@@ -143,8 +180,16 @@ void RenderSystem::drawToScreen()
 
 // Render our game world
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
-void RenderSystem::draw(vec2 window_size_in_game_units)
+void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 {
+	time_elapsed += elapsed_ms;
+	if (time_elapsed > ANIMATION_FREQUENCY) {
+		time_elapsed = 0.f;
+		frame_number++;
+		if (frame_number > 3) // Hardcoded to 3 frames per row, will have a better solution soon!
+			frame_number = 1;
+	}
+
 	// Getting size of window
 	ivec2 frame_buffer_size; // in pixels
 	glfwGetFramebufferSize(&window, &frame_buffer_size.x, &frame_buffer_size.y);
@@ -197,7 +242,7 @@ void gl_has_errors()
 
 	if (error == GL_NO_ERROR)
 		return;
-	
+
 	const char* error_str = "";
 	while (error != GL_NO_ERROR)
 	{
