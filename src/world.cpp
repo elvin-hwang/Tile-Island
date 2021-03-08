@@ -448,7 +448,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 				}
 
 				Blobule::removeTrajectory(active_player);
-				blobuleMoved = false;
+				blobuleMoved = true;
 			}
 		}
 	}
