@@ -58,6 +58,7 @@ namespace DebugSystem
 		motion.velocity = { 0, 0 };
 		motion.position = position;
 		motion.scale = scale;
+		motion.isCollidable = false;
 
 		ECS::registry<DebugComponent>.emplace(entity);
 	}
@@ -67,6 +68,31 @@ namespace DebugSystem
 		while (ECS::registry<DebugComponent>.entities.size() > 0) {
 			ECS::ContainerInterface::remove_all_components_of(ECS::registry<DebugComponent>.entities.back());
         }
+	}
+
+	void createBox(vec2 position, vec2 size)
+	{
+		auto scale_horizontal_line = size;
+		scale_horizontal_line.y *= 0.05f;
+		auto scale_vertical_line = size;
+		scale_vertical_line.x *= 0.05f;
+
+		vec2 topPoint = position;
+		topPoint.y -= size.y / 2;
+
+		vec2 bottomPoint = position;
+		bottomPoint.y += size.y / 2;
+
+		vec2 leftPoint = position;
+		leftPoint.x -= size.x / 2;
+
+		vec2 rightPoint = position;
+		rightPoint.x += size.x / 2;
+
+		DebugSystem::createLine(topPoint, scale_horizontal_line);
+		DebugSystem::createLine(bottomPoint, scale_horizontal_line);
+		DebugSystem::createLine(leftPoint, scale_vertical_line);
+		DebugSystem::createLine(rightPoint, scale_vertical_line);
 	}
 
 	bool in_debug_mode = false;

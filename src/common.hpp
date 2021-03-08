@@ -40,7 +40,9 @@ struct Motion {
 	vec2 position = { 0, 0 };
 	float angle = 0;
 	float friction = 0;
+	float dragDistance = 0;
 	vec2 velocity = { 0, 0 };
+	vec2 direction = { 0, 0 };
 	vec2 scale = { 0, 0 };
 	bool isCollidable = false;
 	std::string shape = "square";
@@ -52,4 +54,11 @@ enum class EggState { normal, move };
 
 struct EggAi {
 	EggState state = EggState::normal;
+	bool initBehaviour = false;
 };
+
+// Components to keep track of each color's splat count
+struct RedSplat {};
+struct BlueSplat {};
+struct GreenSplat {};
+struct YellowSplat {};

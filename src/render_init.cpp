@@ -48,9 +48,9 @@ void RenderSystem::createSprite(ShadedMesh& sprite, std::string texture_path, st
 	vertices[2].position = { +1.f/2, -1.f/2, 0.f };
 	vertices[3].position = { -1.f/2, -1.f/2, 0.f };
 	vertices[0].texcoord = { 0.f, 1.f };
-	vertices[1].texcoord = { 1.f, 1.f };
-	vertices[2].texcoord = { 1.f, 0.f };
-	vertices[3].texcoord = { 0.f, 0.f };
+	vertices[1].texcoord = { 1.f / sprite.num_columns, 1.f };
+	vertices[2].texcoord = { 1.f / sprite.num_columns, sprite.num_rows == 1.f ? 0 : 1.f / sprite.num_rows };
+	vertices[3].texcoord = { 0.f, sprite.num_rows == 1.f ? 0 : 1.f / sprite.num_rows };
 
 	// Counterclockwise as it's the default opengl front winding direction.
 	uint16_t indices[] = { 0, 3, 1, 1, 3, 2 };

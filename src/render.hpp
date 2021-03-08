@@ -22,7 +22,7 @@ public:
 	~RenderSystem();
 
 	// Draw all entities
-	void draw(vec2 window_size_in_game_units);
+	void draw(float elapsed_ms, vec2 window_size_in_game_units);
 
 	// Expose the creating of visual representations to other systems
 	static void createSprite(ShadedMesh& mesh_container, std::string texture_path, std::string shader_name);
