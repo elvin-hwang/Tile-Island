@@ -9,6 +9,15 @@
 #include <iostream>
 
 void CollisionSystem::initialize_collisions() {
+    
+    // Audio initialization.
+    collision_sound = Mix_LoadWAV(audio_path("collision.wav").c_str());
+    splash_sound = Mix_LoadWAV(audio_path("splash.wav").c_str());
+    
+    if (collision_sound == nullptr || splash_sound == nullptr)
+        throw std::runtime_error("Failed to load sounds make sure the data directory is present: "+
+            audio_path("collision.wav")+
+            audio_path("splash.wav"));
 
 	//observer for blobule - tile collision
 	blobule_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_tile_coll"));
@@ -20,8 +29,11 @@ void CollisionSystem::initialize_collisions() {
 	egg_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("egg_tile_coll"));
 
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
-	auto blob_blob_collision = [](auto entity, auto entity_other, Direction dir) {
-
+	auto blob_blob_collision = [this](auto entity, auto entity_other, Direction dir) {
+        
+        // Play collision_sound.
+        Mix_PlayChannel(-1, collision_sound, 0);
+        
 		// entity_other is colliding with entity
 		auto& blobMotion1 = ECS::registry<Motion>.get(entity);
 		auto& blobMotion2 = ECS::registry<Motion>.get(entity_other);
@@ -90,7 +102,7 @@ void CollisionSystem::initialize_collisions() {
 	};
 
 
-	auto blobule_tile_interaction = [](auto entity, auto entity_other, Direction dir) {
+	auto blobule_tile_interaction = [this](auto entity, auto entity_other, Direction dir) {
 		//subject tile to wall
 		auto& blob = ECS::registry<Blobule>.get(entity);
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
@@ -98,12 +110,18 @@ void CollisionSystem::initialize_collisions() {
 		auto& tileMotion = ECS::registry<Motion>.get(entity_other);
 
 		if (terrain.type == Water) {
+            // Play splash_sound.
+            Mix_PlayChannel(-1, splash_sound, 0);
+            
 			blobMotion.velocity = { 0.f, 0.f };
 			blobMotion.friction = 0.f;
 			blobMotion.position = blob.origin;
 		}
 		else if (terrain.type == Block)
 		{
+            // Play collision_sound.
+            Mix_PlayChannel(-1, collision_sound, 0);
+            
 			if (blobMotion.velocity.x == 0 && blobMotion.velocity.y == 0)
 			{
 				//std::cout << "resolving error state" << std::endl;

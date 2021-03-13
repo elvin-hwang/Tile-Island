@@ -83,11 +83,27 @@ WorldSystem::WorldSystem(ivec2 window_size_px)
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
+    
+    // Playing background music indefinitely
+        init_audio();
+        Mix_PlayMusic(background_music, -1);
+        std::cout << "Loaded music\n";
 }
 
 WorldSystem::~WorldSystem() {
 	Mix_CloseAudio();
-
+    // Destroy music components
+    if (background_music != nullptr)
+        Mix_FreeMusic(background_music);
+    if (slingshot_pull_sound != nullptr)
+        Mix_FreeChunk(slingshot_pull_sound);
+    if (slingshot_shot_sound != nullptr)
+        Mix_FreeChunk(slingshot_shot_sound);
+    if (blobule_yipee_sound != nullptr)
+        Mix_FreeChunk(blobule_yipee_sound);
+    if (game_start_sound != nullptr)
+        Mix_FreeChunk(game_start_sound);
+    
 	// Destroy all created components
 	ECS::ContainerInterface::clear_all_components();
 
@@ -103,6 +119,20 @@ void WorldSystem::init_audio()
 
 	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1)
 		throw std::runtime_error("Failed to open audio device");
+    
+    background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
+    slingshot_pull_sound = Mix_LoadWAV(audio_path("slingshot_pull.wav").c_str());
+    slingshot_shot_sound = Mix_LoadWAV(audio_path("slingshot_shot.wav").c_str());
+    blobule_yipee_sound = Mix_LoadWAV(audio_path("blobule_yipee.wav").c_str());
+    game_start_sound = Mix_LoadWAV(audio_path("game_start.wav").c_str());
+
+    if (background_music == nullptr || slingshot_pull_sound == nullptr || slingshot_shot_sound == nullptr || blobule_yipee_sound == nullptr || game_start_sound == nullptr)
+        throw std::runtime_error("Failed to load sounds make sure the data directory is present: "+
+                audio_path("music.wav")+
+                audio_path("slingshot_pull.wav")+
+                audio_path("slingshot_shot.wav")+
+                audio_path("blobule_yipee.wav")+
+                audio_path("game_start.wav"));
 }
 
 // Update our game world
@@ -254,6 +284,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	{
 		if (action == GLFW_PRESS && key == GLFW_KEY_SPACE)
 		{
+            Mix_PlayChannel(-1, game_start_sound, 0);
 			menuState = false;
 			restart();
 		}
@@ -377,7 +408,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		{
 			int w, h;
 			glfwGetWindowSize(window, &w, &h);
-
+            Mix_PlayChannel(-1, game_start_sound, 0);
 			restart();
 		}
 
@@ -426,6 +457,8 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !blobuleMoved)
 		{
+            Mix_PlayChannel(-1, slingshot_pull_sound, 0);
+            
 		    // store position of left click coordinates in mouse_press_x and mouse_press_y
 			glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
 			mouse_move = mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary;
@@ -436,6 +469,9 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 		    // check if left mouse click was on the asset
 			if (mouse_move)
 			{
+                Mix_PlayChannel(-1, slingshot_shot_sound, 0);
+                Mix_PlayChannel(-1, blobule_yipee_sound, 0);
+
 				mouse_move = false;
 
 				auto& blobMotion = ECS::registry<Motion>.get(active_player);
