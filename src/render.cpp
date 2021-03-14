@@ -3,7 +3,7 @@
 #include "render_components.hpp"
 #include "tiny_ecs.hpp"
 #include "blobule.hpp"
-
+#include "text.hpp"
 #include <iostream>
 
 float ANIMATION_FREQUENCY = 500.f; // Milliseconds between sprite frame updates
@@ -227,6 +227,16 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 		// Note, its not very efficient to access elements indirectly via the entity albeit iterating through all Sprites in sequence
 		drawTexturedMesh(entity, projection_2D);
 		gl_has_errors();
+	}
+
+	// Draw text components to the screen
+	// NOTE: for simplicity, text components are drawn in a second pass,
+	// on top of all texture mesh components. This should be reasonable
+	// for nearly all use cases. If you need text to appear behind meshes,
+	// consider using a depth buffer during rendering and adding a
+	// Z-component or depth index to all rendererable components.
+	for (const Text& text : ECS::registry<Text>.components) {
+		drawText(text, window_size_in_game_units);
 	}
 
 	// Truely render to the screen
