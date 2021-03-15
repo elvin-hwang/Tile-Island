@@ -10,6 +10,7 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include "tiny_ecs.hpp"
 
 // Forward declaration, see class definition below
 class Font;
@@ -71,6 +72,10 @@ struct Text {
 
     // The text's colour. Default value of {0.0f, 0.0f, 0.0f} (black)
     glm::vec3 colour;
+
+    // Function to create text entity for convenience
+    static ECS::Entity create_text(std::string content, vec2 position, float scale);
+
 };
 
 // Forward declaration, only for internal use.
@@ -151,3 +156,4 @@ private:
  * not to be used otherwise.
  */
 void drawText(const Text& text, glm::vec2 gameUnitSize);
+

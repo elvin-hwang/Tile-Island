@@ -533,3 +533,18 @@ void drawText(const Text& text, glm::vec2 gameUnitSize) {
         
     gl_has_errors();
 }
+
+// Function to create text entity for convenience
+ECS::Entity Text::create_text(std::string content, vec2 position, float scale)
+{
+    auto text = ECS::Entity();
+    auto coolFont = Font::load("data/fonts/Cool/Cool.TTF");
+
+    ECS::registry<Text>.insert(
+        text,
+        Text(content, coolFont, { position.x, position.y})
+    );
+    ECS::registry<Text>.get(text).scale = scale;
+    return text;
+}
+
