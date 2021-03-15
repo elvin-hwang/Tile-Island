@@ -13,11 +13,13 @@ void CollisionSystem::initialize_collisions() {
     // Audio initialization.
     collision_sound = Mix_LoadWAV(audio_path("collision.wav").c_str());
     splash_sound = Mix_LoadWAV(audio_path("splash.wav").c_str());
+    powerup_sound = Mix_LoadWAV(audio_path("powerup.wav").c_str());
     
     if (collision_sound == nullptr || splash_sound == nullptr)
         throw std::runtime_error("Failed to load sounds make sure the data directory is present: "+
             audio_path("collision.wav")+
-            audio_path("splash.wav"));
+            audio_path("splash.wav")+
+            audio_path("powerup.wav"));
 
 	//observer for blobule - tile collision
 	blobule_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_tile_coll"));
@@ -210,7 +212,9 @@ void CollisionSystem::initialize_collisions() {
 	};
 
 	// egg disappears on collision with blob (only use the second param)
-	auto remove_egg = [](auto entity, auto eggEntity, Direction dir) {
+	auto remove_egg = [this](auto entity, auto eggEntity, Direction dir) {
+        // Play splash_sound.
+        Mix_PlayChannel(-1, powerup_sound, 0);
 		ECS::ContainerInterface::remove_all_components_of(eggEntity);
 	};
 
