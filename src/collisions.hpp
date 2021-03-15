@@ -23,6 +23,7 @@ private:
     // Music References
     Mix_Chunk* collision_sound;
     Mix_Chunk* splash_sound;
+    Mix_Chunk* powerup_sound;
 };
 
  
