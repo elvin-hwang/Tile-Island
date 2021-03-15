@@ -16,6 +16,7 @@
 #include <sstream>
 #include <iostream>
 #include <egg.hpp>
+#include <text.hpp>
 
 
 // Game Configuration
@@ -111,22 +112,33 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	(void)elapsed_ms; // silence unused warning
 	(void)window_size_in_game_units; // silence unused warning
 
-	std::string activeColor = "";
+	std::string active_colour = "";
 	if (ECS::registry<Blobule>.has(active_player)) {
-		activeColor = ECS::registry<Blobule>.get(active_player).color;
+		active_colour = ECS::registry<Blobule>.get(active_player).color;
+		active_colour[0] = toupper(active_colour[0]);
 	}
 
 	// Giving our game a title.
 	std::stringstream title_ss;
-	std::string temp = activeColor;
-	temp[0] = toupper(temp[0]);
-	title_ss << "Welcome to Tile Island!" <<
-		"  Yellow: " << ECS::registry<YellowSplat>.entities.size() <<
-		"  Green: " << ECS::registry<GreenSplat>.entities.size() << 
-		"  Red: " << ECS::registry<RedSplat>.entities.size() << 
-		"  Blue: " << ECS::registry<BlueSplat>.entities.size() <<
-		"  Current Player: " << temp;
+	title_ss << "Welcome to Tile Island!";
 	glfwSetWindowTitle(window, title_ss.str().c_str());
+	
+	// Updating Score UI
+	std::stringstream scores;
+	std::stringstream current_player;
+	scores <<
+		"Yellow: " << ECS::registry<YellowSplat>.entities.size() <<
+		" Green: " << ECS::registry<GreenSplat>.entities.size() <<
+		" Red: " << ECS::registry<RedSplat>.entities.size() <<
+		" Blue: " << ECS::registry<BlueSplat>.entities.size();
+	current_player << "Current Player: " << active_colour;
+	
+	if (!menuState) {
+ 		if (ECS::registry<Text>.size() > 0) {
+			ECS::registry<Text>.get(score_text).content = scores.str();
+			ECS::registry<Text>.get(player_text).content = current_player.str();
+		}
+	}
 
 	// Friction implementation
 	for (auto& blob : ECS::registry<Blobule>.entities)
@@ -155,6 +167,7 @@ void WorldSystem::restart() {
 		ECS::ContainerInterface::list_all_components();
 
 		std::cout << "Restarting\n";
+		
 
 		// Reset other stuff
 		playerMove = 1;
@@ -237,6 +250,11 @@ void WorldSystem::restart() {
 			ECS::Entity entity = Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
 			//add movement things here
 		}
+
+		//Create Text
+		score_text = Text::create_text("score", { islandGrid[0][0].x - tile_width / 2, islandGrid[0][0].y - 30.0f }, 0.58);
+		player_text = Text::create_text("player", { islandGrid[0][0].x - tile_width / 2, islandGrid[0][0].y - 60.0f }, 0.58);
+
 	}
 }
 
