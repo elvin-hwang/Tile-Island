@@ -57,8 +57,6 @@ private:
 	ECS::Entity player_blobule2;
 	ECS::Entity player_blobule3;
 	ECS::Entity player_blobule4;
-	ECS::Entity score_text;
-	ECS::Entity player_text;
 
 	// C++ random number generator
 	std::default_random_engine rng;
