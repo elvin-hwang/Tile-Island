@@ -252,6 +252,9 @@ void WorldSystem::restart() {
 		}
 
 		//Create Text
+		if (ECS::registry<Text>.components.size() > 0){
+			ECS::registry<Text>.clear();
+		}
 		score_text = Text::create_text("score", { islandGrid[0][0].x - tile_width / 2, islandGrid[0][0].y - 30.0f }, 0.58);
 		player_text = Text::create_text("player", { islandGrid[0][0].x - tile_width / 2, islandGrid[0][0].y - 60.0f }, 0.58);
 
