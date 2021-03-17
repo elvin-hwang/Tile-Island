@@ -140,6 +140,7 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 			}
 		}
 	}
+
 	auto& egg_container = ECS::registry<Egg>;
 	for (unsigned int i = 0; i < egg_container.components.size(); i++)
 	{

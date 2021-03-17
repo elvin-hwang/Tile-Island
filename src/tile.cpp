@@ -83,10 +83,6 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     tile.splatEntity = ECS::Entity();
     ECS::registry<Motion>.emplace(tile.splatEntity);
 
-    // set rendering order
-    auto& renderingOrder = ECS::registry<RenderingOrder>.emplace(entity);
-    renderingOrder.order = 3;
-
     return entity;
 }
 
@@ -94,7 +90,7 @@ void Tile::setSplat(ECS::Entity entity, blobuleCol color) {
     if (!ECS::registry<Tile>.has(entity)) {
         return;
     }
-    std::cout << "making splat" << std::endl;
+
     auto& terrain = ECS::registry<Terrain>.get(entity);
     if (terrain.type == Water || terrain.type == Block) {
         return;
@@ -116,21 +112,18 @@ void Tile::setSplat(ECS::Entity entity, blobuleCol color) {
             break;
     }
 
-    // guard preventing more splats from being made on the same tile
+    // guard preventing more splats of the same color from being made on the same tile
     if (colorMap.find(entity.id) != colorMap.end() && colorMap.find(entity.id)->second == stringColor)
     {
         return;
     }
+    //std::cout << "making splat" << std::endl;
 
     colorMap[entity.id] = stringColor;
 
     auto& tile = ECS::registry<Tile>.get(entity);
     ECS::Entity splatEntity = tile.splatEntity;
     ECS::ContainerInterface::remove_all_components_of(splatEntity);
-
-    // set rendering order
-    auto& renderingOrder = ECS::registry<RenderingOrder>.emplace(splatEntity);
-    renderingOrder.order = 2;
 
     std::string key = "splat_";
 
