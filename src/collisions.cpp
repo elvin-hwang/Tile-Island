@@ -75,6 +75,47 @@ void circle_square_penetration_free_collision(Motion& blobMotion, Motion& tileMo
 	}
 }
 
+void egg_square_penetration_free_collision(Motion& blobMotion, Motion& tileMotion, Direction dir)
+{
+	if (blobMotion.velocity.x == 0 && blobMotion.velocity.y == 0)
+	{
+		return;
+	}
+
+	float leftEdge = tileMotion.position.x - tileMotion.scale.x / 2;
+	float rightEdge = tileMotion.position.x + tileMotion.scale.x / 2;
+	float topEdge = tileMotion.position.y - tileMotion.scale.y / 2;
+	float bottomEdge = tileMotion.position.y + tileMotion.scale.y / 2;
+
+	float closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
+	float closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+
+	vec2 dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
+
+	float scale = 0;
+	if (dir == Direction::Left || dir == Direction::Right)
+	{
+		scale = blobMotion.scale.x;
+	}
+	else {
+		scale = blobMotion.scale.y;
+	}
+
+	float penetrationDepth = scale / 2 - glm::length(dist);
+	const vec2 reverseUnitVel = -(blobMotion.velocity / glm::length(blobMotion.velocity));
+	
+	while (penetrationDepth > 1)
+	{
+		float shiftX = blobMotion.position.x + reverseUnitVel.x * 2;
+		float shiftY = blobMotion.position.y + reverseUnitVel.y * 2;
+		blobMotion.position = vec2(shiftX, shiftY);
+		closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
+		closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+		dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
+		penetrationDepth = scale / 2 - glm::length(dist);
+	}
+}
+
 void circle_circle_complex_collision_resolution(Motion& blobMotion1, Motion& blobMotion2)
 {
 	float blobMagnitude = Utils::getVelocityMagnitude(blobMotion1);
@@ -220,13 +261,24 @@ void CollisionSystem::initialize_collisions() {
 	auto egg_tile_interaction = [](auto entity, auto entity_other, Direction dir) {
 
 		auto& eggMotion = ECS::registry<Motion>.get(entity);
+		auto& tileMotion = ECS::registry<Motion>.get(entity_other);
 		auto& terrain = ECS::registry<Terrain>.get(entity_other);
 
 		if (terrain.type == Water || terrain.type == Block)
 		{
-			std::cout << "COLLISION" << std::endl;
-			eggMotion.velocity = -eggMotion.velocity;
-			eggMotion.direction = -eggMotion.direction;
+			egg_square_penetration_free_collision(eggMotion, tileMotion, dir);
+
+			if (dir == Direction::Top || dir == Direction::Bottom)
+			{
+				eggMotion.velocity.y = -eggMotion.velocity.y;
+				eggMotion.direction.y = -eggMotion.direction.y;
+			}
+			else if (dir == Direction::Left || dir == Direction::Right)
+			{
+				eggMotion.velocity.x = -eggMotion.velocity.x;
+				eggMotion.direction.x = -eggMotion.direction.x;
+			}
+			
 		}
 	};
 
