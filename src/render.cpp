@@ -5,6 +5,7 @@
 #include "blobule.hpp"
 #include "text.hpp"
 #include <iostream>
+#include <egg.hpp>
 
 float ANIMATION_FREQUENCY = 500.f; // Milliseconds between sprite frame updates
 float time_elapsed = 0.f;
@@ -219,8 +220,44 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 	float ty = -(top + bottom) / (top - bottom);
 	mat3 projection_2D{ { sx, 0.f, 0.f },{ 0.f, sy, 0.f },{ tx, ty, 1.f } };
 
-	// Draw all textured meshes that have a position and size component
+	std::vector<ECS::Entity> firstEntities;
+	std::vector<ECS::Entity> secondEntities;
+	std::vector<ECS::Entity> thirdEntities;
+
 	for (ECS::Entity entity : ECS::registry<ShadedMeshRef>.entities)
+	{
+		if (ECS::registry<Blobule>.has(entity) || ECS::registry<Egg>.has(entity)) {
+			firstEntities.push_back(entity);
+		}
+		else if (ECS::registry<BlueSplat>.has(entity) || ECS::registry<RedSplat>.has(entity) || ECS::registry<YellowSplat>.has(entity) || ECS::registry<RedSplat>.has(entity)) {
+			secondEntities.push_back(entity);
+		}
+		else {
+			thirdEntities.push_back(entity);
+		}
+	}
+	// Renders tiles and other thirdlevel entities
+	for (ECS::Entity entity : thirdEntities)
+	{
+		if (!ECS::registry<Motion>.has(entity))
+			continue;
+		// Note, its not very efficient to access elements indirectly via the entity albeit iterating through all Sprites in sequence
+		drawTexturedMesh(entity, projection_2D);
+		gl_has_errors();
+	}
+
+	// Renders splats and other second level entities
+	for (ECS::Entity entity : secondEntities)
+	{
+		if (!ECS::registry<Motion>.has(entity))
+			continue;
+		// Note, its not very efficient to access elements indirectly via the entity albeit iterating through all Sprites in sequence
+		drawTexturedMesh(entity, projection_2D);
+		gl_has_errors();
+	}
+
+	// renders blobs and eggs and other first level entities
+	for (ECS::Entity entity : firstEntities)
 	{
 		if (!ECS::registry<Motion>.has(entity))
 			continue;

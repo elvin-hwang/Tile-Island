@@ -49,7 +49,7 @@ ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col, std::string co
     motion.isCollidable = true;
     motion.shape = "circle";
 
-    // Create and (empty) Blobule component to be able to refer to all tiles
+    // Create and (empty) Blobule component to be able to refer to all blobs
     auto& blob = ECS::registry<Blobule>.emplace(entity);
     blob.origin = position;
     blob.color = colString;
