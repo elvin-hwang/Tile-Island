@@ -16,6 +16,7 @@
 #include <sstream>
 #include <iostream>
 #include <egg.hpp>
+#include <text.hpp>
 
 
 // Game Configuration
@@ -83,11 +84,27 @@ WorldSystem::WorldSystem(ivec2 window_size_px)
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
+    
+    // Playing background music indefinitely
+        init_audio();
+        Mix_PlayMusic(background_music, -1);
+        std::cout << "Loaded music\n";
 }
 
 WorldSystem::~WorldSystem() {
 	Mix_CloseAudio();
-
+    // Destroy music components
+    if (background_music != nullptr)
+        Mix_FreeMusic(background_music);
+    if (slingshot_pull_sound != nullptr)
+        Mix_FreeChunk(slingshot_pull_sound);
+    if (slingshot_shot_sound != nullptr)
+        Mix_FreeChunk(slingshot_shot_sound);
+    if (blobule_yipee_sound != nullptr)
+        Mix_FreeChunk(blobule_yipee_sound);
+    if (game_start_sound != nullptr)
+        Mix_FreeChunk(game_start_sound);
+    
 	// Destroy all created components
 	ECS::ContainerInterface::clear_all_components();
 
@@ -103,6 +120,20 @@ void WorldSystem::init_audio()
 
 	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1)
 		throw std::runtime_error("Failed to open audio device");
+    
+    background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
+    slingshot_pull_sound = Mix_LoadWAV(audio_path("slingshot_pull.wav").c_str());
+    slingshot_shot_sound = Mix_LoadWAV(audio_path("slingshot_shot.wav").c_str());
+    blobule_yipee_sound = Mix_LoadWAV(audio_path("blobule_yipee.wav").c_str());
+    game_start_sound = Mix_LoadWAV(audio_path("game_start.wav").c_str());
+
+    if (background_music == nullptr || slingshot_pull_sound == nullptr || slingshot_shot_sound == nullptr || blobule_yipee_sound == nullptr || game_start_sound == nullptr)
+        throw std::runtime_error("Failed to load sounds make sure the data directory is present: "+
+                audio_path("music.wav")+
+                audio_path("slingshot_pull.wav")+
+                audio_path("slingshot_shot.wav")+
+                audio_path("blobule_yipee.wav")+
+                audio_path("game_start.wav"));
 }
 
 // Update our game world
@@ -111,22 +142,33 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	(void)elapsed_ms; // silence unused warning
 	(void)window_size_in_game_units; // silence unused warning
 
-	std::string activeColor = "";
+	std::string active_colour = "";
 	if (ECS::registry<Blobule>.has(active_player)) {
-		activeColor = ECS::registry<Blobule>.get(active_player).color;
+		active_colour = ECS::registry<Blobule>.get(active_player).color;
+		active_colour[0] = toupper(active_colour[0]);
 	}
 
 	// Giving our game a title.
 	std::stringstream title_ss;
-	std::string temp = activeColor;
-	temp[0] = toupper(temp[0]);
-	title_ss << "Welcome to Tile Island!" <<
-		"  Yellow: " << ECS::registry<YellowSplat>.entities.size() <<
-		"  Green: " << ECS::registry<GreenSplat>.entities.size() << 
-		"  Red: " << ECS::registry<RedSplat>.entities.size() << 
-		"  Blue: " << ECS::registry<BlueSplat>.entities.size() <<
-		"  Current Player: " << temp;
+	title_ss << "Welcome to Tile Island!";
 	glfwSetWindowTitle(window, title_ss.str().c_str());
+	
+	// Updating Score UI
+	std::stringstream scores;
+	std::stringstream current_player;
+	scores <<
+		"Yellow: " << ECS::registry<YellowSplat>.entities.size() <<
+		" Green: " << ECS::registry<GreenSplat>.entities.size() <<
+		" Red: " << ECS::registry<RedSplat>.entities.size() <<
+		" Blue: " << ECS::registry<BlueSplat>.entities.size();
+	current_player << "Current Player: " << active_colour;
+	
+	if (!menuState) {
+ 		if (ECS::registry<Text>.size() > 0) {
+			ECS::registry<Text>.get(score_text).content = scores.str();
+			ECS::registry<Text>.get(player_text).content = current_player.str();
+		}
+	}
 
 	// Friction implementation
 	for (auto& blob : ECS::registry<Blobule>.entities)
@@ -155,6 +197,7 @@ void WorldSystem::restart() {
 		ECS::ContainerInterface::list_all_components();
 
 		std::cout << "Restarting\n";
+		
 
 		// Reset other stuff
 		playerMove = 1;
@@ -203,10 +246,32 @@ void WorldSystem::restart() {
 					Tile::createTile({ i, j }, Block); // left, right wall
 				}
 				else if (i < window_width / 2) {
-					Tile::createTile({ i, j }, Ice);
+                    if (i == 281.f && j == 237.f){
+                        Tile::createTile({ i, j }, Speed);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 325.f && j == 545.f){
+                        Tile::createTile({ i, j }, Teleport);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else {
+                        Tile::createTile({ i, j }, Ice);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
 				}
 				else {
-					Tile::createTile({ i, j }, Mud);
+                    if (i == 633.f && j == 457.f){
+                        Tile::createTile({ i, j }, Speed);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 721.f && j == 325.f){
+                        Tile::createTile({ i, j }, Teleport);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else {
+                        Tile::createTile({ i, j }, Mud);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
 				}
 
 				verticalIndex++;
@@ -237,6 +302,14 @@ void WorldSystem::restart() {
 			ECS::Entity entity = Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
 			//add movement things here
 		}
+
+		//Create Text
+		if (ECS::registry<Text>.components.size() > 0){
+			ECS::registry<Text>.clear();
+		}
+		score_text = Text::create_text("score", { islandGrid[0][0].x - tile_width / 2, islandGrid[0][0].y - 30.0f }, 0.58);
+		player_text = Text::create_text("player", { islandGrid[0][0].x - tile_width / 2, islandGrid[0][0].y - 60.0f }, 0.58);
+
 	}
 }
 
@@ -254,6 +327,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	{
 		if (action == GLFW_PRESS && key == GLFW_KEY_SPACE)
 		{
+            Mix_PlayChannel(-1, game_start_sound, 0);
 			menuState = false;
 			restart();
 		}
@@ -377,7 +451,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		{
 			int w, h;
 			glfwGetWindowSize(window, &w, &h);
-
+            Mix_PlayChannel(-1, game_start_sound, 0);
 			restart();
 		}
 
@@ -426,6 +500,8 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !blobuleMoved)
 		{
+            Mix_PlayChannel(-1, slingshot_pull_sound, 0);
+            
 		    // store position of left click coordinates in mouse_press_x and mouse_press_y
 			glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
 			mouse_move = mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary;
@@ -436,6 +512,9 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 		    // check if left mouse click was on the asset
 			if (mouse_move)
 			{
+                Mix_PlayChannel(-1, slingshot_shot_sound, 0);
+                Mix_PlayChannel(-1, blobule_yipee_sound, 0);
+
 				mouse_move = false;
 
 				auto& blobMotion = ECS::registry<Motion>.get(active_player);

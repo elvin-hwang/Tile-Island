@@ -2,9 +2,12 @@
 #include "tile.hpp"
 #include "render.hpp"
 #include "blobule.hpp"
+#include <iostream>
 
 // Initialize size of tiles.
 float size = 0.13f;
+
+std::unordered_map<int, std::string> colorMap;
 
 ECS::Entity Tile::createTile(vec2 position, TerrainType type)
 {
@@ -33,6 +36,16 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     case Mud:
         key = "tile_purple";
         friction = 0.04f;
+        motion.isCollidable = false;
+        break;
+    case Speed:
+        key = "tile_speed";
+        friction = 0.01f;
+        motion.isCollidable = false;
+        break;
+    case Teleport:
+        key = "tile_teleport";
+        friction = 0.01f;
         motion.isCollidable = false;
         break;
     default:
@@ -79,6 +92,7 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     auto& tile = ECS::registry<Tile>.emplace(entity);
     tile.splatEntity = ECS::Entity();
     ECS::registry<Motion>.emplace(tile.splatEntity);
+
     return entity;
 }
 
@@ -86,10 +100,36 @@ void Tile::setSplat(ECS::Entity entity, blobuleCol color) {
     if (!ECS::registry<Tile>.has(entity)) {
         return;
     }
+
     auto& terrain = ECS::registry<Terrain>.get(entity);
     if (terrain.type == Water || terrain.type == Block) {
         return;
     }
+
+    std::string stringColor = "";
+    switch (color) {
+        case blobuleCol::Blue:
+            stringColor = "blue";
+            break;
+        case blobuleCol::Green:
+            stringColor = "green";
+            break;
+        case blobuleCol::Red:
+            stringColor = "red";
+            break;
+        default:
+            stringColor = "yellow";
+            break;
+    }
+
+    // guard preventing more splats of the same color from being made on the same tile
+    if (colorMap.find(entity.id) != colorMap.end() && colorMap.find(entity.id)->second == stringColor)
+    {
+        return;
+    }
+    //std::cout << "making splat" << std::endl;
+
+    colorMap[entity.id] = stringColor;
 
     auto& tile = ECS::registry<Tile>.get(entity);
     ECS::Entity splatEntity = tile.splatEntity;
@@ -97,24 +137,20 @@ void Tile::setSplat(ECS::Entity entity, blobuleCol color) {
 
     std::string key = "splat_";
 
+    key += stringColor;
+
     switch (color) {
     case blobuleCol::Blue:
-        key += "blue";
         ECS::registry<BlueSplat>.emplace(splatEntity);
         break;
     case blobuleCol::Green:
-        key += "green";
         ECS::registry<GreenSplat>.emplace(splatEntity);
         break;
     case blobuleCol::Red:
-        key += "red";
         ECS::registry<RedSplat>.emplace(splatEntity);
         break;
-    case blobuleCol::Yellow:
-        key += "yellow";
-        ECS::registry<YellowSplat>.emplace(splatEntity);
-        break;
     default:
+        ECS::registry<YellowSplat>.emplace(splatEntity);
         break;
     }
 

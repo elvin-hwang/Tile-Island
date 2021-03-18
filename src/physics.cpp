@@ -32,23 +32,24 @@ Direction box_circle_collides(const Motion& box, const Motion& circle)
 	float left_edge = box.position.x - boxHalfWidth; // x1
 
 	// Define circle radius and center of circle position
-	float circle_radius = circle.scale.x / 2.f;
+	float circle_radius_x = circle.scale.x / 2.f;
+	float circle_radius_y = circle.scale.y / 2.f;
 	vec2 center_of_circle = circle.position;
 
 	// Temporary "improvement" by using 4???
 	// Top edge collision
-	if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ box.position.x - boxHalfWidth, top_edge }, vec2{ box.position.x + boxHalfWidth, top_edge }))
+	if (Utils::circleIntersectsLine(center_of_circle, circle_radius_y, vec2{ box.position.x - boxHalfWidth, top_edge }, vec2{ box.position.x + boxHalfWidth, top_edge }))
 		return Direction::Top;
 	// Bottom edge collision
-	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ box.position.x - boxHalfWidth, bottom_edge }, vec2{ box.position.x + boxHalfWidth, bottom_edge }))
+	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius_y, vec2{ box.position.x - boxHalfWidth, bottom_edge }, vec2{ box.position.x + boxHalfWidth, bottom_edge }))
 		return Direction::Bottom;
 	// Left edge collision
-	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ left_edge, box.position.y - boxHalfWidth }, vec2{ left_edge, box.position.y + boxHalfWidth }))
+	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius_x, vec2{ left_edge, box.position.y - boxHalfWidth }, vec2{ left_edge, box.position.y + boxHalfWidth }))
 		return Direction::Left;
 	// Right edge collision
-	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius, vec2{ right_edge, box.position.y - boxHalfWidth }, vec2{ right_edge, box.position.y + boxHalfWidth }))
+	else if (Utils::circleIntersectsLine(center_of_circle, circle_radius_x, vec2{ right_edge, box.position.y - boxHalfWidth }, vec2{ right_edge, box.position.y + boxHalfWidth }))
 		return Direction::Right;
-	else if (Utils::circleTouchesCorner(center_of_circle, circle_radius, box.position, boxHalfWidth))
+	else if (Utils::circleTouchesCorner(center_of_circle, circle_radius_x, box.position, boxHalfWidth))
 		return Direction::Corner;
 	else 
 		return Direction::unknown;
@@ -140,6 +141,7 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 			}
 		}
 	}
+
 	auto& egg_container = ECS::registry<Egg>;
 	for (unsigned int i = 0; i < egg_container.components.size(); i++)
 	{
