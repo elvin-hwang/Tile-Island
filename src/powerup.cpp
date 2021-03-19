@@ -26,7 +26,7 @@ void PowerupSystem::handle_powerups()
 			std::cout << powerup.power << std::endl;
 			powerup.duration = 1;
 			Motion& motion = ECS::registry<Motion>.get(entity);
-			motion.scale *= vec2(2.f, 2.f);
+			motion.scale *= vec2(1.5f, 1.5f);
 		}
 
 	}
