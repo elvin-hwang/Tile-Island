@@ -280,23 +280,18 @@ void WorldSystem::restart() {
 				else if (i < window_width / 2) {
                     if (i == 281.f && j == 237.f){
                         Tile::createTile({ i, j }, Speed);
-                        // std::cout << "(" << i << ", " << j << ")";
                     }
                     else if (i == 325.f && j == 545.f){
                         Tile::createTile({ i, j }, Teleport);
-                        // std::cout << "(" << i << ", " << j << ")";
                     }
                     else if (i == 149.f && j == 413.f){
                         Tile::createTile({ i, j }, Speed_RIGHT);
-                        // std::cout << "(" << i << ", " << j << ")";
                     }
                     else if (i == 457.f && j == 149.f){
                         Tile::createTile({ i, j }, Speed_DOWN);
-                        // std::cout << "(" << i << ", " << j << ")";
                     }
                     else {
                         Tile::createTile({ i, j }, Ice);
-                        std::cout << "(" << i << ", " << j << ")";
                     }
 				}
 				else {
@@ -492,7 +487,15 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                 playerMove = 1;
                 current_turn++;
             }
-            next_egg_spawn--;
+
+            if (ECS::registry<Egg>.components.size() < MAX_EGGS)
+            {
+                next_egg_spawn--;
+                if (next_egg_spawn < 0)
+                    next_egg_spawn = 0;
+                std::cout << next_egg_spawn << std::endl;
+            }
+
             blobuleMoved = false;
         }
 
