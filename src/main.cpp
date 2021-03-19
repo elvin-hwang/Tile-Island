@@ -15,6 +15,7 @@
 #include "collisions.hpp"
 #include "ai.hpp"
 #include "debug.hpp"
+#include <powerup.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -37,6 +38,7 @@ int main()
 	PhysicsSystem physics;
 	CollisionSystem collision;
 	AISystem ai;
+	PowerupSystem powerup;
 
 	// Set all states to default
 	world.restart();
@@ -58,6 +60,7 @@ int main()
 		ai.step(elapsed_ms, window_size_in_game_units);
 		world.step(elapsed_ms, window_size_in_game_units);
 		physics.step(elapsed_ms, window_size_in_game_units);
+		powerup.handle_powerups();
 		collision.handle_collisions();
 		renderer.draw(elapsed_ms, window_size_in_game_units);
 	}
