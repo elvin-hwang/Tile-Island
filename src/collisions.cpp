@@ -8,7 +8,7 @@
 #include <egg.hpp>
 #include <iostream>
 
-const float SPEED_BOOST = 500.f;
+const float SPEED_BOOST = 50.f;
 
 void circle_circle_penetration_free_collision(Motion& blobMotion1, Motion& blobMotion2)
 {
@@ -236,9 +236,41 @@ void CollisionSystem::initialize_collisions() {
 			blobMotion.position = blob.origin;
 		}
         else if (terrain.type == Speed) {
-			blobMotion.velocity.x = SPEED_BOOST;
+            // Check for positive and negative x-velocity.
+            if (blobMotion.velocity.x >= 0){
+                blobMotion.velocity = {blobMotion.velocity.x + SPEED_BOOST,  blobMotion.velocity.y};
+            }
+            else {
+                blobMotion.velocity = {blobMotion.velocity.x - SPEED_BOOST,  blobMotion.velocity.y};
+            }
+            
+            // Check for positive and negative y-velocity.
+            if (blobMotion.velocity.y >= 0){
+                blobMotion.velocity = {blobMotion.velocity.x,  blobMotion.velocity.y  + SPEED_BOOST};
+            }
+            else {
+                blobMotion.velocity = {blobMotion.velocity.x,  blobMotion.velocity.y  - SPEED_BOOST};
+            }
+        }
+        else if (terrain.type == Speed_UP) {
+			blobMotion.velocity.x = 15.f;
 			// setting Y vel so that blob cant get stuck between speed tile and wall forever
-			blobMotion.velocity.y = 15.f;
+            blobMotion.velocity.y += SPEED_BOOST;
+        }
+        else if (terrain.type == Speed_LEFT) {
+            blobMotion.velocity.x -= SPEED_BOOST;
+            // setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y = 15.f;
+        }
+        else if (terrain.type == Speed_RIGHT) {
+            blobMotion.velocity.x += SPEED_BOOST;
+            // setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y = 15.f;
+        }
+        else if (terrain.type == Speed_DOWN) {
+            blobMotion.velocity.x = 15.f;
+            // setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y -= SPEED_BOOST;
         }
         else if (terrain.type == Teleport) {
             // For the Teleporter on the Left.
@@ -292,15 +324,18 @@ void CollisionSystem::initialize_collisions() {
 	};
 
 	auto change_tile_color = [](auto entity, auto entity_other, Direction dir) {
-		auto tileMotion = ECS::registry<Motion>.get(entity_other);
-		auto blobMotion = ECS::registry<Motion>.get(entity);
-		vec2 difference_between_centers = tileMotion.position - blobMotion.position;
-		float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
-		float blobMotion_hit_radius = blobMotion.scale.x / 1.3f;
-		if (distance_between_centers <= blobMotion_hit_radius) {
-			auto& blob = ECS::registry<Blobule>.get(entity);
-			Tile::setSplat(entity_other, blob.colEnum);
-		}
+        auto& terrain = ECS::registry<Terrain>.get(entity_other);
+        if (terrain.type != Speed_UP && terrain.type != Speed_LEFT && terrain.type != Speed_RIGHT && terrain.type != Speed_DOWN && terrain.type != Speed && terrain.type != Teleport){
+            auto tileMotion = ECS::registry<Motion>.get(entity_other);
+            auto blobMotion = ECS::registry<Motion>.get(entity);
+            vec2 difference_between_centers = tileMotion.position - blobMotion.position;
+            float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
+            float blobMotion_hit_radius = blobMotion.scale.x / 1.3f;
+            if (distance_between_centers <= blobMotion_hit_radius) {
+                auto& blob = ECS::registry<Blobule>.get(entity);
+                Tile::setSplat(entity_other, blob.colEnum);
+            }
+        }
 	};
 
 	auto egg_tile_interaction = [](auto entity, auto entity_other, Direction dir) {
