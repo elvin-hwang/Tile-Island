@@ -112,6 +112,11 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     auto& tile = ECS::registry<Tile>.emplace(entity);
     tile.splatEntity = ECS::Entity();
     ECS::registry<Motion>.emplace(tile.splatEntity);
+    
+    if (type == Teleport){
+        auto& teleport = ECS::registry<Teleporting>.emplace(entity);
+        teleport.position = position;
+    }
 
     return entity;
 }
