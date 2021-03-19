@@ -10,6 +10,10 @@ enum TerrainType {
     Ice,
     Mud,
     Speed,
+    Speed_UP,
+    Speed_LEFT,
+    Speed_RIGHT,
+    Speed_DOWN,
     Teleport
 };
 

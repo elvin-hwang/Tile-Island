@@ -254,9 +254,17 @@ void WorldSystem::restart() {
                         Tile::createTile({ i, j }, Teleport);
                         // std::cout << "(" << i << ", " << j << ")";
                     }
+                    else if (i == 149.f && j == 413.f){
+                        Tile::createTile({ i, j }, Speed_RIGHT);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 457.f && j == 149.f){
+                        Tile::createTile({ i, j }, Speed_DOWN);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
                     else {
                         Tile::createTile({ i, j }, Ice);
-                        // std::cout << "(" << i << ", " << j << ")";
+                        std::cout << "(" << i << ", " << j << ")";
                     }
 				}
 				else {
@@ -266,6 +274,14 @@ void WorldSystem::restart() {
                     }
                     else if (i == 721.f && j == 325.f){
                         Tile::createTile({ i, j }, Teleport);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 853.f && j == 369.f){
+                        Tile::createTile({ i, j }, Speed_LEFT);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 501.f && j == 633.f){
+                        Tile::createTile({ i, j }, Speed_UP);
                         // std::cout << "(" << i << ", " << j << ")";
                     }
                     else {
