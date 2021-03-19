@@ -19,7 +19,7 @@ public:
         ECS::Entity owner;     
         static void createPowerup(ECS::Entity& entity);
         std::string power = "none";
-        int duration = 0;
+        int duration = -1;
     };
 
 private:

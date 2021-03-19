@@ -130,18 +130,18 @@ void Tile::setSplat(ECS::Entity entity, blobuleCol color) {
     key += stringColor;
 
     switch (color) {
-    case blobuleCol::Blue:
-        ECS::registry<BlueSplat>.emplace(splatEntity);
-        break;
-    case blobuleCol::Green:
-        ECS::registry<GreenSplat>.emplace(splatEntity);
-        break;
-    case blobuleCol::Red:
-        ECS::registry<RedSplat>.emplace(splatEntity);
-        break;
-    default:
-        ECS::registry<YellowSplat>.emplace(splatEntity);
-        break;
+        case blobuleCol::Blue:
+            ECS::registry<BlueSplat>.emplace(splatEntity);
+            break;
+        case blobuleCol::Green:
+            ECS::registry<GreenSplat>.emplace(splatEntity);
+            break;
+        case blobuleCol::Red:
+            ECS::registry<RedSplat>.emplace(splatEntity);
+            break;
+        default:
+            ECS::registry<YellowSplat>.emplace(splatEntity);
+            break;
     }
 
     ShadedMesh& resource = cache_resource(key);
@@ -158,5 +158,74 @@ void Tile::setSplat(ECS::Entity entity, blobuleCol color) {
     splatMotion.position = tileMotion.position;
     splatMotion.scale = vec2({ size * 0.6, size * 0.6 }) * static_cast<vec2>(resource.texture.size);
     splatMotion.isCollidable = false;
+}
+
+void Tile::setRandomSplat(ECS::Entity entity)
+{
+    auto& tile = ECS::registry<Tile>.get(entity);
+    if (ECS::registry<BlueSplat>.has(tile.splatEntity) || ECS::registry<RedSplat>.has(tile.splatEntity) || ECS::registry<YellowSplat>.has(tile.splatEntity) || ECS::registry<GreenSplat>.has(tile.splatEntity))
+    {
+        int color = 0 + (std::rand() % (3 - 0 + 1));
+        std::string stringColor = "";
+        switch (color) {
+            case 0:
+                stringColor = "blue";
+                break;
+            case 1:
+                stringColor = "green";
+                break;
+            case 2:
+                stringColor = "red";
+                break;
+            default:
+                stringColor = "yellow";
+                break;
+        }
+
+        // guard preventing more splats of the same color from being made on the same tile
+        if (colorMap.find(entity.id) != colorMap.end() && colorMap.find(entity.id)->second == stringColor)
+        {
+            return;
+        }
+
+        colorMap[entity.id] = stringColor;
+
+        ECS::Entity splatEntity = tile.splatEntity;
+        ECS::ContainerInterface::remove_all_components_of(splatEntity);
+
+        std::string key = "splat_";
+        key += stringColor;
+
+        switch (color) {
+            case 0:
+                ECS::registry<BlueSplat>.emplace(splatEntity);
+                break;
+            case 1:
+                ECS::registry<GreenSplat>.emplace(splatEntity);
+                break;
+            case 2:
+                ECS::registry<RedSplat>.emplace(splatEntity);
+                break;
+            default:
+                ECS::registry<YellowSplat>.emplace(splatEntity);
+                break;
+        }
+
+        ShadedMesh& resource = cache_resource(key);
+        if (resource.effect.program.resource == 0)
+        {
+            resource = ShadedMesh();
+            std::cout<<key<<std::endl;
+            RenderSystem::createSprite(resource, textures_path(key.append(".png")), "textured");
+
+        }
+        ECS::registry<ShadedMeshRef>.emplace(splatEntity, resource);
+
+        auto& tileMotion = ECS::registry<Motion>.get(entity);
+        auto& splatMotion = ECS::registry<Motion>.emplace(splatEntity);
+        splatMotion.position = tileMotion.position;
+        splatMotion.scale = vec2({ size * 0.6, size * 0.6 }) * static_cast<vec2>(resource.texture.size);
+        splatMotion.isCollidable = false;
+    }
 }
 

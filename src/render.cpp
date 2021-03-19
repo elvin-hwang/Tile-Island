@@ -234,7 +234,7 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 		if (ECS::registry<Blobule>.has(entity) || ECS::registry<Egg>.has(entity)) {
 			firstEntities.push_back(entity);
 		}
-		else if (ECS::registry<BlueSplat>.has(entity) || ECS::registry<RedSplat>.has(entity) || ECS::registry<YellowSplat>.has(entity) || ECS::registry<RedSplat>.has(entity)) {
+		else if (ECS::registry<BlueSplat>.has(entity) || ECS::registry<RedSplat>.has(entity) || ECS::registry<YellowSplat>.has(entity) || ECS::registry<GreenSplat>.has(entity)) {
 			secondEntities.push_back(entity);
 		}
 		else {
