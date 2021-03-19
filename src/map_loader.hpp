@@ -6,5 +6,6 @@
 // tiles that form the island
 struct MapLoader
 {
+
 };
 
