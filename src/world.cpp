@@ -246,10 +246,32 @@ void WorldSystem::restart() {
 					Tile::createTile({ i, j }, Block); // left, right wall
 				}
 				else if (i < window_width / 2) {
-					Tile::createTile({ i, j }, Ice);
+                    if (i == 281.f && j == 237.f){
+                        Tile::createTile({ i, j }, Speed);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 325.f && j == 545.f){
+                        Tile::createTile({ i, j }, Teleport);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else {
+                        Tile::createTile({ i, j }, Ice);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
 				}
 				else {
-					Tile::createTile({ i, j }, Mud);
+                    if (i == 633.f && j == 457.f){
+                        Tile::createTile({ i, j }, Speed);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 721.f && j == 325.f){
+                        Tile::createTile({ i, j }, Teleport);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else {
+                        Tile::createTile({ i, j }, Mud);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
 				}
 
 				verticalIndex++;

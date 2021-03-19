@@ -8,6 +8,8 @@
 #include <egg.hpp>
 #include <iostream>
 
+const float SPEED_BOOST = 500.f;
+
 void circle_circle_penetration_free_collision(Motion& blobMotion1, Motion& blobMotion2)
 {
 	// take the vector difference between the centers
@@ -233,6 +235,49 @@ void CollisionSystem::initialize_collisions() {
 			blobMotion.friction = 0.f;
 			blobMotion.position = blob.origin;
 		}
+        else if (terrain.type == Speed) {
+			blobMotion.velocity.x = SPEED_BOOST;
+			// setting Y vel so that blob cant get stuck between speed tile and wall forever
+			blobMotion.velocity.y = 15.f;
+        }
+        else if (terrain.type == Teleport) {
+            // For the Teleporter on the Left.
+            if (blobMotion.position.x > 302.f && blobMotion.position.x < 347.f && blobMotion.position.y > 522.f && blobMotion.position.y < 567.f){
+                
+                // Adjusting horizontal position after teleportation.
+                if (blobMotion.velocity.x >= 0){
+                    blobMotion.position.x = 744.f;
+                }
+                else{
+                    blobMotion.position.x = 698.f;
+                }
+                // Adjusting vertical position after teleportation.
+                if (blobMotion.velocity.y >= 0){
+                    blobMotion.position.y = 348.f;
+                }
+                else{
+                    blobMotion.position.y = 302.f;
+                }
+            }
+            // For the Teleporter on the Right.
+            else if (blobMotion.position.x > 699.f && blobMotion.position.x < 743.f && blobMotion.position.y > 303.f && blobMotion.position.y < 347.f){
+            
+                // Adjusting horizontal position after teleportation.
+                if (blobMotion.velocity.x >= 0){
+                    blobMotion.position.x = 348.f;
+                }
+                else{
+                    blobMotion.position.x = 301.f;
+                }
+                // Adjusting vertical position after teleportation.
+                if (blobMotion.velocity.y >= 0){
+                    blobMotion.position.y = 568.f;
+                }
+                else{
+                    blobMotion.position.y = 521.f;
+                }
+            }
+        }
 		else if (terrain.type == Block)
 		{
 			// pen free must go before complex collision or errors will occur
