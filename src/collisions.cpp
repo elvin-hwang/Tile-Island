@@ -255,7 +255,7 @@ void CollisionSystem::initialize_collisions() {
         else if (terrain.type == Speed_UP) {
 			blobMotion.velocity.x = 15.f;
 			// setting Y vel so that blob cant get stuck between speed tile and wall forever
-            blobMotion.velocity.y += SPEED_BOOST;
+            blobMotion.velocity.y -= SPEED_BOOST;
         }
         else if (terrain.type == Speed_LEFT) {
             blobMotion.velocity.x -= SPEED_BOOST;
@@ -270,7 +270,7 @@ void CollisionSystem::initialize_collisions() {
         else if (terrain.type == Speed_DOWN) {
             blobMotion.velocity.x = 15.f;
             // setting Y vel so that blob cant get stuck between speed tile and wall forever
-            blobMotion.velocity.y -= SPEED_BOOST;
+            blobMotion.velocity.y += SPEED_BOOST;
         }
         else if (terrain.type == Teleport) {
             // For the Teleporter on the Left.
