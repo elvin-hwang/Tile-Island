@@ -8,6 +8,8 @@
 #include <egg.hpp>
 #include <iostream>
 
+const float SPEED_BOOST = 500.f;
+
 void circle_circle_penetration_free_collision(Motion& blobMotion1, Motion& blobMotion2)
 {
 	// take the vector difference between the centers
@@ -234,21 +236,9 @@ void CollisionSystem::initialize_collisions() {
 			blobMotion.position = blob.origin;
 		}
         else if (terrain.type == Speed) {
-            // Check for positive and negative x-velocity.
-            if (blobMotion.velocity.x >= 0){
-                blobMotion.velocity = {blobMotion.velocity.x + 30.f,  blobMotion.velocity.y};
-            }
-            else {
-                blobMotion.velocity = {blobMotion.velocity.x - 30.f,  blobMotion.velocity.y};
-            }
-            
-            // Check for positive and negative y-velocity.
-            if (blobMotion.velocity.y >= 0){
-                blobMotion.velocity = {blobMotion.velocity.x,  blobMotion.velocity.y  + 30.f};
-            }
-            else {
-                blobMotion.velocity = {blobMotion.velocity.x,  blobMotion.velocity.y  - 30.f};
-            }
+			blobMotion.velocity.x = SPEED_BOOST;
+			// setting Y vel so that blob cant get stuck between speed tile and wall forever
+			blobMotion.velocity.y = 15.f;
         }
         else if (terrain.type == Teleport) {
             // For the Teleporter on the Left.
