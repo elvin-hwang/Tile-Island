@@ -5,6 +5,7 @@
 #include "tile.hpp"
 #include "blobule.hpp"
 #include "utils.hpp"
+#include "powerup.hpp"
 #include <egg.hpp>
 #include <iostream>
 
@@ -367,6 +368,7 @@ void CollisionSystem::initialize_collisions() {
         // Play splash_sound.
         Mix_PlayChannel(-1, powerup_sound, 0);
 		ECS::ContainerInterface::remove_all_components_of(eggEntity);
+		PowerupSystem::Powerup::createPowerup(entity);
 	};
 
 	//add lambdas to the observer lists

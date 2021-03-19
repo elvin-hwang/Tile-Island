@@ -6,6 +6,7 @@
 #include "text.hpp"
 #include <iostream>
 #include <egg.hpp>
+#include <helptool.hpp>
 
 float ANIMATION_FREQUENCY = 500.f; // Milliseconds between sprite frame updates
 float time_elapsed = 0.f;
@@ -220,16 +221,20 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 	float ty = -(top + bottom) / (top - bottom);
 	mat3 projection_2D{ { sx, 0.f, 0.f },{ 0.f, sy, 0.f },{ tx, ty, 1.f } };
 
+	std::vector<ECS::Entity> overlay;
 	std::vector<ECS::Entity> firstEntities;
 	std::vector<ECS::Entity> secondEntities;
 	std::vector<ECS::Entity> thirdEntities;
 
 	for (ECS::Entity entity : ECS::registry<ShadedMeshRef>.entities)
 	{
+		if (ECS::registry<HelpTool>.has(entity)) {
+			overlay.push_back(entity);
+		}
 		if (ECS::registry<Blobule>.has(entity) || ECS::registry<Egg>.has(entity)) {
 			firstEntities.push_back(entity);
 		}
-		else if (ECS::registry<BlueSplat>.has(entity) || ECS::registry<RedSplat>.has(entity) || ECS::registry<YellowSplat>.has(entity) || ECS::registry<RedSplat>.has(entity)) {
+		else if (ECS::registry<BlueSplat>.has(entity) || ECS::registry<RedSplat>.has(entity) || ECS::registry<YellowSplat>.has(entity) || ECS::registry<GreenSplat>.has(entity)) {
 			secondEntities.push_back(entity);
 		}
 		else {
@@ -258,6 +263,16 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 
 	// renders blobs and eggs and other first level entities
 	for (ECS::Entity entity : firstEntities)
+	{
+		if (!ECS::registry<Motion>.has(entity))
+			continue;
+		// Note, its not very efficient to access elements indirectly via the entity albeit iterating through all Sprites in sequence
+		drawTexturedMesh(entity, projection_2D);
+		gl_has_errors();
+	}
+
+	// renders helptool and other overlay level entities
+	for (ECS::Entity entity : overlay)
 	{
 		if (!ECS::registry<Motion>.has(entity))
 			continue;
