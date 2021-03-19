@@ -33,7 +33,7 @@ if (IS_OS_MAC)
   link_directories(/usr/local/lib)
 endif()
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES} src/start.cpp src/start.hpp "src/behaviourTree.hpp" "src/behaviourTree.cpp")
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} src/start.cpp src/start.hpp "src/behaviourTree.hpp" "src/behaviourTree.cpp" "src/powerup.cpp" "src/powerup.hpp")
 target_include_directories(${PROJECT_NAME} PUBLIC src/)
 
 # Added this so policy CMP0065 doesn't scream

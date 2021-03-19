@@ -27,6 +27,8 @@ struct Tile
     static ECS::Entity createTile(vec2 position, TerrainType type);
 
     static void setSplat(ECS::Entity entity, blobuleCol color);
+
+    static void setRandomSplat(ECS::Entity entity);
 };
 
 // All data relevant to the terrain of entities
