@@ -18,13 +18,13 @@ std::vector<std::vector<std::string>> CSVReader::readCSV(std::istream& in) {
         if (in.bad() || in.fail()) {
             break;
         }
-        auto fields = readCSVRow(row);
+        auto fields = CSVReader::readCSVRow(row);
         table.push_back(fields);
     }
     return table;
 }
 
-std::vector<std::string> readCSVRow(const std::string& row) {
+std::vector<std::string> CSVReader::readCSVRow(const std::string& row) {
     CSVState state = CSVState::UnquotedField;
     std::vector<std::string> fields{ "" };
     size_t i = 0; // index of the current field
