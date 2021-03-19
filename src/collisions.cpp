@@ -9,6 +9,8 @@
 #include <egg.hpp>
 #include <iostream>
 
+const float SPEED_BOOST = 50.f;
+
 void circle_circle_penetration_free_collision(Motion& blobMotion1, Motion& blobMotion2)
 {
 	// take the vector difference between the centers
@@ -234,6 +236,81 @@ void CollisionSystem::initialize_collisions() {
 			blobMotion.friction = 0.f;
 			blobMotion.position = blob.origin;
 		}
+        else if (terrain.type == Speed) {
+            // Check for positive and negative x-velocity.
+            if (blobMotion.velocity.x >= 0){
+                blobMotion.velocity = {blobMotion.velocity.x + SPEED_BOOST,  blobMotion.velocity.y};
+            }
+            else {
+                blobMotion.velocity = {blobMotion.velocity.x - SPEED_BOOST,  blobMotion.velocity.y};
+            }
+            
+            // Check for positive and negative y-velocity.
+            if (blobMotion.velocity.y >= 0){
+                blobMotion.velocity = {blobMotion.velocity.x,  blobMotion.velocity.y  + SPEED_BOOST};
+            }
+            else {
+                blobMotion.velocity = {blobMotion.velocity.x,  blobMotion.velocity.y  - SPEED_BOOST};
+            }
+        }
+        else if (terrain.type == Speed_UP) {
+			blobMotion.velocity.x = 15.f;
+			// setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y -= SPEED_BOOST;
+        }
+        else if (terrain.type == Speed_LEFT) {
+            blobMotion.velocity.x -= SPEED_BOOST;
+            // setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y = 15.f;
+        }
+        else if (terrain.type == Speed_RIGHT) {
+            blobMotion.velocity.x += SPEED_BOOST;
+            // setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y = 15.f;
+        }
+        else if (terrain.type == Speed_DOWN) {
+            blobMotion.velocity.x = 15.f;
+            // setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y += SPEED_BOOST;
+        }
+        else if (terrain.type == Teleport) {
+            // For the Teleporter on the Left.
+            if (blobMotion.position.x > 302.f && blobMotion.position.x < 347.f && blobMotion.position.y > 522.f && blobMotion.position.y < 567.f){
+                
+                // Adjusting horizontal position after teleportation.
+                if (blobMotion.velocity.x >= 0){
+                    blobMotion.position.x = 744.f;
+                }
+                else{
+                    blobMotion.position.x = 698.f;
+                }
+                // Adjusting vertical position after teleportation.
+                if (blobMotion.velocity.y >= 0){
+                    blobMotion.position.y = 348.f;
+                }
+                else{
+                    blobMotion.position.y = 302.f;
+                }
+            }
+            // For the Teleporter on the Right.
+            else if (blobMotion.position.x > 699.f && blobMotion.position.x < 743.f && blobMotion.position.y > 303.f && blobMotion.position.y < 347.f){
+            
+                // Adjusting horizontal position after teleportation.
+                if (blobMotion.velocity.x >= 0){
+                    blobMotion.position.x = 348.f;
+                }
+                else{
+                    blobMotion.position.x = 301.f;
+                }
+                // Adjusting vertical position after teleportation.
+                if (blobMotion.velocity.y >= 0){
+                    blobMotion.position.y = 568.f;
+                }
+                else{
+                    blobMotion.position.y = 521.f;
+                }
+            }
+        }
 		else if (terrain.type == Block)
 		{
 			// pen free must go before complex collision or errors will occur
@@ -248,15 +325,18 @@ void CollisionSystem::initialize_collisions() {
 	};
 
 	auto change_tile_color = [](auto entity, auto entity_other, Direction dir) {
-		auto tileMotion = ECS::registry<Motion>.get(entity_other);
-		auto blobMotion = ECS::registry<Motion>.get(entity);
-		vec2 difference_between_centers = tileMotion.position - blobMotion.position;
-		float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
-		float blobMotion_hit_radius = blobMotion.scale.x / 1.3f;
-		if (distance_between_centers <= blobMotion_hit_radius) {
-			auto& blob = ECS::registry<Blobule>.get(entity);
-			Tile::setSplat(entity_other, blob.colEnum);
-		}
+        auto& terrain = ECS::registry<Terrain>.get(entity_other);
+        if (terrain.type != Speed_UP && terrain.type != Speed_LEFT && terrain.type != Speed_RIGHT && terrain.type != Speed_DOWN && terrain.type != Speed && terrain.type != Teleport){
+            auto tileMotion = ECS::registry<Motion>.get(entity_other);
+            auto blobMotion = ECS::registry<Motion>.get(entity);
+            vec2 difference_between_centers = tileMotion.position - blobMotion.position;
+            float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
+            float blobMotion_hit_radius = blobMotion.scale.x / 1.3f;
+            if (distance_between_centers <= blobMotion_hit_radius) {
+                auto& blob = ECS::registry<Blobule>.get(entity);
+                Tile::setSplat(entity_other, blob.colEnum);
+            }
+        }
 	};
 
 	auto egg_tile_interaction = [](auto entity, auto entity_other, Direction dir) {

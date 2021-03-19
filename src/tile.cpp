@@ -38,6 +38,36 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
         friction = 0.04f;
         motion.isCollidable = false;
         break;
+    case Speed:
+        key = "tile_speed";
+        friction = 0.01f;
+        motion.isCollidable = false;
+        break;
+    case Speed_UP:
+        key = "tile_speed_up";
+        friction = 0.01f;
+        motion.isCollidable = false;
+        break;
+    case Speed_LEFT:
+        key = "tile_speed_left";
+        friction = 0.01f;
+        motion.isCollidable = false;
+        break;
+    case Speed_RIGHT:
+        key = "tile_speed_right";
+        friction = 0.01f;
+        motion.isCollidable = false;
+        break;
+    case Speed_DOWN:
+        key = "tile_speed_down";
+        friction = 0.01f;
+        motion.isCollidable = false;
+        break;
+    case Teleport:
+        key = "tile_teleport";
+        friction = 0.01f;
+        motion.isCollidable = false;
+        break;
     default:
         break;
     }

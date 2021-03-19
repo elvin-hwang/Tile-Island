@@ -8,7 +8,13 @@ enum TerrainType {
     Water,
     Block,
     Ice,
-    Mud
+    Mud,
+    Speed,
+    Speed_UP,
+    Speed_LEFT,
+    Speed_RIGHT,
+    Speed_DOWN,
+    Teleport
 };
 
 // tiles that form the island

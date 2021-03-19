@@ -270,21 +270,57 @@ void WorldSystem::restart() {
                     continue;
                 }
                 islandGrid[horizontalIndex][verticalIndex] = { i, j };
-
-                // Generate map
-                if ((horizontalIndex < numWidth - 2 && horizontalIndex > 2) && (verticalIndex == 0 || verticalIndex == numHeight)) {
-                    Tile::createTile({ i, j }, Block); // top, bottom wall
-                }
-                else if ((verticalIndex < numHeight - 2 && verticalIndex > 2) && (horizontalIndex == 0 || horizontalIndex == numWidth)) {
-                    Tile::createTile({ i, j }, Block); // left, right wall
-                }
-                else if (i < window_width / 2) {
-                    Tile::createTile({ i, j }, Ice);
-                }
-                else {
-                    Tile::createTile({ i, j }, Mud);
-                }
-
+				// Generate map
+				if ((horizontalIndex < numWidth - 2 && horizontalIndex > 2) && (verticalIndex == 0 || verticalIndex == numHeight)) {
+					Tile::createTile({ i, j }, Block); // top, bottom wall
+				}
+				else if ((verticalIndex < numHeight - 2 && verticalIndex > 2) && (horizontalIndex == 0 || horizontalIndex == numWidth)) {
+					Tile::createTile({ i, j }, Block); // left, right wall
+				}
+				else if (i < window_width / 2) {
+                    if (i == 281.f && j == 237.f){
+                        Tile::createTile({ i, j }, Speed);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 325.f && j == 545.f){
+                        Tile::createTile({ i, j }, Teleport);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 149.f && j == 413.f){
+                        Tile::createTile({ i, j }, Speed_RIGHT);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 457.f && j == 149.f){
+                        Tile::createTile({ i, j }, Speed_DOWN);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else {
+                        Tile::createTile({ i, j }, Ice);
+                        std::cout << "(" << i << ", " << j << ")";
+                    }
+				}
+				else {
+                    if (i == 633.f && j == 457.f){
+                        Tile::createTile({ i, j }, Speed);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 721.f && j == 325.f){
+                        Tile::createTile({ i, j }, Teleport);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 853.f && j == 369.f){
+                        Tile::createTile({ i, j }, Speed_LEFT);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else if (i == 501.f && j == 633.f){
+                        Tile::createTile({ i, j }, Speed_UP);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+                    else {
+                        Tile::createTile({ i, j }, Mud);
+                        // std::cout << "(" << i << ", " << j << ")";
+                    }
+				}
                 verticalIndex++;
                 isTile = true;
             }
