@@ -15,6 +15,15 @@ vec2 get_bounding_box(const Motion& motion)
 	return { abs(motion.scale.x), abs(motion.scale.y) };
 }
 
+bool PhysicsSystem::is_entity_clicked(ECS::Entity e, float mouse_press_x, float mouse_press_y){
+
+	auto left_boundary = ECS::registry<Motion>.get(e).position.x - (ECS::registry<Motion>.get(e).scale.x / 2);
+	auto right_boundary = ECS::registry<Motion>.get(e).position.x + (ECS::registry<Motion>.get(e).scale.x / 2);
+	auto top_boundary = ECS::registry<Motion>.get(e).position.y - (ECS::registry<Motion>.get(e).scale.y / 2);
+	auto bottom_boundary = ECS::registry<Motion>.get(e).position.y + (ECS::registry<Motion>.get(e).scale.y / 2);
+
+	return mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary;
+}
 /*
 Our Guide on box circle collisions
 https://www.figma.com/file/K32AjU7kJXHVw9BpALdTY1/Untitled?node-id=0%3A1
@@ -183,6 +192,8 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 		}
 	}
 }
+
+
 
 PhysicsSystem::Collision::Collision(ECS::Entity& other)
 {
