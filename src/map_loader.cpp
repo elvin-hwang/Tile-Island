@@ -23,7 +23,7 @@ std::vector<std::vector<ECS::Entity>> tileIsland;
 std::string loadedGridLocation;
 
 const std::string savedGridLocation = "../../../data/saved/grid.csv";
-const std::string savedMapLocation = "../../../data/saved/map.csv";
+const std::string savedMapLocation = "../../../data/saved/map.json";
 const float tile_width = 44.46f;
 
 void createTileIsland(std::vector<std::vector<std::string>> csvGrid) {
@@ -207,9 +207,17 @@ std::vector<std::vector<ECS::Entity>> MapLoader::loadSavedMap(vec2 windowSize) {
 	std::vector<std::vector<int>> redSplats = mapInfo["redSplat"];
 	std::vector<std::vector<int>> blueSplats = mapInfo["blueSplat"];
 
-	for (auto entity : blobuleList) {
-		// Call setSplat at each positions ya?
-		break;
+	for (auto gridLocation : yellowSplats) {
+		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Yellow);
+	}
+	for (auto gridLocation : greenSplats) {
+		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Green);
+	}
+	for (auto gridLocation : redSplats) {
+		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Red);
+	}
+	for (auto gridLocation : blueSplats) {
+		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Blue);
 	}
 
 	return tileIsland;
@@ -226,21 +234,66 @@ void MapLoader::saveMap() {
 
 		dst << src.rdbuf();
 	}
+	nlohmann::json mapInfo;
+	std::ifstream readFile(savedMapLocation, std::ios::binary);
+	readFile >> mapInfo;
 
-	std::ofstream mapFile(savedMapLocation, std::ios::binary);
+	std::ofstream writeFile(savedMapLocation, std::ios::binary);
 
-	std::vector<std::vector<int>> entitiesPosition = { {0, 1}, {0, 2} };
-	nlohmann::json j_vec(entitiesPosition);
+	// SAVE BLOBULE INFO
+	std::vector<std::vector<int>> entitiesPosition;
+	for (auto entity : blobuleList) {
+		auto& blob = ECS::registry<Blobule>.get(entity);
+		entitiesPosition.push_back(blob.currentGrid);
+	}
+	mapInfo["blobulePositions"] = entitiesPosition;
 
-	//mapFile << j
 
+	// SAVE SPLAT INFO
+	std::vector<std::vector<int>> yellowSplats;
+	std::vector<std::vector<int>> greenSplats;
+	std::vector<std::vector<int>> redSplats;
+	std::vector<std::vector<int>> blueSplats;
 
+	for (int i = 0; i < tileIsland.size(); i++) {
+		auto row = tileIsland[i];
+		for (int j = 0; j < row.size(); j++) {
+			auto& tile = ECS::registry<Tile>.get(tileIsland[i][j]);
+			std::vector<int> currentGrid = { j, i };
+			if (ECS::registry<YellowSplat>.has(tile.splatEntity)) {
+				yellowSplats.push_back(currentGrid);
+			}
+			else if (ECS::registry<GreenSplat>.has(tile.splatEntity)) {
+				greenSplats.push_back(currentGrid);
+			}
+			else if (ECS::registry<RedSplat>.has(tile.splatEntity)) {
+				redSplats.push_back(currentGrid);
+			}
+			else if (ECS::registry<BlueSplat>.has(tile.splatEntity)) {
+				blueSplats.push_back(currentGrid);
+			}
+		}
+	}
+	mapInfo["yellowSplat"] = yellowSplats;
+	mapInfo["greenSplat"] = greenSplats;
+	mapInfo["redSplat"] = redSplats;
+	mapInfo["blueSplat"] = blueSplats;
 
-
-
-	// TODO save map info (blobule position (order of yellow, green, red, blue), egg position, splat positions) 
+	writeFile << mapInfo;
 }
 
+std::vector<int> MapLoader::getTileGridLocation(ECS::Entity tile) {
+	for (int i = 0; i < tileIsland.size(); i++) {
+		auto row = tileIsland[i];
+		for (int j = 0; j < row.size(); j++) {
+			if (tileIsland[i][j].id == tile.id) {
+				return { j, i };
+			}
+		}
+	}
+
+	return { -1, -1 };
+}
 
 ECS::Entity MapLoader::getBlobule(int index) {
 	return blobuleList[index];

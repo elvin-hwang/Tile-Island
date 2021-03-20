@@ -6,6 +6,7 @@
 #include "blobule.hpp"
 #include "utils.hpp"
 #include "powerup.hpp"
+#include "map_loader.hpp";
 #include <egg.hpp>
 #include <iostream>
 
@@ -331,6 +332,7 @@ void CollisionSystem::initialize_collisions() {
             if (distance_between_centers <= blobMotion_hit_radius) {
                 auto& blob = ECS::registry<Blobule>.get(entity);
                 Tile::setSplat(entity_other, blob.colEnum);
+				blob.currentGrid = MapLoader::getTileGridLocation(entity_other);
             }
         }
 	};

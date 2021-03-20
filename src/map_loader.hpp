@@ -14,5 +14,7 @@ struct MapLoader
 	static void saveMap();
 
 	static ECS::Entity getBlobule(int index);
+
+	static std::vector<int> getTileGridLocation(ECS::Entity tile);
 };
 
