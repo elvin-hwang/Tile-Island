@@ -45,7 +45,7 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
         break;
     case Acid:
         key = "tile_green";
-        friction = 0.07f;
+        friction = 0.08f;
         motion.isCollidable = false;
         break;
     case Speed:

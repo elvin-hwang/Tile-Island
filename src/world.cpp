@@ -30,7 +30,7 @@ std::vector<std::vector<ECS::Entity>> islandGrid;
 // Movement speed of blobule.
 float moveSpeed = 200.f;
 float terminalVelocity = 20.f;
-float max_blobule_speed = 750.f;
+float max_blobule_speed = 250.f;
 vec2 window_size;
 ECS::Entity help_tool;
 

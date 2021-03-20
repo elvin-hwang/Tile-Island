@@ -274,51 +274,38 @@ void CollisionSystem::initialize_collisions() {
             blobMotion.velocity.y += SPEED_BOOST;
         }
         else if (terrain.type == Teleport) {
-            // This only works for 2 teleporters.
-            ECS::Entity teleport_one = ECS::registry<Teleporting>.entities[0];
-            ECS::Entity teleport_two = ECS::registry<Teleporting>.entities[1];
-            auto& position1 = ECS::registry<Motion>.get(teleport_one).position;
-            auto& position2 = ECS::registry<Motion>.get(teleport_two).position;
-            
-            // If at teleporter_one...
-            if (blobMotion.position.x > position1.x - 23.f && blobMotion.position.x < position1.x + 23.f
-                && blobMotion.position.y > position1.y - 23.f && blobMotion.position.y < position1.y + 23.f){
-                // Adjusting horizontal position after teleportation.
-                if (blobMotion.velocity.x >= 0){
-                    blobMotion.position.x = position2.x + 23.f;
-                }
-                else{
-                    blobMotion.position.x = position2.x - 23.f;
-                }
-                    
-                // Adjusting vertical position after teleportation.
-                if (blobMotion.velocity.y >= 0){
-                    blobMotion.position.y = position2.y + 23.f;
-                }
-                else{
-                    blobMotion.position.y = position2.y - 23.f;
-                }
-            }
-            
-            // If at teleporter_two...
-            if (blobMotion.position.x > position2.x - 23.f && blobMotion.position.x < position2.x + 23.f
-                && blobMotion.position.y > position2.y - 23.f && blobMotion.position.y < position2.y + 23.f){
-                // Adjusting horizontal position after teleportation.
-                if (blobMotion.velocity.x >= 0){
-                    blobMotion.position.x = position1.x + 23.f;
-                }
-                else{
-                    blobMotion.position.x = position1.x - 23.f;
-                }
-                    
-                // Adjusting vertical position after teleportation.
-                if (blobMotion.velocity.y >= 0){
-                    blobMotion.position.y = position1.y + 23.f;
-                }
-                else{
-                    blobMotion.position.y = position1.y - 23.f;
-                }
-            }
+
+			vec2 difference_between_centers = tileMotion.position - blobMotion.position;
+			float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
+			float blobMotion_hit_radius = blobMotion.scale.x / 1.3f;
+			if (distance_between_centers > blobMotion_hit_radius) {
+				return;
+			}
+
+			ECS::Entity teleportDestination = entity_other;
+
+			while (entity_other.id == teleportDestination.id) {
+				int size = ECS::registry<Teleporting>.size();
+				teleportDestination = ECS::registry<Teleporting>.entities[(rand() % size)];
+			}
+
+			blobMotion.position = ECS::registry<Motion>.get(teleportDestination).position;
+
+			// Adjusting horizontal position after teleportation.
+			if (blobMotion.velocity.x >= 0) {
+				blobMotion.position.x += 23.f;
+			}
+			else {
+				blobMotion.position.x -= 23.f;
+			}
+
+			// Adjusting vertical position after teleportation.
+			if (blobMotion.velocity.y >= 0) {
+				blobMotion.position.y += 23.f;
+			}
+			else {
+				blobMotion.position.y -= 23.f;
+			}
         }
 		else if (terrain.type == Block)
 		{

@@ -108,19 +108,48 @@ void createEggs(std::vector<std::vector<int>> eggPositions, std::vector<std::vec
 }
 
 void createWaterBorder(std::vector<std::vector<ECS::Entity>> tileIsland, vec2 windowSize) {
-	float top = ECS::registry<Motion>.get(tileIsland[0][0]).position.y - tile_width;
-	float rightBound = windowSize.x + 700;
-	float bottomBound = windowSize.y + 700;
-	float leftBound = -700;
-	float topBound = -700;
+	float waterBorderWidth = 700.f;
 
+	vec2 topLeft = ECS::registry<Motion>.get(tileIsland[0][0]).position;
+	vec2 bottomRight = ECS::registry<Motion>.get(tileIsland[heightNum - 1][widthNum - 1]).position;
+
+	float top = topLeft.y - tile_width;
+	float bot = bottomRight.y + tile_width;
+	float left = topLeft.x - tile_width;
+	float right = bottomRight.x + tile_width;
+
+	float rightBound = windowSize.x + waterBorderWidth;
+	float bottomBound = windowSize.y + waterBorderWidth;
+	float leftBound = -waterBorderWidth;
+	float topBound = -waterBorderWidth;
+
+	// Top Water Border
 	for (float y = top; y >= topBound; y -= tile_width) {
 		for (float x = rightBound; x >= leftBound; x -= tile_width) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
-	// while x = 1500 and y = top - tileWIDTH
-	// while > -500 
+
+	// Bottom Water Border
+	for (float y = bot; y <= bottomBound; y += tile_width) {
+		for (float x = rightBound; x >= leftBound; x -= tile_width) {
+			Tile::createTile({ x, y }, Water);
+		}
+	}
+
+	// Left Water Border
+	for (float x = left; x >= leftBound; x -= tile_width) {
+		for (float y = topLeft.y; y <= bottomRight.y; y += tile_width) {
+			Tile::createTile({ x, y }, Water);
+		}
+	}
+
+	// Right Water Border
+	for (float x = right; x <= rightBound; x += tile_width) {
+		for (float y = topLeft.y; y <= bottomRight.y; y += tile_width) {
+			Tile::createTile({ x, y }, Water);
+		}
+	}
 }
 
 void centerIsland(std::vector<std::vector<ECS::Entity>> tileIsland, vec2 windowSize) {
