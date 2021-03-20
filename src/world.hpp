@@ -63,6 +63,8 @@ private:
 
 	ECS::Entity score_text;
 	ECS::Entity player_text;
+	ECS::Entity start_button;
+	ECS::Entity load_button;
 
 
 	// C++ random number generator

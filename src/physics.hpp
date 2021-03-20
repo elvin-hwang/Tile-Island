@@ -18,6 +18,8 @@ class PhysicsSystem
 public:
 	void step(float elapsed_ms, vec2 window_size_in_game_units);
 
+	static bool is_entity_clicked(ECS::Entity e, float mouse_press_x, float mouse_press_y);
+
 	// Stucture to store collision information
 	struct Collision
 	{
