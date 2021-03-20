@@ -420,21 +420,15 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 	glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
 	if (menuState) {
 		auto start_clicked = PhysicsSystem::is_entity_clicked(start_button, mouse_press_x, mouse_press_y);
-		if (start_clicked) {
+        auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
+		if (start_clicked || load_clicked) {
 			Mix_PlayChannel(-1, game_start_sound, 0);
 			menuState = false;
+            load_game = load_clicked;
 			restart();
 		}
-		else {
-			auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
-			if (load_clicked) {
-                load_game = true;
-                restart();
-			}
-		}
 	}
-
-    if (!menuState && current_turn < MAX_TURNS)
+    else if (current_turn < MAX_TURNS)
     {
         // compute the horizontal and vertical boundaries of the player asset
         auto left_boundary = ECS::registry<Motion>.get(active_player).position.x - (ECS::registry<Motion>.get(active_player).scale.x / 2);
