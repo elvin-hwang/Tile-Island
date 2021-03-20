@@ -274,42 +274,38 @@ void CollisionSystem::initialize_collisions() {
             blobMotion.velocity.y += SPEED_BOOST;
         }
         else if (terrain.type == Teleport) {
-            // For the Teleporter on the Left.
-            if (blobMotion.position.x > 302.f && blobMotion.position.x < 347.f && blobMotion.position.y > 522.f && blobMotion.position.y < 567.f){
-                
-                // Adjusting horizontal position after teleportation.
-                if (blobMotion.velocity.x >= 0){
-                    blobMotion.position.x = 744.f;
-                }
-                else{
-                    blobMotion.position.x = 698.f;
-                }
-                // Adjusting vertical position after teleportation.
-                if (blobMotion.velocity.y >= 0){
-                    blobMotion.position.y = 348.f;
-                }
-                else{
-                    blobMotion.position.y = 302.f;
-                }
-            }
-            // For the Teleporter on the Right.
-            else if (blobMotion.position.x > 699.f && blobMotion.position.x < 743.f && blobMotion.position.y > 303.f && blobMotion.position.y < 347.f){
-            
-                // Adjusting horizontal position after teleportation.
-                if (blobMotion.velocity.x >= 0){
-                    blobMotion.position.x = 348.f;
-                }
-                else{
-                    blobMotion.position.x = 301.f;
-                }
-                // Adjusting vertical position after teleportation.
-                if (blobMotion.velocity.y >= 0){
-                    blobMotion.position.y = 568.f;
-                }
-                else{
-                    blobMotion.position.y = 521.f;
-                }
-            }
+
+			vec2 difference_between_centers = tileMotion.position - blobMotion.position;
+			float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
+			float blobMotion_hit_radius = blobMotion.scale.x / 1.3f;
+			if (distance_between_centers > blobMotion_hit_radius) {
+				return;
+			}
+
+			ECS::Entity teleportDestination = entity_other;
+
+			while (entity_other.id == teleportDestination.id) {
+				int size = ECS::registry<Teleporting>.size();
+				teleportDestination = ECS::registry<Teleporting>.entities[(rand() % size)];
+			}
+
+			blobMotion.position = ECS::registry<Motion>.get(teleportDestination).position;
+
+			// Adjusting horizontal position after teleportation.
+			if (blobMotion.velocity.x >= 0) {
+				blobMotion.position.x += 23.f;
+			}
+			else {
+				blobMotion.position.x -= 23.f;
+			}
+
+			// Adjusting vertical position after teleportation.
+			if (blobMotion.velocity.y >= 0) {
+				blobMotion.position.y += 23.f;
+			}
+			else {
+				blobMotion.position.y -= 23.f;
+			}
         }
 		else if (terrain.type == Block)
 		{

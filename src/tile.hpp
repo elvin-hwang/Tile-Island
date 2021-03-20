@@ -3,12 +3,15 @@
 #include "common.hpp"
 #include "tiny_ecs.hpp"
 #include "blobule.hpp"
+#include <vector>
 
 enum TerrainType {
     Water,
     Block,
     Ice,
     Mud,
+    Sand,
+    Acid,
     Speed,
     Speed_UP,
     Speed_LEFT,
@@ -34,4 +37,10 @@ struct Tile
 struct Terrain {
     TerrainType type;
     float friction = 0.f;
+    // std::vector<vec2> teleport_positions;
+};
+
+// All data relevant to teleportation tiles
+struct Teleporting {
+    vec2 position = { 0, 0 };
 };
