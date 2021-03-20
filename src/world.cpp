@@ -368,156 +368,155 @@ bool WorldSystem::is_over() const
 // Check out https://www.glfw.org/docs/3.3/input_guide.html
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
-
-	ECS::registry<Blobule>.get(active_player).active_player = false;
-	switch (playerMove) {
-	case 1:
-		active_player = player_blobule1;
-		break;
-	case 2:
-		active_player = player_blobule2;
-		break;
-	case 3:
-		active_player = player_blobule3;
-		break;
-	case 4:
-		active_player = player_blobule4;
-		break;
-	}
-
-	ECS::registry<Blobule>.get(active_player).active_player = true;
-	auto& blobule_movement = ECS::registry<Motion>.get(active_player);
-	auto blobule_position = blobule_movement.position;
-
-	// For when you press an arrow key and the salmon starts moving.
-	if (action == GLFW_PRESS || action == GLFW_REPEAT)
-	{
-		if (key == GLFW_KEY_UP)
-		{
-			// Note: Subtraction causes upwards movement.
-			blobule_movement.velocity.y = -moveSpeed;
-		}
-		if (key == GLFW_KEY_DOWN)
-		{
-			// Note: Addition causes downwards movement.
-			blobule_movement.velocity.y = moveSpeed;
-		}
-		if (key == GLFW_KEY_LEFT)
-		{
-			blobule_movement.velocity.x = -moveSpeed;
-
-		}
-		if (key == GLFW_KEY_RIGHT)
-		{
-			blobule_movement.velocity.x = moveSpeed;
-
-		}
-
-
-	}
-
-	if (key == GLFW_KEY_H) {
-		if (action == GLFW_PRESS) {
-			help_tool = HelpTool::createHelpTool({ window_size.x / 2, window_size.y / 2 });
-		}
-		if (action == GLFW_RELEASE) {
-			ECS::ContainerInterface::remove_all_components_of(help_tool);
-		}
-	}
-
-
-	// For when you press a WASD key and the camera starts moving.
-	if (action == GLFW_PRESS || action == GLFW_REPEAT)
-	{
-		// Note that we don't update the tileIsland grid in this function to save performance
-		// If we need to, then we can store a global variable for the x,y offsets and use it accordingly.
-		int xOffset = 0;
-		int yOffset = 0;
-		switch (key) {
-		case GLFW_KEY_W:
-			yOffset = 10.f;
+	if (!menuState) {
+		ECS::registry<Blobule>.get(active_player).active_player = false;
+		switch (playerMove) {
+		case 1:
+			active_player = player_blobule1;
 			break;
-		case GLFW_KEY_S:
-			yOffset = -10.f;
+		case 2:
+			active_player = player_blobule2;
 			break;
-		case GLFW_KEY_A:
-			xOffset = 10.f;
+		case 3:
+			active_player = player_blobule3;
 			break;
-		case GLFW_KEY_D:
-			xOffset = -10.f;
-			break;
-		default:
+		case 4:
+			active_player = player_blobule4;
 			break;
 		}
 
-		// Move all Blobules
-		for (auto& blob : ECS::registry<Blobule>.entities)
+		ECS::registry<Blobule>.get(active_player).active_player = true;
+		auto& blobule_movement = ECS::registry<Motion>.get(active_player);
+		auto blobule_position = blobule_movement.position;
+
+		// For when you press an arrow key and the salmon starts moving.
+		if (action == GLFW_PRESS || action == GLFW_REPEAT)
 		{
-			ECS::registry<Motion>.get(blob).position += vec2({ xOffset, yOffset });
-			ECS::registry<Blobule>.get(blob).origin += vec2({ xOffset, yOffset });
+			if (key == GLFW_KEY_UP)
+			{
+				// Note: Subtraction causes upwards movement.
+				blobule_movement.velocity.y = -moveSpeed;
+			}
+			if (key == GLFW_KEY_DOWN)
+			{
+				// Note: Addition causes downwards movement.
+				blobule_movement.velocity.y = moveSpeed;
+			}
+			if (key == GLFW_KEY_LEFT)
+			{
+				blobule_movement.velocity.x = -moveSpeed;
+
+			}
+			if (key == GLFW_KEY_RIGHT)
+			{
+				blobule_movement.velocity.x = moveSpeed;
+
+			}
 		}
-		// Move all tiles
-		for (auto& tile : ECS::registry<Tile>.entities)
+
+		if (key == GLFW_KEY_H) {
+			if (action == GLFW_PRESS) {
+				help_tool = HelpTool::createHelpTool({ window_size.x / 2, window_size.y / 2 });
+			}
+			if (action == GLFW_RELEASE) {
+				ECS::ContainerInterface::remove_all_components_of(help_tool);
+			}
+		}
+
+
+		// For when you press a WASD key and the camera starts moving.
+		if (action == GLFW_PRESS || action == GLFW_REPEAT)
 		{
-			auto& tileComponent = ECS::registry<Tile>.get(tile);
-			ECS::registry<Motion>.get(tile).position += vec2({ xOffset, yOffset });
-			ECS::registry<Motion>.get(tileComponent.splatEntity).position += vec2({ xOffset, yOffset });
+			// Note that we don't update the tileIsland grid in this function to save performance
+			// If we need to, then we can store a global variable for the x,y offsets and use it accordingly.
+			int xOffset = 0;
+			int yOffset = 0;
+			switch (key) {
+			case GLFW_KEY_W:
+				yOffset = 10.f;
+				break;
+			case GLFW_KEY_S:
+				yOffset = -10.f;
+				break;
+			case GLFW_KEY_A:
+				xOffset = 10.f;
+				break;
+			case GLFW_KEY_D:
+				xOffset = -10.f;
+				break;
+			default:
+				break;
+			}
+
+			// Move all Blobules
+			for (auto& blob : ECS::registry<Blobule>.entities)
+			{
+				ECS::registry<Motion>.get(blob).position += vec2({ xOffset, yOffset });
+				ECS::registry<Blobule>.get(blob).origin += vec2({ xOffset, yOffset });
+			}
+			// Move all tiles
+			for (auto& tile : ECS::registry<Tile>.entities)
+			{
+				auto& tileComponent = ECS::registry<Tile>.get(tile);
+				ECS::registry<Motion>.get(tile).position += vec2({ xOffset, yOffset });
+				ECS::registry<Motion>.get(tileComponent.splatEntity).position += vec2({ xOffset, yOffset });
+			}
+			// Move all eggs
+			for (auto& egg : ECS::registry<Egg>.entities)
+			{
+				ECS::registry<Motion>.get(egg).position += vec2({ xOffset, yOffset });
+			}
 		}
-		// Move all eggs
-		for (auto& egg : ECS::registry<Egg>.entities)
+
+		// Turn based system
+		if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS)
 		{
-			ECS::registry<Motion>.get(egg).position += vec2({ xOffset, yOffset });
-		}
-	}
+			if (playerMove != 4) {
+				playerMove++;
+				current_turn++;
+			}
+			else {
+				playerMove = 1;
+				current_turn++;
+			}
 
-	// Turn based system
-	if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS)
-	{
-		if (playerMove != 4) {
-			playerMove++;
-			current_turn++;
-		}
-		else {
-			playerMove = 1;
-			current_turn++;
+			if (ECS::registry<Egg>.components.size() < MAX_EGGS)
+			{
+				next_egg_spawn--;
+				if (next_egg_spawn < 0)
+					next_egg_spawn = 0;
+				std::cout << next_egg_spawn << std::endl;
+			}
+
+			blobuleMoved = false;
 		}
 
-		if (ECS::registry<Egg>.components.size() < MAX_EGGS)
+		// Resetting game
+		if (action == GLFW_RELEASE && key == GLFW_KEY_R)
 		{
-			next_egg_spawn--;
-			if (next_egg_spawn < 0)
-				next_egg_spawn = 0;
-			std::cout << next_egg_spawn << std::endl;
+			int w, h;
+			glfwGetWindowSize(window, &w, &h);
+			Mix_PlayChannel(-1, game_start_sound, 0);
+			restart();
 		}
 
-		blobuleMoved = false;
-	}
+		// Debugging
+		if (key == GLFW_KEY_Q)
+			DebugSystem::in_debug_mode = (action != GLFW_RELEASE);
 
-	// Resetting game
-	if (action == GLFW_RELEASE && key == GLFW_KEY_R)
-	{
-		int w, h;
-		glfwGetWindowSize(window, &w, &h);
-		Mix_PlayChannel(-1, game_start_sound, 0);
-		restart();
+		// Control the current speed with `<` `>`
+		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
+		{
+			current_speed -= 0.1f;
+			std::cout << "Current speed = " << current_speed << std::endl;
+		}
+		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
+		{
+			current_speed += 0.1f;
+			std::cout << "Current speed = " << current_speed << std::endl;
+		}
+		current_speed = std::max(0.f, current_speed);
 	}
-
-	// Debugging
-	if (key == GLFW_KEY_Q)
-		DebugSystem::in_debug_mode = (action != GLFW_RELEASE);
-
-	// Control the current speed with `<` `>`
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
-	{
-		current_speed -= 0.1f;
-		std::cout << "Current speed = " << current_speed << std::endl;
-	}
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
-	{
-		current_speed += 0.1f;
-		std::cout << "Current speed = " << current_speed << std::endl;
-	}
-	current_speed = std::max(0.f, current_speed);
 
 }
 
