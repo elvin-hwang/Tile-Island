@@ -65,6 +65,7 @@ private:
 	ECS::Entity player_text;
 	ECS::Entity start_button;
 	ECS::Entity load_button;
+	ECS::Entity save_button;
 
 
 	// C++ random number generator

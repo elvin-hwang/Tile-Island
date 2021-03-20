@@ -262,8 +262,10 @@ void WorldSystem::restart() {
         if (ECS::registry<Text>.components.size() > 0){
             ECS::registry<Text>.clear();
         }
-        score_text = Text::create_text("score", { 100, 60 }, 0.58);
-        player_text = Text::create_text("player", { 100, 30 }, 0.58);
+
+        score_text = Text::create_text("score", { 82, 60 }, 0.58);
+        player_text = Text::create_text("player", { 82, 30 }, 0.58);
+        save_button = Button::createButton({177, 730}, { 0.35,0.35 }, buttonType::Save, "save");
 
     }
 }
@@ -419,14 +421,16 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 {
 	glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
 	if (menuState) {
-		auto start_clicked = PhysicsSystem::is_entity_clicked(start_button, mouse_press_x, mouse_press_y);
-        auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
-		if (start_clicked || load_clicked) {
-			Mix_PlayChannel(-1, game_start_sound, 0);
-			menuState = false;
-            load_game = load_clicked;
-			restart();
-		}
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+            auto start_clicked = PhysicsSystem::is_entity_clicked(start_button, mouse_press_x, mouse_press_y);
+            auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
+            if (start_clicked || load_clicked) {
+                Mix_PlayChannel(-1, game_start_sound, 0);
+                menuState = false;
+                load_game = load_clicked;
+                restart();
+            }
+        }
 	}
     else if (current_turn < MAX_TURNS)
     {
@@ -461,6 +465,13 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 
                 Blobule::removeTrajectory(active_player);
                 blobuleMoved = true;
+            }
+        }
+
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+            auto save_clicked = PhysicsSystem::is_entity_clicked(save_button, mouse_press_x, mouse_press_y);
+            if (save_clicked) {
+                //call save function here
             }
         }
     }
