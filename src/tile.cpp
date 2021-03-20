@@ -77,6 +77,7 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
         key = "tile_teleport";
         friction = 0.01f;
         motion.isCollidable = false;
+        ECS::registry<Teleporting>.emplace(entity);
         break;
     default:
         break;
@@ -122,7 +123,7 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     auto& tile = ECS::registry<Tile>.emplace(entity);
     tile.splatEntity = ECS::Entity();
     ECS::registry<Motion>.emplace(tile.splatEntity);
-
+    
     return entity;
 }
 

@@ -274,40 +274,49 @@ void CollisionSystem::initialize_collisions() {
             blobMotion.velocity.y += SPEED_BOOST;
         }
         else if (terrain.type == Teleport) {
-            // For the Teleporter on the Left.
-            if (blobMotion.position.x > 302.f && blobMotion.position.x < 347.f && blobMotion.position.y > 522.f && blobMotion.position.y < 567.f){
-                
+            // This only works for 2 teleporters.
+            ECS::Entity teleport_one = ECS::registry<Teleporting>.entities[0];
+            ECS::Entity teleport_two = ECS::registry<Teleporting>.entities[1];
+            auto& position1 = ECS::registry<Motion>.get(teleport_one).position;
+            auto& position2 = ECS::registry<Motion>.get(teleport_two).position;
+            
+            // If at teleporter_one...
+            if (blobMotion.position.x > position1.x - 23.f && blobMotion.position.x < position1.x + 23.f
+                && blobMotion.position.y > position1.y - 23.f && blobMotion.position.y < position1.y + 23.f){
                 // Adjusting horizontal position after teleportation.
                 if (blobMotion.velocity.x >= 0){
-                    blobMotion.position.x = 744.f;
+                    blobMotion.position.x = position2.x + 23.f;
                 }
                 else{
-                    blobMotion.position.x = 698.f;
+                    blobMotion.position.x = position2.x - 23.f;
                 }
+                    
                 // Adjusting vertical position after teleportation.
                 if (blobMotion.velocity.y >= 0){
-                    blobMotion.position.y = 348.f;
+                    blobMotion.position.y = position2.y + 23.f;
                 }
                 else{
-                    blobMotion.position.y = 302.f;
+                    blobMotion.position.y = position2.y - 23.f;
                 }
             }
-            // For the Teleporter on the Right.
-            else if (blobMotion.position.x > 699.f && blobMotion.position.x < 743.f && blobMotion.position.y > 303.f && blobMotion.position.y < 347.f){
             
+            // If at teleporter_two...
+            if (blobMotion.position.x > position2.x - 23.f && blobMotion.position.x < position2.x + 23.f
+                && blobMotion.position.y > position2.y - 23.f && blobMotion.position.y < position2.y + 23.f){
                 // Adjusting horizontal position after teleportation.
                 if (blobMotion.velocity.x >= 0){
-                    blobMotion.position.x = 348.f;
+                    blobMotion.position.x = position1.x + 23.f;
                 }
                 else{
-                    blobMotion.position.x = 301.f;
+                    blobMotion.position.x = position1.x - 23.f;
                 }
+                    
                 // Adjusting vertical position after teleportation.
                 if (blobMotion.velocity.y >= 0){
-                    blobMotion.position.y = 568.f;
+                    blobMotion.position.y = position1.y + 23.f;
                 }
                 else{
-                    blobMotion.position.y = 521.f;
+                    blobMotion.position.y = position1.y - 23.f;
                 }
             }
         }
