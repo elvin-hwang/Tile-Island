@@ -6,11 +6,16 @@
 #include "json.hpp"
 #include "tile.hpp"
 #include "blobule.hpp"
+#include "egg.hpp"
+#include "utils.hpp"
 #include <istream>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
+
+int widthNum;
+int heightNum;
 
 const float tile_width = 44.46f;
 std::vector<ECS::Entity> blobuleList;
@@ -72,19 +77,67 @@ std::vector<std::vector<ECS::Entity>> createTileIsland(std::vector<std::vector<s
 
 void createBlobules(std::vector<std::vector<int>> blobulePositions, std::vector<std::vector<ECS::Entity>> tileIsland) {
 	blobuleList.clear();
+	int count = 0;
 	for (auto position : blobulePositions) {
 		auto& motion = ECS::registry<Motion>.get(tileIsland[position[1]][position[0]]);
-		blobuleList.push_back(Blobule::createBlobule(motion.position, blobuleCol::Yellow, "yellow"));
+		ECS::Entity blob;
+		switch (count) {
+		case 0:
+			blob = Blobule::createBlobule(motion.position, blobuleCol::Yellow, "yellow");
+			break;
+		case 1:
+			blob = Blobule::createBlobule(motion.position, blobuleCol::Green, "green");
+			break;
+		case 2:
+			blob = Blobule::createBlobule(motion.position, blobuleCol::Red, "red");
+			break;
+		case 3:
+			blob = Blobule::createBlobule(motion.position, blobuleCol::Blue, "blue");
+			break;
+		}
+		blobuleList.push_back(blob);
+		count++;
 	}
 }
 
-std::vector<std::vector<ECS::Entity>> MapLoader::loadMap(std::string fileLocation) {
+void createEggs(std::vector<std::vector<int>> eggPositions, std::vector<std::vector<ECS::Entity>> tileIsland) {
+	for (auto position : eggPositions) {
+		auto& motion = ECS::registry<Motion>.get(tileIsland[position[1]][position[0]]);
+		Egg::createEgg(motion.position);
+	}
+}
+
+void createWaterBorder(std::vector<std::vector<ECS::Entity>> tileIsland, vec2 windowSize) {
+	float top = ECS::registry<Motion>.get(tileIsland[0][0]).position.y - tile_width;
+	float rightBound = windowSize.x + 700;
+	float bottomBound = windowSize.y + 700;
+	float leftBound = -700;
+	float topBound = -700;
+
+	for (float y = top; y >= topBound; y -= tile_width) {
+		for (float x = rightBound; x >= leftBound; x -= tile_width) {
+			Tile::createTile({ x, y }, Water);
+		}
+	}
+	// while x = 1500 and y = top - tileWIDTH
+	// while > -500 
+}
+
+void centerIsland(std::vector<std::vector<ECS::Entity>> tileIsland, vec2 windowSize) {
+	auto& motion = ECS::registry<Motion>.get(tileIsland[heightNum / 2][widthNum / 2]);
+	vec2 offset = vec2{ windowSize.x / 2, windowSize.y / 2 } - motion.position;
+	Utils::moveCamera(offset.x, offset.y);
+}
+
+
+// PUBLIC functions
+std::vector<std::vector<ECS::Entity>> MapLoader::loadMap(std::string fileLocation, vec2 windowSize) {
 	nlohmann::json mapInfo;
 	std::ifstream map_file(fileLocation, std::ifstream::binary);
 	map_file >> mapInfo;
 
-	int widthNum = mapInfo["numWidth"];
-	int heightNum = mapInfo["numHeight"];
+	widthNum = mapInfo["numWidth"];
+	heightNum = mapInfo["numHeight"];
 
 	std::string gridInfoPath = mapInfo["gridInfo"];
 	std::ifstream temp(gridInfoPath);
@@ -96,8 +149,12 @@ std::vector<std::vector<ECS::Entity>> MapLoader::loadMap(std::string fileLocatio
 	if (gridWidth != widthNum || gridHeight != heightNum) {
 		throw "INVALID HEIGHT AND WIDTH IN FILES";
 	}
+
 	std::vector<std::vector<ECS::Entity>> tileIsland = createTileIsland(csvGrid);
 	createBlobules(mapInfo["blobulePositions"], tileIsland);
+	createEggs(mapInfo["eggPositions"], tileIsland);
+	centerIsland(tileIsland, windowSize);
+	createWaterBorder(tileIsland, windowSize);
 	return tileIsland;
 }
 

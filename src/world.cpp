@@ -23,12 +23,9 @@
 // Game Configuration
 
 // Tile Configurations
-const float tile_width = 44.46f;
-const int borderWidth = 100;
-
 int numWidth = 0;
 int numHeight = 0;
-std::vector<std::vector<ECS::Entity>> islandGrid; // This will actually be a size of [numWidth][numHeight] but just using 100 to be safe
+std::vector<std::vector<ECS::Entity>> islandGrid;
 
 // Movement speed of blobule.
 float moveSpeed = 200.f;
@@ -250,46 +247,19 @@ void WorldSystem::restart() {
         // Debugging for memory/component leaks
         ECS::ContainerInterface::list_all_components();
 
-        // Generate our default grid first.
-        int window_width, window_height;
-        glfwGetWindowSize(window, &window_width, &window_height);
-
-        // TODO DELETE HERE TO...
-        // Make a 20 x 15 Grid of Tiles.
-        islandGrid = MapLoader::loadMap("../../../data/level/map_1.json");
+        islandGrid = MapLoader::loadMap("../../../data/level/map_1.json", { window_width, window_height });
         numHeight = islandGrid.size();
         numWidth = islandGrid[0].size();
 
-        //// Create blobule characters
-        //if (ECS::registry<Blobule>.components.size() <= 4) {
-        //    player_blobule1 = Blobule::createBlobule({ islandGrid[1][1].x, islandGrid[1][1].y }, blobuleCol::Yellow, "yellow");
-        //    player_blobule2 = Blobule::createBlobule({ islandGrid[numWidth - 1][1].x, islandGrid[numWidth - 1][1].y }, blobuleCol::Green,
-        //                                             "green");
-        //    player_blobule3 = Blobule::createBlobule({ islandGrid[1][numHeight - 1].x, islandGrid[1][numHeight - 1].y }, blobuleCol::Red, "red");
-        //    player_blobule4 = Blobule::createBlobule({ islandGrid[numWidth - 1][numHeight - 1].x , islandGrid[numWidth - 1][numHeight - 1].y },
-        //                                             blobuleCol::Blue, "blue");
-        //    active_player = player_blobule1;
-        //    ECS::registry<Blobule>.get(active_player).active_player = true;
-        //}
-
         active_player = MapLoader::getBlobule(0);
         ECS::registry<Blobule>.get(active_player).active_player = true;
-
-        ////Only one npc for now
-        //if (ECS::registry<Egg>.components.size() < 1) {
-        //    // Create egg
-        //    ECS::Entity entity = Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
-        //    //add movement things here
-        //}
-
-        // UP TO HERE !!! TODO
 
         //Create Text
         if (ECS::registry<Text>.components.size() > 0){
             ECS::registry<Text>.clear();
         }
-        score_text = Text::create_text("score", { 100, 70 }, 0.58);
-        player_text = Text::create_text("player", { 100, 40 }, 0.58);
+        score_text = Text::create_text("score", { 100, 60 }, 0.58);
+        player_text = Text::create_text("player", { 100, 30 }, 0.58);
 
     }
 }
@@ -363,8 +333,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         {
             // Note that we don't update the tileIsland grid in this function to save performance
             // If we need to, then we can store a global variable for the x,y offsets and use it accordingly.
-            int xOffset = 0;
-            int yOffset = 0;
+            float xOffset = 0;
+            float yOffset = 0;
             switch (key) {
                 case GLFW_KEY_W:
                     yOffset = 10.f;
@@ -382,24 +352,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                     break;
             }
 
-            // Move all Blobules
-            for (auto& blob : ECS::registry<Blobule>.entities)
-            {
-                ECS::registry<Motion>.get(blob).position += vec2({ xOffset, yOffset });
-                ECS::registry<Blobule>.get(blob).origin += vec2({ xOffset, yOffset });
-            }
-            // Move all tiles
-            for (auto& tile : ECS::registry<Tile>.entities)
-            {
-                auto& tileComponent = ECS::registry<Tile>.get(tile);
-                ECS::registry<Motion>.get(tile).position += vec2({ xOffset, yOffset });
-                ECS::registry<Motion>.get(tileComponent.splatEntity).position += vec2({ xOffset, yOffset });
-            }
-            // Move all eggs
-            for (auto& egg : ECS::registry<Egg>.entities)
-            {
-                ECS::registry<Motion>.get(egg).position += vec2({ xOffset, yOffset });
-            }
+            Utils::moveCamera(xOffset, yOffset);
         }
 
         // Turn based system

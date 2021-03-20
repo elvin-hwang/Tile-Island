@@ -9,6 +9,8 @@ struct Utils
     // Get Active Player Blobule
     static ECS::Entity& getActivePlayerBlobule();
 
+    static void moveCamera(float xOffset, float yOffset);
+
     // Get Euclidean distance between two motions
     static float euclideanDist(Motion motion1, Motion motion2);
 
