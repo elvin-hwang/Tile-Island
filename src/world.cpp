@@ -201,7 +201,6 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
             ECS::registry<Text>.get(player_text).content = current_player.str();
         }
 
-
         // Friction implementation
         for (auto& blob : ECS::registry<Blobule>.entities)
         {
@@ -251,7 +250,8 @@ void WorldSystem::restart() {
         // Debugging for memory/component leaks
         ECS::ContainerInterface::list_all_components();
 
-        islandGrid = MapLoader::loadMap("../../../data/level/map_1.json", { window_width, window_height });
+        // Can replace loadMap with loadSavedMap
+        islandGrid = load_game ? MapLoader::loadSavedMap({ window_width, window_height }) : MapLoader::loadMap("../../../data/level/map_1.json", { window_width, window_height });
         numHeight = islandGrid.size();
         numWidth = islandGrid[0].size();
 
@@ -472,6 +472,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
             auto save_clicked = PhysicsSystem::is_entity_clicked(save_button, mouse_press_x, mouse_press_y);
             if (save_clicked) {
                 //call save function here
+                MapLoader::saveMap();
             }
         }
     }
