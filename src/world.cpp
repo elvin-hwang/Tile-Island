@@ -476,7 +476,14 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
             auto save_clicked = PhysicsSystem::is_entity_clicked(save_button, mouse_press_x, mouse_press_y);
             if (save_clicked) {
                 //call save function here
-                MapLoader::saveMap(playerMove, current_turn);
+                int currPlayer = playerMove;
+                if (blobuleMoved) {
+                    currPlayer++;
+                    if (currPlayer > 3) {
+                        currPlayer = 0;
+                    }
+                }
+                MapLoader::saveMap(currPlayer, current_turn);
             }
         }
     }
