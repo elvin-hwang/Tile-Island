@@ -37,7 +37,7 @@ ECS::Entity help_tool;
 
 double mouse_press_x, mouse_press_y;
 
-int playerMove = 1;
+int playerMove = 0;
 bool blobuleMoved = false;
 bool mouse_move = false;
 bool load_game = false;
@@ -52,7 +52,7 @@ WorldSystem::WorldSystem(ivec2 window_size_px)
 {
 	menuState = true;
 	window_size = window_size_px;
-	playerMove = 1;
+	playerMove = 0;
 
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
@@ -234,7 +234,7 @@ void WorldSystem::restart() {
 
 
         // Reset other stuff
-        playerMove = 1;
+        playerMove = 0;
         blobuleMoved = false;
         mouse_move = false;
         current_turn = 0;
@@ -255,7 +255,11 @@ void WorldSystem::restart() {
         numHeight = islandGrid.size();
         numWidth = islandGrid[0].size();
 
-        active_player = MapLoader::getBlobule(0);
+        // Set initial values
+        auto vals = MapLoader::getInitialInfo();
+        current_turn = vals[1];
+        playerMove = vals[0];
+        active_player = MapLoader::getBlobule(playerMove);
         ECS::registry<Blobule>.get(active_player).active_player = true;
 
         //Create Text
@@ -283,7 +287,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
     if(!menuState)
     {
         ECS::registry<Blobule>.get(active_player).active_player = false;
-        active_player = MapLoader::getBlobule(playerMove - 1);
+        active_player = MapLoader::getBlobule(playerMove);
 
         ECS::registry<Blobule>.get(active_player).active_player = true;
         auto& blobule_movement = ECS::registry<Motion>.get(active_player);
@@ -355,12 +359,12 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         // Turn based system
         if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS)
         {
-            if (playerMove != 4) {
+            if (playerMove != 3) {
                 playerMove++;
                 current_turn++;
             }
             else {
-                playerMove = 1;
+                playerMove = 0;
                 current_turn++;
             }
 
@@ -472,7 +476,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
             auto save_clicked = PhysicsSystem::is_entity_clicked(save_button, mouse_press_x, mouse_press_y);
             if (save_clicked) {
                 //call save function here
-                MapLoader::saveMap();
+                MapLoader::saveMap(playerMove, current_turn);
             }
         }
     }

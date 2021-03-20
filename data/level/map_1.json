@@ -11,6 +11,8 @@
   "eggPositions": [
     [ 9, 7 ]
   ],
+  "currentRound": 0,
+  "currentPlayer": 0,
   "yellowSplat": [],
   "greenSplat": [],
   "redSplat": [],

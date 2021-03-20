@@ -11,10 +11,12 @@ struct MapLoader
 
 	static std::vector<std::vector<ECS::Entity>> loadSavedMap(vec2 windowSize);
 
-	static void saveMap();
+	static void saveMap(int currentPlayer, int currentTurn);
+
+	static std::vector<int> getTileGridLocation(ECS::Entity tile);
 
 	static ECS::Entity getBlobule(int index);
 
-	static std::vector<int> getTileGridLocation(ECS::Entity tile);
+	static std::vector<int> getInitialInfo();
 };
 

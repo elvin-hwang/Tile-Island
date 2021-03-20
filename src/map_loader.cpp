@@ -17,6 +17,9 @@
 int widthNum;
 int heightNum;
 
+int initialPlayer;
+int initialRound;
+
 // Blobules are always in order of yellow, green, red, blue
 std::vector<ECS::Entity> blobuleList;
 std::vector<std::vector<ECS::Entity>> tileIsland;
@@ -170,6 +173,8 @@ std::vector<std::vector<ECS::Entity>> MapLoader::loadMap(std::string fileLocatio
 	std::ifstream map_file(fileLocation, std::ifstream::binary);
 	map_file >> mapInfo;
 
+	initialPlayer = mapInfo["currentPlayer"];
+	initialRound = mapInfo["currentRound"];
 	widthNum = mapInfo["numWidth"];
 	heightNum = mapInfo["numHeight"];
 
@@ -223,7 +228,7 @@ std::vector<std::vector<ECS::Entity>> MapLoader::loadSavedMap(vec2 windowSize) {
 	return tileIsland;
 }
 
-void MapLoader::saveMap() {
+void MapLoader::saveMap(int currentPlayer, int currentTurn) {
 	if (loadedGridLocation.empty()) {
 		return;
 	}
@@ -239,6 +244,10 @@ void MapLoader::saveMap() {
 	readFile >> mapInfo;
 
 	std::ofstream writeFile(savedMapLocation, std::ios::binary);
+
+	// Save current info
+	mapInfo["currentPlayer"] = currentPlayer;
+	mapInfo["currentRound"] = currentTurn;
 
 	// SAVE BLOBULE INFO
 	std::vector<std::vector<int>> entitiesPosition;
@@ -297,4 +306,8 @@ std::vector<int> MapLoader::getTileGridLocation(ECS::Entity tile) {
 
 ECS::Entity MapLoader::getBlobule(int index) {
 	return blobuleList[index];
+}
+
+std::vector<int> MapLoader::getInitialInfo() {
+	return { initialPlayer, initialRound };
 }
