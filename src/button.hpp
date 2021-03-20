@@ -5,7 +5,8 @@
 
 enum class buttonType {
 	Start,
-	Load
+	Load,
+	Save
 };
 
 

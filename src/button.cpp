@@ -21,6 +21,9 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, buttonType type, std
         case buttonType::Load:
             path = textures_path("load_button.png");
             break;
+        case buttonType::Save:
+            path = textures_path("save_button.png");
+            break;
         }
         RenderSystem::createSprite(resource, path, "textured");
 
