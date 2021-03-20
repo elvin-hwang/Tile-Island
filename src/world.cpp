@@ -199,6 +199,7 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
             ECS::registry<Text>.get(score_text).content = scores.str();
             ECS::registry<Text>.get(player_text).content = current_player.str();
         }
+        MapLoader::saveMap();
     }
 
     // Friction implementation
@@ -247,6 +248,7 @@ void WorldSystem::restart() {
         // Debugging for memory/component leaks
         ECS::ContainerInterface::list_all_components();
 
+        // Can replace loadMap with loadSavedMap
         islandGrid = MapLoader::loadMap("../../../data/level/map_1.json", { window_width, window_height });
         numHeight = islandGrid.size();
         numWidth = islandGrid[0].size();

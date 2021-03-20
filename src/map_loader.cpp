@@ -17,11 +17,17 @@
 int widthNum;
 int heightNum;
 
-const float tile_width = 44.46f;
+// Blobules are always in order of yellow, green, red, blue
 std::vector<ECS::Entity> blobuleList;
+std::vector<std::vector<ECS::Entity>> tileIsland;
+std::string loadedGridLocation;
 
-std::vector<std::vector<ECS::Entity>> createTileIsland(std::vector<std::vector<std::string>> csvGrid) {
-	std::vector<std::vector<ECS::Entity>> tileIsland;
+const std::string savedGridLocation = "../../../data/saved/grid.csv";
+const std::string savedMapLocation = "../../../data/saved/map.csv";
+const float tile_width = 44.46f;
+
+void createTileIsland(std::vector<std::vector<std::string>> csvGrid) {
+	tileIsland.clear();
 	for (int i = 0; i < csvGrid.size(); i++) {
 		auto row = csvGrid[i];
 		std::vector<ECS::Entity> newRow;
@@ -72,10 +78,9 @@ std::vector<std::vector<ECS::Entity>> createTileIsland(std::vector<std::vector<s
 		}
 		tileIsland.push_back(newRow);
 	}
-	return tileIsland;
 }
 
-void createBlobules(std::vector<std::vector<int>> blobulePositions, std::vector<std::vector<ECS::Entity>> tileIsland) {
+void createBlobules(std::vector<std::vector<int>> blobulePositions) {
 	blobuleList.clear();
 	int count = 0;
 	for (auto position : blobulePositions) {
@@ -100,14 +105,14 @@ void createBlobules(std::vector<std::vector<int>> blobulePositions, std::vector<
 	}
 }
 
-void createEggs(std::vector<std::vector<int>> eggPositions, std::vector<std::vector<ECS::Entity>> tileIsland) {
+void createEggs(std::vector<std::vector<int>> eggPositions) {
 	for (auto position : eggPositions) {
 		auto& motion = ECS::registry<Motion>.get(tileIsland[position[1]][position[0]]);
 		Egg::createEgg(motion.position);
 	}
 }
 
-void createWaterBorder(std::vector<std::vector<ECS::Entity>> tileIsland, vec2 windowSize) {
+void createWaterBorder(vec2 windowSize) {
 	float waterBorderWidth = 700.f;
 
 	vec2 topLeft = ECS::registry<Motion>.get(tileIsland[0][0]).position;
@@ -152,7 +157,7 @@ void createWaterBorder(std::vector<std::vector<ECS::Entity>> tileIsland, vec2 wi
 	}
 }
 
-void centerIsland(std::vector<std::vector<ECS::Entity>> tileIsland, vec2 windowSize) {
+void centerIsland(vec2 windowSize) {
 	auto& motion = ECS::registry<Motion>.get(tileIsland[heightNum / 2][widthNum / 2]);
 	vec2 offset = vec2{ windowSize.x / 2, windowSize.y / 2 } - motion.position;
 	Utils::moveCamera(offset.x, offset.y);
@@ -168,8 +173,8 @@ std::vector<std::vector<ECS::Entity>> MapLoader::loadMap(std::string fileLocatio
 	widthNum = mapInfo["numWidth"];
 	heightNum = mapInfo["numHeight"];
 
-	std::string gridInfoPath = mapInfo["gridInfo"];
-	std::ifstream temp(gridInfoPath);
+	loadedGridLocation = mapInfo["gridInfo"];
+	std::ifstream temp(loadedGridLocation);
 	std::istream& file = temp;
 	std::vector<std::vector<std::string>> csvGrid = CSVReader::readCSV(file);
 
@@ -179,20 +184,61 @@ std::vector<std::vector<ECS::Entity>> MapLoader::loadMap(std::string fileLocatio
 		throw "INVALID HEIGHT AND WIDTH IN FILES";
 	}
 
-	std::vector<std::vector<ECS::Entity>> tileIsland = createTileIsland(csvGrid);
-	createBlobules(mapInfo["blobulePositions"], tileIsland);
-	createEggs(mapInfo["eggPositions"], tileIsland);
-	centerIsland(tileIsland, windowSize);
-	createWaterBorder(tileIsland, windowSize);
+	createTileIsland(csvGrid);
+	createBlobules(mapInfo["blobulePositions"]);
+	createEggs(mapInfo["eggPositions"]);
+	centerIsland(windowSize);
+	createWaterBorder(windowSize);
 	return tileIsland;
 }
 
-void MapLoader::loadSavedMap() {
-	// TODO
+std::vector<std::vector<ECS::Entity>> MapLoader::loadSavedMap(vec2 windowSize) {
+	loadedGridLocation = savedGridLocation;
+	tileIsland = MapLoader::loadMap(savedMapLocation, windowSize);
+
+
+	nlohmann::json mapInfo;
+	std::ifstream map_file(savedMapLocation, std::ifstream::binary);
+	map_file >> mapInfo;
+
+	// Set splat positions
+	std::vector<std::vector<int>> yellowSplats = mapInfo["yellowSplat"];
+	std::vector<std::vector<int>> greenSplats = mapInfo["greenSplat"];
+	std::vector<std::vector<int>> redSplats = mapInfo["redSplat"];
+	std::vector<std::vector<int>> blueSplats = mapInfo["blueSplat"];
+
+	for (auto entity : blobuleList) {
+		// Call setSplat at each positions ya?
+		break;
+	}
+
+	return tileIsland;
 }
 
 void MapLoader::saveMap() {
-	// TODO
+	if (loadedGridLocation.empty()) {
+		return;
+	}
+
+	if (loadedGridLocation != savedGridLocation) {
+		std::ifstream  src(loadedGridLocation, std::ios::binary);
+		std::ofstream  dst(savedGridLocation, std::ios::binary);
+
+		dst << src.rdbuf();
+	}
+
+	std::ofstream mapFile(savedMapLocation, std::ios::binary);
+
+	std::vector<std::vector<int>> entitiesPosition = { {0, 1}, {0, 2} };
+	nlohmann::json j_vec(entitiesPosition);
+
+	//mapFile << j
+
+
+
+
+
+	// TODO save map info (blobule position (order of yellow, green, red, blue), egg position, splat positions) 
 }
 
 

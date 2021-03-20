@@ -9,7 +9,7 @@ struct MapLoader
 {
 	static std::vector<std::vector<ECS::Entity>> loadMap(std::string fileLocation, vec2 windowSize);
 
-	static void loadSavedMap();
+	static std::vector<std::vector<ECS::Entity>> loadSavedMap(vec2 windowSize);
 
 	static void saveMap();
 
