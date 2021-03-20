@@ -35,7 +35,17 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
         break;
     case Mud:
         key = "tile_purple";
-        friction = 0.04f;
+        friction = 0.03f;
+        motion.isCollidable = false;
+        break;
+    case Sand:
+        key = "tile_brown";
+        friction = 0.02f;
+        motion.isCollidable = false;
+        break;
+    case Acid:
+        key = "tile_green";
+        friction = 0.08f;
         motion.isCollidable = false;
         break;
     case Speed:
@@ -67,6 +77,7 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
         key = "tile_teleport";
         friction = 0.01f;
         motion.isCollidable = false;
+        ECS::registry<Teleporting>.emplace(entity);
         break;
     default:
         break;
@@ -113,11 +124,6 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     tile.splatEntity = ECS::Entity();
     ECS::registry<Motion>.emplace(tile.splatEntity);
     
-    if (type == Teleport){
-        auto& teleport = ECS::registry<Teleporting>.emplace(entity);
-        teleport.position = position;
-    }
-
     return entity;
 }
 

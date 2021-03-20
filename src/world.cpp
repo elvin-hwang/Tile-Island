@@ -9,6 +9,7 @@
 #include "helptool.hpp"
 #include "collisions.hpp"
 #include "utils.hpp"
+#include "map_loader.hpp"
 
 // stlib
 #include <string.h>
@@ -22,16 +23,14 @@
 // Game Configuration
 
 // Tile Configurations
-const float tile_width = 44.46f;
-const int borderWidth = 100;
 int numWidth = 0;
 int numHeight = 0;
-vec2 islandGrid[100][100]; // This will actually be a size of [numWidth][numHeight] but just using 100 to be safe
+std::vector<std::vector<ECS::Entity>> islandGrid;
 
 // Movement speed of blobule.
 float moveSpeed = 200.f;
 float terminalVelocity = 20.f;
-float max_blobule_speed = 750.f;
+float max_blobule_speed = 250.f;
 vec2 window_size;
 ECS::Entity help_tool;
 
@@ -184,7 +183,8 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
     if (ECS::registry<Egg>.components.size() < MAX_EGGS && next_egg_spawn == 0)
     {
         next_egg_spawn = 3;
-        ECS::Entity entity = Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
+        auto& motion = ECS::registry<Motion>.get(islandGrid[numWidth / 2][numHeight / 2]);
+        ECS::Entity entity = Egg::createEgg(motion.position);
     }
 
     scores <<
@@ -247,110 +247,19 @@ void WorldSystem::restart() {
         // Debugging for memory/component leaks
         ECS::ContainerInterface::list_all_components();
 
-        // Generate our default grid first.
-        int window_width, window_height;
-        glfwGetWindowSize(window, &window_width, &window_height);
+        islandGrid = MapLoader::loadMap("../../../data/level/map_1.json", { window_width, window_height });
+        numHeight = islandGrid.size();
+        numWidth = islandGrid[0].size();
 
-        // Make a 20 x 15 Grid of Tiles.
-        numWidth = (window_width - borderWidth * 2) / tile_width + 1;
-        numHeight = (window_height - borderWidth * 2) / tile_width;
-
-        int horizontalIndex = 0;
-        int verticalIndex = 0;
-        bool isTile = false;
-
-        // Horizontally...
-        for (int i = tile_width / 2 - borderWidth*5; i <= window_width + borderWidth*5; i += tile_width)
-        {
-            // Vertically...
-            for (int j = tile_width / 2 - borderWidth*5; j <= window_height + borderWidth*5; j += tile_width)
-            {
-                if (i < borderWidth || j < borderWidth || i > window_width - borderWidth || j > window_height - borderWidth) {
-                    Tile::createTile({ i, j }, Water);
-                    continue;
-                }
-                islandGrid[horizontalIndex][verticalIndex] = { i, j };
-				// Generate map
-				if ((horizontalIndex < numWidth - 2 && horizontalIndex > 2) && (verticalIndex == 0 || verticalIndex == numHeight)) {
-					Tile::createTile({ i, j }, Block); // top, bottom wall
-				}
-				else if ((verticalIndex < numHeight - 2 && verticalIndex > 2) && (horizontalIndex == 0 || horizontalIndex == numWidth)) {
-					Tile::createTile({ i, j }, Block); // left, right wall
-				}
-				else if (i < window_width / 2) {
-                    if (i == 281.f && j == 237.f){
-                        Tile::createTile({ i, j }, Speed);
-                    }
-                    else if (i == 325.f && j == 545.f){
-                        Tile::createTile({ i, j }, Teleport);
-                    }
-                    else if (i == 149.f && j == 413.f){
-                        Tile::createTile({ i, j }, Speed_RIGHT);
-                    }
-                    else if (i == 457.f && j == 149.f){
-                        Tile::createTile({ i, j }, Speed_DOWN);
-                    }
-                    else {
-                        Tile::createTile({ i, j }, Ice);
-                    }
-				}
-				else {
-                    if (i == 633.f && j == 457.f){
-                        Tile::createTile({ i, j }, Speed);
-                        // std::cout << "(" << i << ", " << j << ")";
-                    }
-                    else if (i == 721.f && j == 325.f){
-                        Tile::createTile({ i, j }, Teleport);
-                        // std::cout << "(" << i << ", " << j << ")";
-                    }
-                    else if (i == 853.f && j == 369.f){
-                        Tile::createTile({ i, j }, Speed_LEFT);
-                        // std::cout << "(" << i << ", " << j << ")";
-                    }
-                    else if (i == 501.f && j == 633.f){
-                        Tile::createTile({ i, j }, Speed_UP);
-                        // std::cout << "(" << i << ", " << j << ")";
-                    }
-                    else {
-                        Tile::createTile({ i, j }, Mud);
-                        // std::cout << "(" << i << ", " << j << ")";
-                    }
-				}
-                verticalIndex++;
-                isTile = true;
-            }
-            if (isTile) {
-                verticalIndex = 0;
-                horizontalIndex++;
-                isTile = false;
-            }
-        }
-
-        // Create blobule characters
-        if (ECS::registry<Blobule>.components.size() <= 4) {
-            player_blobule1 = Blobule::createBlobule({ islandGrid[1][1].x, islandGrid[1][1].y }, blobuleCol::Yellow, "yellow");
-            player_blobule2 = Blobule::createBlobule({ islandGrid[numWidth - 1][1].x, islandGrid[numWidth - 1][1].y }, blobuleCol::Green,
-                                                     "green");
-            player_blobule3 = Blobule::createBlobule({ islandGrid[1][numHeight - 1].x, islandGrid[1][numHeight - 1].y }, blobuleCol::Red, "red");
-            player_blobule4 = Blobule::createBlobule({ islandGrid[numWidth - 1][numHeight - 1].x , islandGrid[numWidth - 1][numHeight - 1].y },
-                                                     blobuleCol::Blue, "blue");
-            active_player = player_blobule1;
-            ECS::registry<Blobule>.get(active_player).active_player = true;
-        }
-
-        //Only one npc for now
-        if (ECS::registry<Egg>.components.size() < 1) {
-            // Create egg
-            ECS::Entity entity = Egg::createEgg({ islandGrid[numWidth / 2][numHeight / 2].x, islandGrid[numWidth / 2][numHeight / 2].y });
-            //add movement things here
-        }
+        active_player = MapLoader::getBlobule(0);
+        ECS::registry<Blobule>.get(active_player).active_player = true;
 
         //Create Text
         if (ECS::registry<Text>.components.size() > 0){
             ECS::registry<Text>.clear();
         }
-        score_text = Text::create_text("score", { islandGrid[0][0].x - tile_width / 2, islandGrid[0][0].y - 30.0f }, 0.58);
-        player_text = Text::create_text("player", { islandGrid[0][0].x - tile_width / 2, islandGrid[0][0].y - 60.0f }, 0.58);
+        score_text = Text::create_text("score", { 100, 60 }, 0.58);
+        player_text = Text::create_text("player", { 100, 30 }, 0.58);
 
     }
 }
@@ -376,20 +285,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
     }
     else {
         ECS::registry<Blobule>.get(active_player).active_player = false;
-        switch (playerMove) {
-            case 1:
-                active_player = player_blobule1;
-                break;
-            case 2:
-                active_player = player_blobule2;
-                break;
-            case 3:
-                active_player = player_blobule3;
-                break;
-            case 4:
-                active_player = player_blobule4;
-                break;
-        }
+        active_player = MapLoader::getBlobule(playerMove - 1);
 
         ECS::registry<Blobule>.get(active_player).active_player = true;
         auto& blobule_movement = ECS::registry<Motion>.get(active_player);
@@ -437,8 +333,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         {
             // Note that we don't update the tileIsland grid in this function to save performance
             // If we need to, then we can store a global variable for the x,y offsets and use it accordingly.
-            int xOffset = 0;
-            int yOffset = 0;
+            float xOffset = 0;
+            float yOffset = 0;
             switch (key) {
                 case GLFW_KEY_W:
                     yOffset = 10.f;
@@ -455,31 +351,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                 default:
                     break;
             }
-
-            // Move all Blobules
-            for (auto& blob : ECS::registry<Blobule>.entities)
-            {
-                ECS::registry<Motion>.get(blob).position += vec2({ xOffset, yOffset });
-                ECS::registry<Blobule>.get(blob).origin += vec2({ xOffset, yOffset });
-            }
-            // Move all tiles
-            for (auto& tile : ECS::registry<Tile>.entities)
-            {
-                auto& tileComponent = ECS::registry<Tile>.get(tile);
-                ECS::registry<Motion>.get(tile).position += vec2({ xOffset, yOffset });
-                ECS::registry<Motion>.get(tileComponent.splatEntity).position += vec2({ xOffset, yOffset });
-            }
-            // Move all eggs
-            for (auto& egg : ECS::registry<Egg>.entities)
-            {
-                ECS::registry<Motion>.get(egg).position += vec2({ xOffset, yOffset });
-            }
-            
-            // Move all teleportation tiles
-            for (auto& teleport : ECS::registry<Teleporting>.entities)
-            {
-                ECS::registry<Teleporting>.get(teleport).position += vec2({ xOffset, yOffset });
-            }
+            Utils::moveCamera(xOffset, yOffset);
         }
 
         // Turn based system

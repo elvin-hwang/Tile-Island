@@ -10,6 +10,8 @@ enum TerrainType {
     Block,
     Ice,
     Mud,
+    Sand,
+    Acid,
     Speed,
     Speed_UP,
     Speed_LEFT,
