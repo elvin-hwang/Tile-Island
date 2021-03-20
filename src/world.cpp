@@ -40,6 +40,7 @@ double mouse_press_x, mouse_press_y;
 int playerMove = 1;
 bool blobuleMoved = false;
 bool mouse_move = false;
+bool load_game = false;
 
 int current_turn = 0;
 int MAX_TURNS = 20;
@@ -427,7 +428,8 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 		else {
 			auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
 			if (load_clicked) {
-				//call load function
+                load_game = true;
+                restart();
 			}
 		}
 	}
