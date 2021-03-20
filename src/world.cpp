@@ -474,6 +474,12 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             {
                 ECS::registry<Motion>.get(egg).position += vec2({ xOffset, yOffset });
             }
+            
+            // Move all teleportation tiles
+            for (auto& teleport : ECS::registry<Teleporting>.entities)
+            {
+                ECS::registry<Teleporting>.get(teleport).position += vec2({ xOffset, yOffset });
+            }
         }
 
         // Turn based system
@@ -553,11 +559,14 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !blobuleMoved)
         {
-            Mix_PlayChannel(-1, slingshot_pull_sound, 0);
-
+            
             // store position of left click coordinates in mouse_press_x and mouse_press_y
             glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
             mouse_move = mouse_press_x >= left_boundary && mouse_press_x <= right_boundary && mouse_press_y >= top_boundary && mouse_press_y <= bottom_boundary;
+            
+            if (mouse_move){
+                Mix_PlayChannel(-1, slingshot_pull_sound, 0);
+            }
         }
 
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE && !blobuleMoved)
