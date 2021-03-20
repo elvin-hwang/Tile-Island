@@ -434,19 +434,9 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 
     if (!menuState && current_turn < MAX_TURNS)
     {
-        // compute the horizontal and vertical boundaries of the player asset
-        auto left_boundary = ECS::registry<Motion>.get(active_player).position.x - (ECS::registry<Motion>.get(active_player).scale.x / 2);
-        auto right_boundary = ECS::registry<Motion>.get(active_player).position.x + (ECS::registry<Motion>.get(active_player).scale.x / 2);
-        auto top_boundary = ECS::registry<Motion>.get(active_player).position.y - (ECS::registry<Motion>.get(active_player).scale.y / 2);
-        auto bottom_boundary = ECS::registry<Motion>.get(active_player).position.y + (ECS::registry<Motion>.get(active_player).scale.y / 2);
-
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !blobuleMoved)
         {
-            
-            // store position of left click coordinates in mouse_press_x and mouse_press_y
-            glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
             mouse_move = PhysicsSystem::is_entity_clicked(active_player, mouse_press_x, mouse_press_y);
-
             if (mouse_move){
                 Mix_PlayChannel(-1, slingshot_pull_sound, 0);
             }
