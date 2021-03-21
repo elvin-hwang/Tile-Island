@@ -254,7 +254,7 @@ void WorldSystem::restart() {
         ECS::ContainerInterface::list_all_components();
 
         // Can replace loadMap with loadSavedMap
-        islandGrid = load_game ? MapLoader::loadSavedMap({ window_width, window_height }) : MapLoader::loadMap("../../../data/level/map_1.json", { window_width, window_height });
+        islandGrid = load_game ? MapLoader::loadSavedMap({ window_width, window_height }) : MapLoader::loadMap("data/level/map_1.json", { window_width, window_height });
         numHeight = islandGrid.size();
         numWidth = islandGrid[0].size();
 

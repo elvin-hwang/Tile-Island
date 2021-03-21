@@ -25,8 +25,8 @@ std::vector<ECS::Entity> blobuleList;
 std::vector<std::vector<ECS::Entity>> tileIsland;
 std::string loadedGridLocation;
 
-const std::string savedGridLocation = "../../../data/saved/grid.csv";
-const std::string savedMapLocation = "../../../data/saved/map.json";
+const std::string savedGridLocation = "data/saved/grid.csv";
+const std::string savedMapLocation = "data/saved/map.json";
 const float tile_width = 44.46f;
 
 void createTileIsland(std::vector<std::vector<std::string>> csvGrid) {
@@ -244,6 +244,9 @@ void MapLoader::saveMap(int currentPlayer, int currentTurn) {
 	readFile >> mapInfo;
 
 	std::ofstream writeFile(savedMapLocation, std::ios::binary);
+
+	// Save grid info
+	mapInfo["gridInfo"] = savedGridLocation;
 
 	// Save current info
 	mapInfo["currentPlayer"] = currentPlayer;

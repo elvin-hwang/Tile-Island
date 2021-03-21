@@ -1,7 +1,7 @@
 {
   "numWidth": 19,
   "numHeight": 14,
-  "gridInfo": "../../../data/level/grid_1.csv",
+  "gridInfo": "data/level/grid_1.csv",
   "blobulePositions": [
     [ 1, 1 ],
     [ 17, 1 ],
