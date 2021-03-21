@@ -77,6 +77,8 @@ void createTileIsland(std::vector<std::vector<std::string>> csvGrid) {
 			else { // default case: value == "Water"
 				tile = Tile::createTile({ xPos, yPos }, Water);
 			}
+			auto& tileComponent = ECS::registry<Tile>.get(tile);
+			tileComponent.gridLocation = { j, i };
 			newRow.push_back(tile);
 		}
 		tileIsland.push_back(newRow);
@@ -260,6 +262,13 @@ void MapLoader::saveMap(int currentPlayer, int currentTurn) {
 	}
 	mapInfo["blobulePositions"] = entitiesPosition;
 
+	// SAVE EGG INFO
+	std::vector<std::vector<int>> eggsPosition;
+	for (ECS::Entity entity : ECS::registry<Egg>.entities) {
+		auto& egg = ECS::registry<Egg>.get(entity);
+		eggsPosition.push_back(egg.gridLocation);
+	}
+	mapInfo["eggPositions"] = eggsPosition;
 
 	// SAVE SPLAT INFO
 	std::vector<std::vector<int>> yellowSplats;

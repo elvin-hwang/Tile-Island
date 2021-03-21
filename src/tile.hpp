@@ -24,6 +24,7 @@ enum TerrainType {
 struct Tile
 {
     ECS::Entity splatEntity;
+    std::vector<int> gridLocation = { -1, -1 };
 
     // Create all the associated render resources and default transform.
     static ECS::Entity createTile(vec2 position, TerrainType type);

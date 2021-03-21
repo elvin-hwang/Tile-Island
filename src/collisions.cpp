@@ -332,7 +332,7 @@ void CollisionSystem::initialize_collisions() {
             if (distance_between_centers <= blobMotion_hit_radius) {
                 auto& blob = ECS::registry<Blobule>.get(entity);
                 Tile::setSplat(entity_other, blob.colEnum);
-				blob.currentGrid = MapLoader::getTileGridLocation(entity_other);
+				blob.currentGrid = ECS::registry<Tile>.get(entity_other).gridLocation;
             }
         }
 	};
@@ -357,7 +357,10 @@ void CollisionSystem::initialize_collisions() {
 				eggMotion.velocity.x = -eggMotion.velocity.x;
 				eggMotion.direction.x = -eggMotion.direction.x;
 			}
-			
+		}
+		else {
+			auto& egg = ECS::registry<Egg>.get(entity);
+			egg.gridLocation = ECS::registry<Tile>.get(entity_other).gridLocation;
 		}
 	};
 
