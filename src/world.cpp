@@ -228,7 +228,7 @@ void WorldSystem::restart() {
 	}
     else {
         // Debugging for memory/component leaks
-        ECS::ContainerInterface::list_all_components();
+        //ECS::ContainerInterface::list_all_components();
 
         std::cout << "Restarting\n";
 
@@ -244,8 +244,11 @@ void WorldSystem::restart() {
         current_speed = 1.f;
 
         // Remove all entities that we created (those that have a motion component)
-        while (ECS::registry<Motion>.entities.size() > 0)
+        while (ECS::registry<Motion>.entities.size() > 0) 
             ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
+
+        while (ECS::registry<ShadedMeshRef>.entities.size() > 0)
+            ECS::ContainerInterface::remove_all_components_of(ECS::registry<ShadedMeshRef>.entities.back());
 
         // Debugging for memory/component leaks
         ECS::ContainerInterface::list_all_components();
@@ -385,6 +388,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             int w, h;
             glfwGetWindowSize(window, &w, &h);
             Mix_PlayChannel(-1, game_start_sound, 0);
+            load_game = false;
             restart();
         }
 
