@@ -168,6 +168,36 @@ void centerIsland(vec2 windowSize) {
 	Utils::moveCamera(offset.x, offset.y);
 }
 
+void setSplatPositions(nlohmann::json mapInfo) {
+	// Set splat positions
+	std::vector<std::vector<int>> yellowSplats = mapInfo["yellowSplat"];
+	std::vector<std::vector<int>> greenSplats = mapInfo["greenSplat"];
+	std::vector<std::vector<int>> redSplats = mapInfo["redSplat"];
+	std::vector<std::vector<int>> blueSplats = mapInfo["blueSplat"];
+
+	for (auto gridLocation : yellowSplats) {
+		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Yellow);
+	}
+	for (auto gridLocation : greenSplats) {
+		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Green);
+	}
+	for (auto gridLocation : redSplats) {
+		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Red);
+	}
+	for (auto gridLocation : blueSplats) {
+		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Blue);
+	}
+}
+
+void setBlobuleScales(std::vector<std::vector<float>> blobuleScales) {
+	for (int i = 0; i < blobuleList.size(); i++) {
+		auto entity = blobuleList[i];
+		auto scale = blobuleScales[i];
+		auto& motion = ECS::registry<Motion>.get(entity);
+		motion.scale = { scale[0], scale[1] };
+	}
+}
+
 
 // PUBLIC functions
 std::vector<std::vector<ECS::Entity>> MapLoader::loadMap(std::string fileLocation, vec2 windowSize) {
@@ -208,24 +238,8 @@ std::vector<std::vector<ECS::Entity>> MapLoader::loadSavedMap(vec2 windowSize) {
 	std::ifstream map_file(savedMapLocation, std::ifstream::binary);
 	map_file >> mapInfo;
 
-	// Set splat positions
-	std::vector<std::vector<int>> yellowSplats = mapInfo["yellowSplat"];
-	std::vector<std::vector<int>> greenSplats = mapInfo["greenSplat"];
-	std::vector<std::vector<int>> redSplats = mapInfo["redSplat"];
-	std::vector<std::vector<int>> blueSplats = mapInfo["blueSplat"];
-
-	for (auto gridLocation : yellowSplats) {
-		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Yellow);
-	}
-	for (auto gridLocation : greenSplats) {
-		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Green);
-	}
-	for (auto gridLocation : redSplats) {
-		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Red);
-	}
-	for (auto gridLocation : blueSplats) {
-		Tile::setSplat(tileIsland[gridLocation[1]][gridLocation[0]], blobuleCol::Blue);
-	}
+	setSplatPositions(mapInfo);
+	setBlobuleScales(mapInfo["blobuleScales"]);
 
 	return tileIsland;
 }
@@ -256,11 +270,15 @@ void MapLoader::saveMap(int currentPlayer, int currentTurn) {
 
 	// SAVE BLOBULE INFO
 	std::vector<std::vector<int>> entitiesPosition;
+	std::vector<std::vector<float>> entitiesScale;
 	for (auto entity : blobuleList) {
 		auto& blob = ECS::registry<Blobule>.get(entity);
+		auto& motion = ECS::registry<Motion>.get(entity);
 		entitiesPosition.push_back(blob.currentGrid);
+		entitiesScale.push_back({ motion.scale.x, motion.scale.y });
 	}
 	mapInfo["blobulePositions"] = entitiesPosition;
+	mapInfo["blobuleScales"] = entitiesScale;
 
 	// SAVE EGG INFO
 	std::vector<std::vector<int>> eggsPosition;
