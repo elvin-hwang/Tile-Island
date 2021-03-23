@@ -14,6 +14,7 @@ enum class blobuleCol {
 struct Blobule
 {
 	vec2 origin;
+	std::vector<int> currentGrid;
 	std::string color;
 	blobuleCol colEnum;
 	bool active_player = false;

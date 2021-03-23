@@ -4,6 +4,8 @@
 #include "tiny_ecs.hpp"
 #include "blobule.hpp"
 #include "utils.hpp"
+#include "tile.hpp"
+#include "egg.hpp"
 
 ECS::Entity& Utils::getActivePlayerBlobule()
 {
@@ -15,6 +17,26 @@ ECS::Entity& Utils::getActivePlayerBlobule()
 		}
 	}
 	throw "no active player set";
+}
+void Utils::moveCamera(float xOffset, float yOffset) {
+	// Move all Blobules
+	for (auto& blob : ECS::registry<Blobule>.entities)
+	{
+		ECS::registry<Motion>.get(blob).position += vec2({ xOffset, yOffset });
+		ECS::registry<Blobule>.get(blob).origin += vec2({ xOffset, yOffset });
+	}
+	// Move all tiles
+	for (auto& tile : ECS::registry<Tile>.entities)
+	{
+		auto& tileComponent = ECS::registry<Tile>.get(tile);
+		ECS::registry<Motion>.get(tile).position += vec2({ xOffset, yOffset });
+		ECS::registry<Motion>.get(tileComponent.splatEntity).position += vec2({ xOffset, yOffset });
+	}
+	// Move all eggs
+	for (auto& egg : ECS::registry<Egg>.entities)
+	{
+		ECS::registry<Motion>.get(egg).position += vec2({ xOffset, yOffset });
+	}
 }
 
 float Utils::euclideanDist(Motion motion1, Motion motion2)

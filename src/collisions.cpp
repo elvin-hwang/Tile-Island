@@ -5,10 +5,196 @@
 #include "tile.hpp"
 #include "blobule.hpp"
 #include "utils.hpp"
+#include "powerup.hpp"
+#include "map_loader.hpp";
 #include <egg.hpp>
 #include <iostream>
 
+const float SPEED_BOOST = 50.f;
+
+void circle_circle_penetration_free_collision(Motion& blobMotion1, Motion& blobMotion2)
+{
+	// take the vector difference between the centers
+	vec2 difference_between_centers = blobMotion1.position - blobMotion2.position;
+	// compute the length of this vector
+	float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
+
+	// compute the amount you need to move
+	float motion1_radius = blobMotion1.scale.x / 2.f;
+	float motion2_radius = blobMotion2.scale.x / 2.f;
+	float step = motion1_radius + motion2_radius - distance_between_centers;
+	vec2 unitDirection = difference_between_centers / distance_between_centers;
+
+	if (blobMotion1.position.x > blobMotion2.position.x)
+	{
+		blobMotion1.position.x += unitDirection.x * step / 2;
+		blobMotion2.position.x -= unitDirection.x * step / 2;
+	}
+	else
+	{
+		blobMotion1.position.x += unitDirection.x * step / 2;
+		blobMotion2.position.x -= unitDirection.x * step / 2;
+	}
+
+	if (blobMotion1.position.y > blobMotion2.position.y)
+	{
+		blobMotion1.position.y += unitDirection.y * step / 2;
+		blobMotion2.position.y -= unitDirection.y * step / 2;
+	}
+	else
+	{
+		blobMotion1.position.y += unitDirection.y * step / 2;
+		blobMotion2.position.y -= unitDirection.y * step / 2;
+	}
+}
+
+void circle_square_penetration_free_collision(Motion& blobMotion, Motion& tileMotion)
+{
+	if (blobMotion.velocity.x == 0 && blobMotion.velocity.y == 0)
+	{
+		return;
+	}
+
+	float leftEdge = tileMotion.position.x - tileMotion.scale.x / 2;
+	float rightEdge = tileMotion.position.x + tileMotion.scale.x / 2;
+	float topEdge = tileMotion.position.y - tileMotion.scale.y / 2;
+	float bottomEdge = tileMotion.position.y + tileMotion.scale.y / 2;
+
+	float closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
+	float closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+
+	vec2 dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
+
+	float penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
+	const vec2 reverseUnitVel = -(blobMotion.velocity / glm::length(blobMotion.velocity));
+	while (penetrationDepth > 1)
+	{
+		float shiftX = blobMotion.position.x + reverseUnitVel.x * 2;
+		float shiftY = blobMotion.position.y + reverseUnitVel.y * 2;
+		blobMotion.position = vec2(shiftX, shiftY);
+		closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
+		closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+		dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
+		penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
+	}
+}
+
+void egg_square_penetration_free_collision(Motion& blobMotion, Motion& tileMotion, Direction dir)
+{
+	if (blobMotion.velocity.x == 0 && blobMotion.velocity.y == 0)
+	{
+		return;
+	}
+
+	float leftEdge = tileMotion.position.x - tileMotion.scale.x / 2;
+	float rightEdge = tileMotion.position.x + tileMotion.scale.x / 2;
+	float topEdge = tileMotion.position.y - tileMotion.scale.y / 2;
+	float bottomEdge = tileMotion.position.y + tileMotion.scale.y / 2;
+
+	float closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
+	float closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+
+	vec2 dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
+
+	float scale = 0;
+	if (dir == Direction::Left || dir == Direction::Right)
+	{
+		scale = blobMotion.scale.x;
+	}
+	else {
+		scale = blobMotion.scale.y;
+	}
+
+	float penetrationDepth = scale / 2 - glm::length(dist);
+	const vec2 reverseUnitVel = -(blobMotion.velocity / glm::length(blobMotion.velocity));
+	
+	while (penetrationDepth > 1)
+	{
+		float shiftX = blobMotion.position.x + reverseUnitVel.x * 2;
+		float shiftY = blobMotion.position.y + reverseUnitVel.y * 2;
+		blobMotion.position = vec2(shiftX, shiftY);
+		closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
+		closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+		dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
+		penetrationDepth = scale / 2 - glm::length(dist);
+	}
+}
+
+void circle_circle_complex_collision_resolution(Motion& blobMotion1, Motion& blobMotion2)
+{
+	float blobMagnitude = Utils::getVelocityMagnitude(blobMotion1);
+	float otherBlobMagnitude = Utils::getVelocityMagnitude(blobMotion2);
+	float finalVelocity = (blobMagnitude + otherBlobMagnitude) / 2;
+
+	bool switched = otherBlobMagnitude > blobMagnitude;
+	Motion& incomingMotion = !switched ? blobMotion1 : blobMotion2;
+
+	// Calculate angles
+	float originalAngle = atan2(incomingMotion.velocity.y, incomingMotion.velocity.x);
+	float impactAngle = !switched ?
+		atan2(blobMotion2.position.y - blobMotion1.position.y, blobMotion2.position.x - blobMotion1.position.x) :
+		atan2(blobMotion1.position.y - blobMotion2.position.y, blobMotion1.position.x - blobMotion2.position.x);
+
+	if (impactAngle < 0 && originalAngle > 0)
+		originalAngle = originalAngle - 2 * PI;
+	else if (impactAngle > 0 && originalAngle < 0)
+		originalAngle = originalAngle + 2 * PI;
+
+	float derivedAngle = impactAngle > originalAngle ? impactAngle - PI / 2 : impactAngle + PI / 2;
+
+	if (!switched) {
+		blobMotion1.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
+		blobMotion2.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
+	}
+	else {
+		blobMotion2.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
+		blobMotion1.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
+	}
+}
+
+void circle_square_complex_collision_handling(Motion& blobMotion, Motion& tileMotion, Direction dir)
+{
+	// Top and Bot walls reflect x axis (given by default)
+	// Left and Right walls reflect y axis (add 90 to previous angle), reflect, add 90 again
+	float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
+	float angle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
+
+	// Wall collision detected edge
+	switch (dir)
+	{
+	case Direction::Left:
+	case Direction::Right:
+		angle = -angle - PI;
+		break;
+	case Direction::Top:
+	case Direction::Bottom:
+		angle *= -1;
+		if (angle == 0) {
+			angle += PI;
+		}
+		break;
+	case Direction::Corner:
+		angle += PI;
+		break;
+	default:
+		break;
+	}
+
+	blobMotion.velocity = { cos(angle) * blobMagnitude, sin(angle) * blobMagnitude };
+}
+
 void CollisionSystem::initialize_collisions() {
+    
+    // Audio initialization.
+    collision_sound = Mix_LoadWAV(audio_path("collision.wav").c_str());
+    splash_sound = Mix_LoadWAV(audio_path("splash.wav").c_str());
+    powerup_sound = Mix_LoadWAV(audio_path("powerup.wav").c_str());
+    
+    if (collision_sound == nullptr || splash_sound == nullptr)
+        throw std::runtime_error("Failed to load sounds make sure the data directory is present: "+
+            audio_path("collision.wav")+
+            audio_path("splash.wav")+
+            audio_path("powerup.wav"));
 
 	//observer for blobule - tile collision
 	blobule_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("blobule_tile_coll"));
@@ -20,77 +206,23 @@ void CollisionSystem::initialize_collisions() {
 	egg_tile_coll = ECS::registry<Subject>.get(Subject::createSubject("egg_tile_coll"));
 
 	//Add any collision logic here as a lambda function that takes in (entity, entity_other)
-	auto blob_blob_collision = [](auto entity, auto entity_other, Direction dir) {
-
+	auto blob_blob_collision = [this](auto entity, auto entity_other, Direction dir) {
+        
+        // Play collision_sound.
+        Mix_PlayChannel(-1, collision_sound, 0);
+        
 		// entity_other is colliding with entity
 		auto& blobMotion1 = ECS::registry<Motion>.get(entity);
 		auto& blobMotion2 = ECS::registry<Motion>.get(entity_other);
 
-		// take the vector difference between the centers
-		vec2 difference_between_centers = blobMotion1.position - blobMotion2.position;
-		// compute the length of this vector
-		float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
-
-		// compute the amount you need to move
-		float motion1_radius = blobMotion1.scale.x / 2.f;
-		float motion2_radius = blobMotion2.scale.x / 2.f;
-		float step = motion1_radius + motion2_radius - distance_between_centers;
-		vec2 unitDirection = difference_between_centers / distance_between_centers;
-
-		float blobMagnitude = Utils::getVelocityMagnitude(blobMotion1);
-		float otherBlobMagnitude = Utils::getVelocityMagnitude(blobMotion2);
-		float finalVelocity = (blobMagnitude + otherBlobMagnitude) / 2;
-
-		bool switched = otherBlobMagnitude > blobMagnitude;
-		Motion& incomingMotion = !switched ? blobMotion1 : blobMotion2;
-
-		// Calculate angles
-		float originalAngle = atan2(incomingMotion.velocity.y, incomingMotion.velocity.x);
-		float impactAngle = !switched ?
-			atan2(blobMotion2.position.y - blobMotion1.position.y, blobMotion2.position.x - blobMotion1.position.x) :
-			atan2(blobMotion1.position.y - blobMotion2.position.y, blobMotion1.position.x - blobMotion2.position.x);
-
-		if (impactAngle < 0 && originalAngle > 0)
-			originalAngle = originalAngle - 2*PI;
-		else if (impactAngle > 0 && originalAngle < 0)
-			originalAngle = originalAngle + 2*PI;
-
-		float derivedAngle = impactAngle > originalAngle ? impactAngle - PI / 2 : impactAngle + PI / 2;
-
-		if (!switched) {
-			blobMotion1.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
-			blobMotion2.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
-		}
-		else {
-			blobMotion2.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
-			blobMotion1.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
-		}
-
-		if (blobMotion1.position.x > blobMotion2.position.x)
-		{
-			blobMotion1.position.x += unitDirection.x * step / 2;
-			blobMotion2.position.x -= unitDirection.x * step / 2;
-		}
-		else
-		{
-			blobMotion1.position.x += unitDirection.x * step / 2;
-			blobMotion2.position.x -= unitDirection.x * step / 2;
-		}
-
-		if (blobMotion1.position.y > blobMotion2.position.y)
-		{
-			blobMotion1.position.y += unitDirection.y * step / 2;
-			blobMotion2.position.y -= unitDirection.y * step / 2;
-		}
-		else
-		{
-			blobMotion1.position.y += unitDirection.y * step / 2;
-			blobMotion2.position.y -= unitDirection.y * step / 2;
-		}
+		circle_circle_complex_collision_resolution(blobMotion1, blobMotion2);
+		circle_circle_penetration_free_collision(blobMotion1, blobMotion2);
+        // Play collision_sound.
+        Mix_PlayChannel(-1, collision_sound, 0);
 	};
 
 
-	auto blobule_tile_interaction = [](auto entity, auto entity_other, Direction dir) {
+	auto blobule_tile_interaction = [this](auto entity, auto entity_other, Direction dir) {
 		//subject tile to wall
 		auto& blob = ECS::registry<Blobule>.get(entity);
 		auto& blobMotion = ECS::registry<Motion>.get(entity);
@@ -98,68 +230,91 @@ void CollisionSystem::initialize_collisions() {
 		auto& tileMotion = ECS::registry<Motion>.get(entity_other);
 
 		if (terrain.type == Water) {
+            // Play splash_sound.
+            Mix_PlayChannel(-1, splash_sound, 0);
+            
 			blobMotion.velocity = { 0.f, 0.f };
 			blobMotion.friction = 0.f;
 			blobMotion.position = blob.origin;
 		}
-		else if (terrain.type == Block)
-		{
-			if (blobMotion.velocity.x == 0 && blobMotion.velocity.y == 0)
-			{
-				//std::cout << "resolving error state" << std::endl;
+        else if (terrain.type == Speed) {
+            // Check for positive and negative x-velocity.
+            if (blobMotion.velocity.x >= 0){
+                blobMotion.velocity = {blobMotion.velocity.x + SPEED_BOOST,  blobMotion.velocity.y};
+            }
+            else {
+                blobMotion.velocity = {blobMotion.velocity.x - SPEED_BOOST,  blobMotion.velocity.y};
+            }
+            
+            // Check for positive and negative y-velocity.
+            if (blobMotion.velocity.y >= 0){
+                blobMotion.velocity = {blobMotion.velocity.x,  blobMotion.velocity.y  + SPEED_BOOST};
+            }
+            else {
+                blobMotion.velocity = {blobMotion.velocity.x,  blobMotion.velocity.y  - SPEED_BOOST};
+            }
+        }
+        else if (terrain.type == Speed_UP) {
+			blobMotion.velocity.x = 15.f;
+			// setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y -= SPEED_BOOST;
+        }
+        else if (terrain.type == Speed_LEFT) {
+            blobMotion.velocity.x -= SPEED_BOOST;
+            // setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y = 15.f;
+        }
+        else if (terrain.type == Speed_RIGHT) {
+            blobMotion.velocity.x += SPEED_BOOST;
+            // setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y = 15.f;
+        }
+        else if (terrain.type == Speed_DOWN) {
+            blobMotion.velocity.x = 15.f;
+            // setting Y vel so that blob cant get stuck between speed tile and wall forever
+            blobMotion.velocity.y += SPEED_BOOST;
+        }
+        else if (terrain.type == Teleport) {
+
+			vec2 difference_between_centers = tileMotion.position - blobMotion.position;
+			float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
+			float blobMotion_hit_radius = blobMotion.scale.x / 1.3f;
+			if (distance_between_centers > blobMotion_hit_radius) {
 				return;
 			}
-			float leftEdge = tileMotion.position.x - tileMotion.scale.x / 2;
-			float rightEdge = tileMotion.position.x + tileMotion.scale.x / 2;
-			float topEdge = tileMotion.position.y - tileMotion.scale.y / 2;
-			float bottomEdge = tileMotion.position.y + tileMotion.scale.y / 2;
 
-			float closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
-			float closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
+			ECS::Entity teleportDestination = entity_other;
 
-			vec2 dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
-
-			float penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
-			const vec2 reverseUnitVel = -(blobMotion.velocity / glm::length(blobMotion.velocity));
-			while (penetrationDepth > 1)
-			{
-				float shiftX = blobMotion.position.x + reverseUnitVel.x * 2;
-				float shiftY = blobMotion.position.y + reverseUnitVel.y * 2;
-				blobMotion.position = vec2(shiftX, shiftY);
-				closestX = glm::max(leftEdge, glm::min(blobMotion.position.x, rightEdge));
-				closestY = glm::max(topEdge, glm::min(blobMotion.position.y, bottomEdge));
-				dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
-				penetrationDepth = blobMotion.scale.x / 2 - glm::length(dist);
+			while (entity_other.id == teleportDestination.id) {
+				int size = ECS::registry<Teleporting>.size();
+				teleportDestination = ECS::registry<Teleporting>.entities[(rand() % size)];
 			}
 
-			// Top and Bot walls reflect x axis (given by default)
-			// Left and Right walls reflect y axis (add 90 to previous angle), reflect, add 90 again
-			float blobMagnitude = Utils::getVelocityMagnitude(blobMotion);
-			float angle = atan2(blobMotion.velocity.y, blobMotion.velocity.x);
+			blobMotion.position = ECS::registry<Motion>.get(teleportDestination).position;
 
-			// Wall collision detected edge
-			switch (dir)
-			{
-			case Direction::Left:
-			case Direction::Right:
-				angle = -angle - PI;
-				break;
-			case Direction::Top:
-			case Direction::Bottom:
-				angle *= -1;
-				if (angle == 0) {
-					angle += PI;
-				}
-				break;
-			case Direction::Corner:
-				angle += PI;
-				break;
-			default:
-				break;
+			// Adjusting horizontal position after teleportation.
+			if (blobMotion.velocity.x >= 0) {
+				blobMotion.position.x += 23.f;
+			}
+			else {
+				blobMotion.position.x -= 23.f;
 			}
 
-			blobMotion.velocity = { cos(angle) * blobMagnitude, sin(angle) * blobMagnitude };
-			//blobMotion.velocity = { 0.f, 0.f};
+			// Adjusting vertical position after teleportation.
+			if (blobMotion.velocity.y >= 0) {
+				blobMotion.position.y += 23.f;
+			}
+			else {
+				blobMotion.position.y -= 23.f;
+			}
+        }
+		else if (terrain.type == Block)
+		{
+			// pen free must go before complex collision or errors will occur
+			circle_square_penetration_free_collision(blobMotion, tileMotion);
+			circle_square_complex_collision_handling(blobMotion, tileMotion, dir);
+			
+            Mix_PlayChannel(-1, collision_sound, 0);
 		}
 		else {
 			blobMotion.friction = terrain.friction;
@@ -167,33 +322,54 @@ void CollisionSystem::initialize_collisions() {
 	};
 
 	auto change_tile_color = [](auto entity, auto entity_other, Direction dir) {
-		auto tileMotion = ECS::registry<Motion>.get(entity_other);
-		auto blobMotion = ECS::registry<Motion>.get(entity);
-		vec2 difference_between_centers = tileMotion.position - blobMotion.position;
-		float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
-		float blobMotion_hit_radius = blobMotion.scale.x / 1.3f;
-		if (distance_between_centers <= blobMotion_hit_radius) {
-			auto& blob = ECS::registry<Blobule>.get(entity);
-			Tile::setSplat(entity_other, blob.colEnum);
-		}
+        auto& terrain = ECS::registry<Terrain>.get(entity_other);
+        if (terrain.type != Speed_UP && terrain.type != Speed_LEFT && terrain.type != Speed_RIGHT && terrain.type != Speed_DOWN && terrain.type != Speed && terrain.type != Teleport){
+            auto tileMotion = ECS::registry<Motion>.get(entity_other);
+            auto blobMotion = ECS::registry<Motion>.get(entity);
+            vec2 difference_between_centers = tileMotion.position - blobMotion.position;
+            float distance_between_centers = std::sqrt(dot(difference_between_centers, difference_between_centers));
+            float blobMotion_hit_radius = blobMotion.scale.x / 1.3f;
+            if (distance_between_centers <= blobMotion_hit_radius) {
+                auto& blob = ECS::registry<Blobule>.get(entity);
+                Tile::setSplat(entity_other, blob.colEnum);
+				blob.currentGrid = ECS::registry<Tile>.get(entity_other).gridLocation;
+            }
+        }
 	};
 
 	auto egg_tile_interaction = [](auto entity, auto entity_other, Direction dir) {
 
 		auto& eggMotion = ECS::registry<Motion>.get(entity);
+		auto& tileMotion = ECS::registry<Motion>.get(entity_other);
 		auto& terrain = ECS::registry<Terrain>.get(entity_other);
 
 		if (terrain.type == Water || terrain.type == Block)
 		{
-			std::cout << "COLLISION" << std::endl;
-			eggMotion.velocity = -eggMotion.velocity;
-			eggMotion.direction = -eggMotion.direction;
+			egg_square_penetration_free_collision(eggMotion, tileMotion, dir);
+
+			if (dir == Direction::Top || dir == Direction::Bottom)
+			{
+				eggMotion.velocity.y = -eggMotion.velocity.y;
+				eggMotion.direction.y = -eggMotion.direction.y;
+			}
+			else if (dir == Direction::Left || dir == Direction::Right)
+			{
+				eggMotion.velocity.x = -eggMotion.velocity.x;
+				eggMotion.direction.x = -eggMotion.direction.x;
+			}
+		}
+		else {
+			auto& egg = ECS::registry<Egg>.get(entity);
+			egg.gridLocation = ECS::registry<Tile>.get(entity_other).gridLocation;
 		}
 	};
 
 	// egg disappears on collision with blob (only use the second param)
-	auto remove_egg = [](auto entity, auto eggEntity, Direction dir) {
+	auto remove_egg = [this](auto entity, auto eggEntity, Direction dir) {
+        // Play splash_sound.
+        Mix_PlayChannel(-1, powerup_sound, 0);
 		ECS::ContainerInterface::remove_all_components_of(eggEntity);
+		PowerupSystem::Powerup::createPowerup(entity);
 	};
 
 	//add lambdas to the observer lists
