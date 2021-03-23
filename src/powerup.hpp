@@ -10,7 +10,6 @@
 class PowerupSystem
 {
 public:
-    void initialize_powerups();
     void handle_powerups();
 
     // Stucture to store collision information

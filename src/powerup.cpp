@@ -16,9 +16,48 @@ std::string BIG_POWERUP = "bigboi";
 std::string SMALL_POWERUP = "smolboi";
 std::string COLOR_SWAP_POWERUP = "colorswitcharoo";
 
-void PowerupSystem::initialize_powerups() {
+void bigPowerup(ECS::Entity entity, PowerupSystem::Powerup& powerup)
+{
+    if (powerup.duration == -1)
+    {
+        powerup.duration = current_turn + 5;
+        Motion& motion = ECS::registry<Motion>.get(entity);
+        motion.scale *= vec2(1.5f, 1.5f);
+    }
 
-};
+    else if (current_turn == powerup.duration)
+    {
+        Motion& motion = ECS::registry<Motion>.get(entity);
+        motion.scale /= vec2(1.5f, 1.5f);
+        ECS::registry<PowerupSystem::Powerup>.remove(entity);
+    }
+}
+
+void smallPowerup(ECS::Entity entity, PowerupSystem::Powerup& powerup)
+{
+    if (powerup.duration == -1)
+    {
+        powerup.duration = current_turn + 5;
+        Motion& motion = ECS::registry<Motion>.get(entity);
+        motion.scale *= vec2(0.7f, 0.7f);
+    }
+
+    else if (current_turn == powerup.duration)
+    {
+        Motion& motion = ECS::registry<Motion>.get(entity);
+        motion.scale /= vec2(0.7f, 0.7f);
+        ECS::registry<PowerupSystem::Powerup>.remove(entity);
+    }
+}
+
+void colorSwapPowerup(ECS::Entity entity)
+{
+    for (ECS::Entity entity : ECS::registry<Tile>.entities)
+    {
+        Tile::setRandomSplat(entity);
+    }
+    ECS::registry<PowerupSystem::Powerup>.remove(entity);
+}
 
 void PowerupSystem::handle_powerups()
 {
@@ -31,45 +70,17 @@ void PowerupSystem::handle_powerups()
 		// create random powerup
 		if (powerup.power == BIG_POWERUP)
 		{
-            if (powerup.duration == -1)
-            {
-                powerup.duration = current_turn + 5;
-                Motion& motion = ECS::registry<Motion>.get(entity);
-                motion.scale *= vec2(1.5f, 1.5f);
-            }
-
-            else if (current_turn == powerup.duration)
-            {
-                Motion& motion = ECS::registry<Motion>.get(entity);
-                motion.scale /= vec2(1.5f, 1.5f);
-                ECS::registry<PowerupSystem::Powerup>.remove(entity);
-            }
+            bigPowerup(entity, powerup);
 		}
 
         if (powerup.power == SMALL_POWERUP)
         {
-            if (powerup.duration == -1)
-            {
-                powerup.duration = current_turn + 5;
-                Motion& motion = ECS::registry<Motion>.get(entity);
-                motion.scale *= vec2(0.7f, 0.7f);
-            }
-
-            else if (current_turn == powerup.duration)
-            {
-                Motion& motion = ECS::registry<Motion>.get(entity);
-                motion.scale /= vec2(0.7f, 0.7f);
-                ECS::registry<PowerupSystem::Powerup>.remove(entity);
-            }
+            smallPowerup(entity, powerup);
         }
 
         if (powerup.power == COLOR_SWAP_POWERUP)
         {
-            for (ECS::Entity entity : ECS::registry<Tile>.entities)
-            {
-                Tile::setRandomSplat(entity);
-            }
-            ECS::registry<PowerupSystem::Powerup>.remove(entity);
+            colorSwapPowerup(entity);
         }
 	}
 }
