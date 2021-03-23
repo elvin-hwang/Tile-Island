@@ -6,5 +6,5 @@
 // main menu start screen
 struct Menu
 {
-    static ECS::Entity createMenu(vec2 position);
+    static ECS::Entity createMenu(vec2 position, GameState gameState);
 };

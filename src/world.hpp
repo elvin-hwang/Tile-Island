@@ -12,7 +12,7 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 
-// Container for all our entities and game logic. Individual rendering / update is 
+// Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
 class WorldSystem
 {
@@ -38,7 +38,8 @@ public:
 	// Should the game be over ?
 	bool is_over() const;
 
-	bool menuState;
+	// Different states for the world system
+	GameState gameState;
 
 	// OpenGL window handle
 	GLFWwindow* window;
@@ -66,7 +67,6 @@ private:
 	ECS::Entity start_button;
 	ECS::Entity load_button;
 	ECS::Entity save_button;
-
 
 	// C++ random number generator
 	std::default_random_engine rng;
