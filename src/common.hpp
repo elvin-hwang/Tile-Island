@@ -62,3 +62,16 @@ struct RedSplat {};
 struct BlueSplat {};
 struct GreenSplat {};
 struct YellowSplat {};
+
+// Keep track of game state and different screens
+enum class GameState {
+	Start,
+	Intro,
+	Yellow,
+	Green,
+	Red,
+	Blue,
+	Paint,
+	Island,
+	Game,
+};

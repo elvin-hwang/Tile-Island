@@ -50,7 +50,7 @@ int MAX_EGGS = 1;
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
 {
-	menuState = true;
+    gameState = GameState::Start;
 	window_size = window_size_px;
 	playerMove = 0;
 
@@ -147,7 +147,7 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 {
     (void)elapsed_ms; // silence unused warning
     (void)window_size_in_game_units; // silence unused warning
-    if (!menuState) {
+    if (gameState == GameState::Game) {
         std::string active_colour = "";
         if (ECS::registry<Blobule>.has(active_player)) {
             active_colour = ECS::registry<Blobule>.get(active_player).color;
@@ -221,12 +221,17 @@ void WorldSystem::restart() {
     int window_width, window_height;
     glfwGetWindowSize(window, &window_width, &window_height);
 
-	if (menuState) {
-		Menu::createMenu({ window_width / 2, window_height / 2 });
+	if (gameState == GameState::Start) {
+		Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Start);
 		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, buttonType::Start, "start");
 		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 }, buttonType::Load, "load");
 	}
-    else {
+    else if (gameState != GameState::Game)
+    {
+        Menu::createMenu({ window_width / 2, window_height / 2 }, gameState);
+    }
+    else
+    {
         // Debugging for memory/component leaks
         //ECS::ContainerInterface::list_all_components();
 
@@ -287,7 +292,7 @@ bool WorldSystem::is_over() const
 // Check out https://www.glfw.org/docs/3.3/input_guide.html
 void WorldSystem::on_key(int key, int, int action, int mod)
 {
-    if(!menuState)
+    if (gameState == GameState::Game)
     {
         ECS::registry<Blobule>.get(active_player).active_player = false;
         active_player = MapLoader::getBlobule(playerMove);
@@ -428,18 +433,52 @@ void WorldSystem::on_mouse_move(vec2 mouse_pos)
 void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 {
 	glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
-	if (menuState) {
+	if (gameState == GameState::Start) {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
             auto start_clicked = PhysicsSystem::is_entity_clicked(start_button, mouse_press_x, mouse_press_y);
             auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
-            if (start_clicked || load_clicked) {
+            if (start_clicked) {
+                gameState = GameState::Intro;
+                restart();
+            }
+            else if (load_clicked) {
                 Mix_PlayChannel(-1, game_start_sound, 0);
-                menuState = false;
+                gameState = GameState::Game;
                 load_game = load_clicked;
                 restart();
             }
         }
 	}
+    else if (gameState != GameState::Game)
+    {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+            switch (gameState) {
+            case GameState::Intro:
+                gameState = GameState::Yellow;
+                break;
+            case GameState::Yellow:
+                gameState = GameState::Green;
+                break;
+            case GameState::Green:
+                gameState = GameState::Red;
+                break;
+            case GameState::Red:
+                gameState = GameState::Blue;
+                break;
+            case GameState::Blue:
+                gameState = GameState::Paint;
+                break;
+            case GameState::Paint:
+                gameState = GameState::Island;
+                break;
+            case GameState::Island:
+                Mix_PlayChannel(-1, game_start_sound, 0);
+                gameState = GameState::Game;
+                break;
+            }
+            restart();
+        }
+    }
     else if (current_turn < MAX_TURNS)
     {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !blobuleMoved)
