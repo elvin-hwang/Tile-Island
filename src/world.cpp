@@ -45,6 +45,7 @@ bool blobuleMoved = false;
 bool mouse_move = false;
 bool isDraggedFarEnough = false;
 bool load_game = false;
+bool canPressEnter = true;
 
 int current_turn = 0;
 int MAX_TURNS = 20;
@@ -52,6 +53,18 @@ int next_egg_spawn = 3;
 int MAX_EGGS = 1;
 
 float font_size = 0.58;
+
+bool noBlobulesMoving() {
+    for (ECS::Entity entity : ECS::registry<Blobule>.entities)
+    {
+        Motion& motion = ECS::registry<Motion>.get(entity);
+        if (motion.velocity.x != 0 || motion.velocity.y != 0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
@@ -170,7 +183,7 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
         std::stringstream current_player;
         
         // Switch Player Statement
-        std::string end_turn_message = "Press Enter to End Turn";
+        std::string end_turn_message = "Press Enter to End Your Turn";
         std::string winner_colour = "Blue";
 
         if (current_turn == MAX_TURNS)
@@ -208,7 +221,6 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
         if (ECS::registry<Text>.size() > 0) {
             ECS::registry<Text>.get(score_text).content = scores.str();
             ECS::registry<Text>.get(player_text).content = current_player.str();
-            ECS::registry<Text>.get(end_turn_text).content = end_turn_message;
         }
 
         // Friction implementation
@@ -221,6 +233,16 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
             if (velocityMagnitude < terminalVelocity) {
                 motion.velocity = { 0.f, 0.f };
             }
+        }
+
+        if (blobuleMoved && noBlobulesMoving())
+        {
+            ECS::registry<Text>.get(end_turn_text).content = end_turn_message;
+            canPressEnter = true;
+        }
+        else
+        {
+            ECS::registry<Text>.get(end_turn_text).content = "";
         }
     }
 }
@@ -287,7 +309,7 @@ void WorldSystem::restart() {
         // initializing text
         score_text = Text::create_text("score", { 82, 60 }, font_size);
         player_text = Text::create_text("player", { 82, 30 }, font_size);
-        end_turn_text = Text::create_text("end_turn", { window_size.x / 4 , window_size.y - 50 }, font_size);
+        end_turn_text = Text::create_text("end_turn", { window_size.x / 5 , window_size.y - 50 }, font_size);
         save_button = Button::createButton({177, 730}, { 0.35, 0.35 }, buttonType::Save, "save");
 
     }
@@ -381,7 +403,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         }
 
         // Turn based system
-        if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS)
+        if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS && canPressEnter)
         {
             if (playerMove != 3) {
                 playerMove++;
@@ -399,7 +421,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                     next_egg_spawn = 0;
                 std::cout << next_egg_spawn << std::endl;
             }
-
+            canPressEnter = false;
             blobuleMoved = false;
         }
 
@@ -471,7 +493,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 	}
     else if (gameState != GameState::Game)
     {
-        if (button == GLFW_MOUSE_BUTTON_LEFT || button == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
             switch (gameState) {
             case GameState::Intro:
                 gameState = GameState::Yellow;
