@@ -43,12 +43,28 @@ double mouse_press_x, mouse_press_y;
 int playerMove = 0;
 bool blobuleMoved = false;
 bool mouse_move = false;
+bool isDraggedFarEnough = false;
 bool load_game = false;
+bool canPressEnter = true;
 
 int current_turn = 0;
 int MAX_TURNS = 20;
 int next_egg_spawn = 3;
 int MAX_EGGS = 1;
+
+float font_size = 0.58;
+
+bool noBlobulesMoving() {
+    for (ECS::Entity entity : ECS::registry<Blobule>.entities)
+    {
+        Motion& motion = ECS::registry<Motion>.get(entity);
+        if (motion.velocity.x != 0 || motion.velocity.y != 0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
@@ -165,6 +181,9 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
         // Updating Score UI
         std::stringstream scores;
         std::stringstream current_player;
+        
+        // Switch Player Statement
+        std::string end_turn_message = "Press Enter to End Your Turn";
         std::string winner_colour = "Blue";
 
         if (current_turn == MAX_TURNS)
@@ -215,6 +234,16 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
                 motion.velocity = { 0.f, 0.f };
             }
         }
+
+        if (blobuleMoved && noBlobulesMoving())
+        {
+            ECS::registry<Text>.get(end_turn_text).content = end_turn_message;
+            canPressEnter = true;
+        }
+        else
+        {
+            ECS::registry<Text>.get(end_turn_text).content = "";
+        }
     }
 }
 
@@ -239,7 +268,6 @@ void WorldSystem::restart() {
         //ECS::ContainerInterface::list_all_components();
 
         std::cout << "Restarting\n";
-
 
         // Reset other stuff
         playerMove = 0;
@@ -273,14 +301,16 @@ void WorldSystem::restart() {
         active_player = MapLoader::getBlobule(playerMove);
         ECS::registry<Blobule>.get(active_player).active_player = true;
 
-        //Create Text
+        // Clearing Text from previous game
         if (ECS::registry<Text>.components.size() > 0){
             ECS::registry<Text>.clear();
         }
 
-        score_text = Text::create_text("score", { 82, 60 }, 0.58);
-        player_text = Text::create_text("player", { 82, 30 }, 0.58);
-        save_button = Button::createButton({177, 730}, { 0.35,0.35 }, buttonType::Save, "save");
+        // initializing text
+        score_text = Text::create_text("score", { 82, 60 }, font_size);
+        player_text = Text::create_text("player", { 82, 30 }, font_size);
+        end_turn_text = Text::create_text("end_turn", { window_size.x / 5 , window_size.y - 50 }, font_size);
+        save_button = Button::createButton({177, 730}, { 0.35, 0.35 }, buttonType::Save, "save");
 
     }
 }
@@ -373,7 +403,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         }
 
         // Turn based system
-        if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS)
+        if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS && canPressEnter)
         {
             if (playerMove != 3) {
                 playerMove++;
@@ -391,7 +421,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                     next_egg_spawn = 0;
                 std::cout << next_egg_spawn << std::endl;
             }
-
+            canPressEnter = false;
             blobuleMoved = false;
         }
 
@@ -431,10 +461,14 @@ void WorldSystem::on_mouse_move(vec2 mouse_pos)
 	{
 		auto& blobMotion = ECS::registry<Motion>.get(active_player);
 		blobMotion.angle = atan2(mouse_pos.y - mouse_press_y, mouse_pos.x - mouse_press_x) - PI;
-		blobMotion.dragDistance = (((mouse_pos.y - mouse_press_y) * (mouse_pos.y - mouse_press_y)) + ((mouse_pos.x - mouse_press_x) * (mouse_pos.x - mouse_press_x))) * 0.01;
-		Blobule::setTrajectory(active_player);
+		float dragDistance = (((mouse_pos.y - mouse_press_y) * (mouse_pos.y - mouse_press_y)) + ((mouse_pos.x - mouse_press_x) * (mouse_pos.x - mouse_press_x))) * 0.01;
+        if (dragDistance > 30.f)
+        {
+            blobMotion.dragDistance = (((mouse_pos.y - mouse_press_y) * (mouse_pos.y - mouse_press_y)) + ((mouse_pos.x - mouse_press_x) * (mouse_pos.x - mouse_press_x))) * 0.01;
+            Blobule::setTrajectory(active_player);
+            isDraggedFarEnough = true;
+        }
 	}
-	(void)mouse_pos;
 }
 
 // On mouse button callback
@@ -500,12 +534,13 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE && !blobuleMoved)
         {
             // check if left mouse click was on the asset
-            if (mouse_move)
+            if (mouse_move && isDraggedFarEnough)
             {
                 Mix_PlayChannel(-1, slingshot_shot_sound, 0);
                 Mix_PlayChannel(-1, blobule_yipee_sound, 0);
 
                 mouse_move = false;
+                isDraggedFarEnough = false;
 
                 auto& blobMotion = ECS::registry<Motion>.get(active_player);
                 float blobAngle = blobMotion.angle;
@@ -520,6 +555,10 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 
                 Blobule::removeTrajectory(active_player);
                 blobuleMoved = true;
+            }
+            else 
+            {
+                mouse_move = false;
             }
         }
 
@@ -539,3 +578,4 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
         }
     }
 }
+
