@@ -33,7 +33,10 @@ float moveSpeed = 200.f;
 float terminalVelocity = 20.f;
 float max_blobule_speed = 250.f;
 vec2 window_size;
+
+// helptool and helptool status
 ECS::Entity help_tool;
+bool help_tool_is_active = false;
 
 double mouse_press_x, mouse_press_y;
 
@@ -330,10 +333,15 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
         if (key == GLFW_KEY_H) {
             if (action == GLFW_PRESS) {
-                help_tool = HelpTool :: createHelpTool({ window_size.x / 2, window_size.y / 2 });
-            }
-            if (action == GLFW_RELEASE) {
-                ECS::ContainerInterface::remove_all_components_of(help_tool);
+                if (help_tool_is_active)
+                {
+                    help_tool_is_active = false;
+                    ECS::ContainerInterface::remove_all_components_of(help_tool);
+                }
+                else {
+                    help_tool_is_active = true;
+                    help_tool = HelpTool::createHelpTool({ window_size.x / 2, window_size.y / 2 });
+                }
             }
         }
 
