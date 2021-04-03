@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 int widthNum;
 int heightNum;
@@ -36,7 +37,8 @@ void createTileIsland(std::vector<std::vector<std::string>> csvGrid) {
 		std::vector<ECS::Entity> newRow;
 		for (int j = 0; j < row.size(); j++) {
 			ECS::Entity tile;
-			auto value = row[j];
+			std::string value = row[j];
+			value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
 
 			float xPos = tile_width * (j + 1);
 			float yPos = tile_width * (i + 1);
