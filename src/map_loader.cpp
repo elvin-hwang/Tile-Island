@@ -263,6 +263,8 @@ void MapLoader::saveMap(int currentPlayer, int currentTurn) {
 
 	// Save grid info
 	mapInfo["gridInfo"] = savedGridLocation;
+	mapInfo["numWidth"] = widthNum;
+	mapInfo["numHeight"] = heightNum;
 
 	// Save current info
 	mapInfo["currentPlayer"] = currentPlayer;
