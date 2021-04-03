@@ -149,14 +149,14 @@ void createWaterBorder(vec2 windowSize) {
 
 	// Left Water Border
 	for (float x = left; x >= leftBound; x -= tile_width) {
-		for (float y = topLeft.y; y <= bottomRight.y; y += tile_width) {
+		for (float y = topLeft.y; y <= bottomBound; y += tile_width) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
 
 	// Right Water Border
 	for (float x = right; x <= rightBound; x += tile_width) {
-		for (float y = topLeft.y; y <= bottomRight.y; y += tile_width) {
+		for (float y = topLeft.y; y <= bottomBound; y += tile_width) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
