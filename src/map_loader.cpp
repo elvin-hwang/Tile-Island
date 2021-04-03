@@ -190,7 +190,7 @@ void setSplatPositions(nlohmann::json mapInfo) {
 }
 
 void setBlobuleScales(std::vector<std::vector<float>> blobuleScales) {
-	for (int i = 0; i < blobuleList.size(); i++) {
+	for (int i = 0; i < blobuleScales.size(); i++) {
 		auto entity = blobuleList[i];
 		auto scale = blobuleScales[i];
 		auto& motion = ECS::registry<Motion>.get(entity);
