@@ -93,10 +93,10 @@ void PhysicsSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 	// Visualization for debugging the position and scale of objects
 	if (DebugSystem::in_debug_mode)
 	{
-		for (auto& motion : ECS::registry<Motion>.components)
+		/*for (auto& motion : ECS::registry<Motion>.components)
 		{
 			DebugSystem::createBox(motion.position, motion.scale);
-		}
+		}*/
 	}
 
 	// Go through the list of Blobules rather Motion

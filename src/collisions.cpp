@@ -9,6 +9,7 @@
 #include "map_loader.hpp";
 #include <egg.hpp>
 #include <iostream>
+#include "debug.hpp"
 
 const float SPEED_BOOST = 50.f;
 
@@ -118,9 +119,10 @@ void egg_square_penetration_free_collision(Motion& blobMotion, Motion& tileMotio
 		dist = vec2(blobMotion.position.x - closestX, blobMotion.position.y - closestY);
 		penetrationDepth = scale / 2 - glm::length(dist);
 	}
+
 }
 
-void circle_circle_complex_collision_resolution(Motion& blobMotion1, Motion& blobMotion2)
+float circle_circle_complex_collision_resolution(Motion& blobMotion1, Motion& blobMotion2)
 {
 	float blobMagnitude = Utils::getVelocityMagnitude(blobMotion1);
 	float otherBlobMagnitude = Utils::getVelocityMagnitude(blobMotion2);
@@ -150,6 +152,8 @@ void circle_circle_complex_collision_resolution(Motion& blobMotion1, Motion& blo
 		blobMotion2.velocity = { cos(derivedAngle) * finalVelocity, sin(derivedAngle) * finalVelocity };
 		blobMotion1.velocity = { cos(impactAngle) * finalVelocity, sin(impactAngle) * finalVelocity };
 	}
+
+	return derivedAngle;
 }
 
 void circle_square_complex_collision_handling(Motion& blobMotion, Motion& tileMotion, Direction dir)
@@ -215,8 +219,12 @@ void CollisionSystem::initialize_collisions() {
 		auto& blobMotion1 = ECS::registry<Motion>.get(entity);
 		auto& blobMotion2 = ECS::registry<Motion>.get(entity_other);
 
-		circle_circle_complex_collision_resolution(blobMotion1, blobMotion2);
+		float derivedAngle = circle_circle_complex_collision_resolution(blobMotion1, blobMotion2);
 		circle_circle_penetration_free_collision(blobMotion1, blobMotion2);
+		// adding collision debug box
+		DebugSystem::createBox(blobMotion1.position, blobMotion1.scale, derivedAngle);
+		DebugSystem::createBox(blobMotion2.position, blobMotion2.scale, derivedAngle);
+
         // Play collision_sound.
         Mix_PlayChannel(-1, collision_sound, 0);
 	};
@@ -313,6 +321,8 @@ void CollisionSystem::initialize_collisions() {
 			// pen free must go before complex collision or errors will occur
 			circle_square_penetration_free_collision(blobMotion, tileMotion);
 			circle_square_complex_collision_handling(blobMotion, tileMotion, dir);
+			DebugSystem::createBox(blobMotion.position, blobMotion.scale, 0.f);
+			DebugSystem::createBox(tileMotion.position, tileMotion.scale, 0.f);
 			
             Mix_PlayChannel(-1, collision_sound, 0);
 		}

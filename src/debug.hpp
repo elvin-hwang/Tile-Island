@@ -7,10 +7,10 @@ namespace DebugSystem {
 	extern bool in_debug_mode;
 
 	// draw a red line for debugging purposes
-	void createLine(vec2 position, vec2 size);
+	void createLine(vec2 position, vec2 size, float angle);
 
 	// debug in bounding boxes
-	void createBox(vec2 position, vec2 size);
+	void createBox(vec2 position, vec2 size, float angle);
 
 	// Removes all debugging graphics in ECS, called at every iteration of the game loop
 	void clearDebugComponents();
