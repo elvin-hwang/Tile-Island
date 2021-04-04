@@ -236,21 +236,6 @@ std::vector<std::vector<ECS::Entity>> MapLoader::loadMap(std::string fileLocatio
 	return tileIsland;
 }
 
-//std::vector<std::vector<ECS::Entity>> MapLoader::loadSavedMap(vec2 windowSize) {
-//	loadedGridLocation = savedGridLocation;
-//	tileIsland = MapLoader::loadMap(savedMapLocation, windowSize);
-//
-//
-//	nlohmann::json mapInfo;
-//	std::ifstream map_file(savedMapLocation, std::ifstream::binary);
-//	map_file >> mapInfo;
-//
-//	setSplatPositions(mapInfo);
-//	setBlobuleScales(mapInfo["blobuleScales"]);
-//
-//	return tileIsland;
-//}
-
 void MapLoader::saveMap(int currentPlayer, int currentTurn) {
 	if (loadedGridLocation.empty()) {
 		return;
