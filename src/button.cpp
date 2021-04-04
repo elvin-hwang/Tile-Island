@@ -2,7 +2,10 @@
 #include "button.hpp"
 #include "render.hpp"
 
-ECS::Entity Button::createButton(vec2 position, vec2 scale, buttonType type, std::string buttonstring)
+#include <text.hpp>
+float buttonFontSize = 0.66;
+
+ECS::Entity Button::createButton(vec2 position, vec2 scale, std::string buttonstring)
 {
     // Reserve an entity
     auto entity = ECS::Entity();
@@ -13,20 +16,13 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, buttonType type, std
     if (resource.effect.program.resource == 0)
     {
         resource = ShadedMesh();
-        std::string path;
-        switch (type) {
-        case buttonType::Start:
-            path = textures_path("start_button.png");
-            break;
-        case buttonType::Load:
-            path = textures_path("load_button.png");
-            break;
-        case buttonType::Save:
-            path = textures_path("save_button.png");
-            break;
-        }
-        RenderSystem::createSprite(resource, path, "textured");
+        std::string path = textures_path("blue_button.png");;
 
+        if (buttonstring == "Save") {
+            path = textures_path("yellow_button.png");
+        }
+
+        RenderSystem::createSprite(resource, path, "textured");
     }
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
     ECS::registry<ShadedMeshRef>.emplace(entity, resource);
@@ -40,8 +36,14 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, buttonType type, std
     motion.friction = 0.f;
     motion.scale = scale * static_cast<vec2>(resource.texture.size);
 
+    if (buttonstring == "Save") {
+        Text::create_text(buttonstring, { position.x - 40, position.y + 5 }, 0.4);
+    }
+    else {
+        Text::create_text(buttonstring, { position.x - 60, position.y + 10 }, buttonFontSize);
+    }
+
     auto& button = ECS::registry<Button>.emplace(entity);
-    button.buttonEnum = type;
     return entity;
 }
 

@@ -1,0 +1,21 @@
+{
+  "numWidth": 19,
+  "numHeight": 28,
+  "gridInfo": "data/level/grid_2.csv",
+  "blobulePositions": [
+    [ 1, 1 ],
+    [ 17, 1 ],
+    [ 1, 26 ],
+    [ 17, 26 ]
+  ],
+  "eggPositions": [
+    [ 9, 10 ]
+  ],
+  "blobuleScales": [],
+  "currentRound": 0,
+  "currentPlayer": 0,
+  "yellowSplat": [],
+  "greenSplat": [],
+  "redSplat": [],
+  "blueSplat": []
+}
