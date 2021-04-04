@@ -73,5 +73,6 @@ enum class GameState {
 	Blue,
 	Paint,
 	Island,
+	Level,
 	Game,
 };

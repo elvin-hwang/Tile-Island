@@ -19,9 +19,10 @@
 #include <egg.hpp>
 #include <text.hpp>
 #include <button.hpp>
-
+#include <filesystem>
 
 // Game Configuration
+namespace fs = std::filesystem;
 
 // Tile Configurations
 int numWidth = 0;
@@ -257,7 +258,13 @@ void WorldSystem::restart() {
 		Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Start);
 		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, buttonType::Start, "start");
 		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 }, buttonType::Load, "load");
-	}
+    }
+    else if (gameState == GameState::Level) {
+        Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Level);
+        //for (const auto& entry : std::filesystem)
+        start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, buttonType::Start, "start");
+        load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 }, buttonType::Load, "load");
+    }
     else if (gameState != GameState::Game)
     {
         Menu::createMenu({ window_width / 2, window_height / 2 }, gameState);
@@ -491,6 +498,22 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
             }
         }
 	}
+    else if (gameState == GameState::Level) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+            auto start_clicked = PhysicsSystem::is_entity_clicked(start_button, mouse_press_x, mouse_press_y);
+            auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
+            if (start_clicked) {
+                gameState = GameState::Intro;
+                restart();
+            }
+            else if (load_clicked) {
+                Mix_PlayChannel(-1, game_start_sound, 0);
+                gameState = GameState::Game;
+                load_game = load_clicked;
+                restart();
+            }
+        }
+    }
     else if (gameState != GameState::Game)
     {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
@@ -514,8 +537,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 gameState = GameState::Island;
                 break;
             case GameState::Island:
-                Mix_PlayChannel(-1, game_start_sound, 0);
-                gameState = GameState::Game;
+                gameState = GameState::Level;
                 break;
             }
             restart();

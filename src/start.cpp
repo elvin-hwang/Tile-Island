@@ -43,6 +43,9 @@ ECS::Entity Menu::createMenu(vec2 position, GameState gameState)
     case GameState::Island:
         RenderSystem::createSprite(resource, textures_path("story_7.png"), "textured");
         break;
+    case GameState::Level:
+        RenderSystem::createSprite(resource, textures_path("start_menu.png"), "textured");
+        break;
     }
 
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
