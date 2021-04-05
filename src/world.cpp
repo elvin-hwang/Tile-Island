@@ -37,6 +37,7 @@ std::vector<std::vector<ECS::Entity>> islandGrid;
 float moveSpeed = 200.f;
 float terminalVelocity = 20.f;
 float max_blobule_speed = 250.f;
+float max_blue_speed = 161.f;
 vec2 window_size;
 
 // helptool and helptool status
@@ -587,10 +588,20 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 blobMotion.velocity = { cos(blobAngle) * blobPower, sin(blobAngle) * blobPower };
 
                 float velocityMagnitude = Utils::getVelocityMagnitude(blobMotion);
-                if (velocityMagnitude > max_blobule_speed) {
-                    blobMotion.velocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
+                
+                std::string active_colour = ECS::registry<Blobule>.get(active_player).color;
+                
+                if (active_colour == "blue"){
+                    if (velocityMagnitude > max_blue_speed) {
+                        blobMotion.velocity = { cos(blobAngle) * max_blue_speed, sin(blobAngle) * max_blue_speed };
+                    }
                 }
-
+                else{
+                    if (velocityMagnitude > max_blobule_speed) {
+                        blobMotion.velocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
+                    }
+                }
+                
                 Blobule::removeTrajectory(active_player);
                 blobuleMoved = true;
             }
