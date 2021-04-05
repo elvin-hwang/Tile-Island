@@ -19,9 +19,14 @@
 #include <egg.hpp>
 #include <text.hpp>
 #include <button.hpp>
-
+#include <filesystem>
+#include <algorithm>
+#include <regex>
 
 // Game Configuration
+namespace fs = std::filesystem;
+std::map<std::string, ECS::Entity> levelButtons; 
+std::string load_map_location = "data/level/map_1.json";
 
 // Tile Configurations
 int numWidth = 0;
@@ -32,6 +37,7 @@ std::vector<std::vector<ECS::Entity>> islandGrid;
 float moveSpeed = 200.f;
 float terminalVelocity = 20.f;
 float max_blobule_speed = 250.f;
+float max_blue_speed = 161.f;
 vec2 window_size;
 
 // helptool and helptool status
@@ -44,7 +50,6 @@ int playerMove = 0;
 bool blobuleMoved = false;
 bool mouse_move = false;
 bool isDraggedFarEnough = false;
-bool load_game = false;
 bool canPressEnter = true;
 
 int current_turn = 0;
@@ -255,9 +260,28 @@ void WorldSystem::restart() {
 
 	if (gameState == GameState::Start) {
 		Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Start);
-		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, buttonType::Start, "start");
-		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 }, buttonType::Load, "load");
-	}
+		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, "Start");
+		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 }, "Load");
+    }
+    else if (gameState == GameState::Level) {
+        Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Level);
+        int count = 0;
+        int numMaps = std::distance(fs::directory_iterator("data/level/"), fs::directory_iterator()) / 2;
+        float initialYPos = window_height / 2 - 100 * (numMaps / 2);
+
+        for (const auto& entry : fs::directory_iterator("data/level/")) {
+            std::string filePath = entry.path().string();
+            if (filePath.find(".json") == std::string::npos) {
+                continue;
+            }
+            std::string mapName = std::regex_replace(filePath, std::regex("data/level/"), "");
+            mapName = std::regex_replace(mapName, std::regex("\\.json"), "");
+            mapName = std::regex_replace(mapName, std::regex("map_"), "");
+
+            levelButtons.insert({ filePath, Button::createButton({ window_width / 2, initialYPos + 100 * count}, { 0.75,0.75 }, "Map " + mapName) });
+            count++;
+        }
+    }
     else if (gameState != GameState::Game)
     {
         Menu::createMenu({ window_width / 2, window_height / 2 }, gameState);
@@ -290,7 +314,7 @@ void WorldSystem::restart() {
         ECS::ContainerInterface::list_all_components();
 
         // Can replace loadMap with loadSavedMap
-        islandGrid = load_game ? MapLoader::loadSavedMap({ window_width, window_height }) : MapLoader::loadMap("data/level/map_1.json", { window_width, window_height });
+        islandGrid = MapLoader::loadMap(load_map_location, { window_width, window_height });
         numHeight = islandGrid.size();
         numWidth = islandGrid[0].size();
 
@@ -310,8 +334,7 @@ void WorldSystem::restart() {
         score_text = Text::create_text("score", { 82, 60 }, font_size);
         player_text = Text::create_text("player", { 82, 30 }, font_size);
         end_turn_text = Text::create_text("end_turn", { window_size.x / 5 , window_size.y - 50 }, font_size);
-        save_button = Button::createButton({177, 730}, { 0.35, 0.35 }, buttonType::Save, "save");
-
+        save_button = Button::createButton({177, 730}, { 0.35, 0.35 }, "Save");
     }
 }
 
@@ -337,26 +360,26 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         // For when you press an arrow key and the salmon starts moving.
         if (action == GLFW_PRESS || action == GLFW_REPEAT)
         {
-            if (key == GLFW_KEY_UP)
-            {
-                // Note: Subtraction causes upwards movement.
-                blobule_movement.velocity.y = -moveSpeed;
-            }
-            if (key == GLFW_KEY_DOWN)
-            {
-                // Note: Addition causes downwards movement.
-                blobule_movement.velocity.y = moveSpeed;
-            }
-            if (key == GLFW_KEY_LEFT)
-            {
-                blobule_movement.velocity.x = -moveSpeed;
+            //if (key == GLFW_KEY_UP)
+            //{
+            //    // Note: Subtraction causes upwards movement.
+            //    blobule_movement.velocity.y = -moveSpeed;
+            //}
+            //if (key == GLFW_KEY_DOWN)
+            //{
+            //    // Note: Addition causes downwards movement.
+            //    blobule_movement.velocity.y = moveSpeed;
+            //}
+            //if (key == GLFW_KEY_LEFT)
+            //{
+            //    blobule_movement.velocity.x = -moveSpeed;
 
-            }
-            if (key == GLFW_KEY_RIGHT)
-            {
-                blobule_movement.velocity.x = moveSpeed;
+            //}
+            //if (key == GLFW_KEY_RIGHT)
+            //{
+            //    blobule_movement.velocity.x = moveSpeed;
 
-            }
+            //}
 
 
         }
@@ -431,7 +454,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             int w, h;
             glfwGetWindowSize(window, &w, &h);
             Mix_PlayChannel(-1, game_start_sound, 0);
-            load_game = false;
             restart();
         }
 
@@ -492,16 +514,33 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
             auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
             if (start_clicked) {
                 gameState = GameState::Intro;
+                ECS::registry<Text>.clear();
                 restart();
             }
             else if (load_clicked) {
                 Mix_PlayChannel(-1, game_start_sound, 0);
                 gameState = GameState::Game;
-                load_game = load_clicked;
+                load_map_location = "data/saved/map.json";
+                ECS::registry<Text>.clear();
                 restart();
             }
         }
 	}
+    else if (gameState == GameState::Level) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+            for (const auto& buttonPair : levelButtons) {
+                auto button_clicked = PhysicsSystem::is_entity_clicked(buttonPair.second, mouse_press_x, mouse_press_y);
+                if (button_clicked) {
+                    Mix_PlayChannel(-1, game_start_sound, 0);
+                    gameState = GameState::Game;
+                    load_map_location = buttonPair.first;
+                    ECS::registry<Text>.clear();
+                    restart();
+                    break;
+                }
+            }
+        }
+    }
     else if (gameState != GameState::Game)
     {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
@@ -525,10 +564,10 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 gameState = GameState::Island;
                 break;
             case GameState::Island:
-                Mix_PlayChannel(-1, game_start_sound, 0);
-                gameState = GameState::Game;
+                gameState = GameState::Level;
                 break;
             }
+            ECS::registry<Text>.clear();
             restart();
         }
     }
@@ -560,10 +599,20 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 blobMotion.velocity = { cos(blobAngle) * blobPower, sin(blobAngle) * blobPower };
 
                 float velocityMagnitude = Utils::getVelocityMagnitude(blobMotion);
-                if (velocityMagnitude > max_blobule_speed) {
-                    blobMotion.velocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
+                
+                std::string active_colour = ECS::registry<Blobule>.get(active_player).color;
+                
+                if (active_colour == "blue"){
+                    if (velocityMagnitude > max_blue_speed) {
+                        blobMotion.velocity = { cos(blobAngle) * max_blue_speed, sin(blobAngle) * max_blue_speed };
+                    }
                 }
-
+                else{
+                    if (velocityMagnitude > max_blobule_speed) {
+                        blobMotion.velocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
+                    }
+                }
+                
                 Blobule::removeTrajectory(active_player);
                 blobuleMoved = true;
             }
