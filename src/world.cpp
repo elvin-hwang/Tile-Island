@@ -270,12 +270,12 @@ void WorldSystem::restart() {
 
         for (const auto& entry : fs::directory_iterator("data/level/")) {
             std::string filePath = entry.path().string();
-            if (filePath.find(".csv") != std::string::npos) {
+            if (filePath.find(".json") == std::string::npos) {
                 continue;
             }
             std::string mapName = std::regex_replace(filePath, std::regex("data/level/"), "");
             mapName = std::regex_replace(mapName, std::regex("\\.json"), "");
-            mapName = std::regex_replace(mapName, std::regex("\\map_"), "");
+            mapName = std::regex_replace(mapName, std::regex("map_"), "");
 
             levelButtons.insert({ filePath, Button::createButton({ window_width / 2, initialYPos + 100 * count}, { 0.75,0.75 }, "Map " + mapName) });
             count++;
