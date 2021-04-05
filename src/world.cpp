@@ -524,6 +524,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                     load_map_location = buttonPair.first;
                     ECS::registry<Text>.clear();
                     restart();
+                    break;
                 }
             }
         }
