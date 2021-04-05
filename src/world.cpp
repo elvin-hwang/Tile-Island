@@ -360,26 +360,26 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         // For when you press an arrow key and the salmon starts moving.
         if (action == GLFW_PRESS || action == GLFW_REPEAT)
         {
-            if (key == GLFW_KEY_UP)
-            {
-                // Note: Subtraction causes upwards movement.
-                blobule_movement.velocity.y = -moveSpeed;
-            }
-            if (key == GLFW_KEY_DOWN)
-            {
-                // Note: Addition causes downwards movement.
-                blobule_movement.velocity.y = moveSpeed;
-            }
-            if (key == GLFW_KEY_LEFT)
-            {
-                blobule_movement.velocity.x = -moveSpeed;
+            //if (key == GLFW_KEY_UP)
+            //{
+            //    // Note: Subtraction causes upwards movement.
+            //    blobule_movement.velocity.y = -moveSpeed;
+            //}
+            //if (key == GLFW_KEY_DOWN)
+            //{
+            //    // Note: Addition causes downwards movement.
+            //    blobule_movement.velocity.y = moveSpeed;
+            //}
+            //if (key == GLFW_KEY_LEFT)
+            //{
+            //    blobule_movement.velocity.x = -moveSpeed;
 
-            }
-            if (key == GLFW_KEY_RIGHT)
-            {
-                blobule_movement.velocity.x = moveSpeed;
+            //}
+            //if (key == GLFW_KEY_RIGHT)
+            //{
+            //    blobule_movement.velocity.x = moveSpeed;
 
-            }
+            //}
 
 
         }
