@@ -458,8 +458,18 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         }
 
         // Debugging
-        if (key == GLFW_KEY_Q)
-            DebugSystem::in_debug_mode = (action != GLFW_RELEASE);
+        if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+        {
+            if (!DebugSystem::in_debug_mode)
+            {
+                DebugSystem::in_debug_mode = true;
+            }
+            else 
+            {
+                DebugSystem::in_debug_mode = false;
+                DebugSystem::clearDebugComponents();
+            }
+        }
 
         // Control the current speed with `<` `>`
         if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)

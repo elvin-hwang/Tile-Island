@@ -223,6 +223,7 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 
 	std::vector<ECS::Entity> overlay;
 	std::vector<ECS::Entity> firstEntities;
+	std::vector<ECS::Entity> debugEntities;
 	std::vector<ECS::Entity> secondEntities;
 	std::vector<ECS::Entity> thirdEntities;
 
@@ -236,6 +237,10 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 		}
 		else if (ECS::registry<BlueSplat>.has(entity) || ECS::registry<RedSplat>.has(entity) || ECS::registry<YellowSplat>.has(entity) || ECS::registry<GreenSplat>.has(entity)) {
 			secondEntities.push_back(entity);
+		}
+		else if (ECS::registry<DebugComponent>.has(entity))
+		{
+			debugEntities.push_back(entity);
 		}
 		else {
 			thirdEntities.push_back(entity);
@@ -253,6 +258,16 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 
 	// Renders splats and other second level entities
 	for (ECS::Entity entity : secondEntities)
+	{
+		if (!ECS::registry<Motion>.has(entity))
+			continue;
+		// Note, its not very efficient to access elements indirectly via the entity albeit iterating through all Sprites in sequence
+		drawTexturedMesh(entity, projection_2D);
+		gl_has_errors();
+	}
+
+	// Renders debug level entities
+	for (ECS::Entity entity : debugEntities)
 	{
 		if (!ECS::registry<Motion>.has(entity))
 			continue;
