@@ -114,5 +114,29 @@ namespace DebugSystem
 		DebugSystem::createLine(rightPoint, scale_vertical_line, angle);
 	}
 
+	void createDirectionLine(vec2 position, vec2 velocity, vec2 size)
+	{
+		auto scale_horizontal_line = size;
+		scale_horizontal_line.y *= 0.2f;
+		scale_horizontal_line.x *= 1.2f;
+
+		vec2 topPoint = position;
+		topPoint.y -= size.y / 2;
+		topPoint.x += size.x / 2;
+
+		vec2 bottomPoint = position;
+		bottomPoint.y += size.y / 2;
+		bottomPoint.x += size.x / 2;
+
+		vec2 futurePos = position + velocity;
+
+		float y = futurePos.y - position.y;
+		float x = futurePos.x - position.x;
+
+		float angle = atan2(y, x);
+
+		DebugSystem::createLine(position, scale_horizontal_line, angle);
+	}
+
 	bool in_debug_mode = false;
 }

@@ -187,6 +187,29 @@ void circle_square_complex_collision_handling(Motion& blobMotion, Motion& tileMo
 	blobMotion.velocity = { cos(angle) * blobMagnitude, sin(angle) * blobMagnitude };
 }
 
+void circleCircleHandleDebug(Motion& blobMotion1, Motion& blobMotion2, float angle)
+{
+	// adding collision debug box
+	if (DebugSystem::in_debug_mode)
+	{
+		DebugSystem::createBox(blobMotion1.position, blobMotion1.scale, angle);
+		DebugSystem::createBox(blobMotion2.position, blobMotion2.scale, angle);
+		DebugSystem::createDirectionLine(blobMotion1.position, blobMotion1.velocity, blobMotion1.scale);
+		DebugSystem::createDirectionLine(blobMotion2.position, blobMotion2.velocity, blobMotion2.scale);
+	}
+}
+
+void circleSquareHandleDebug(Motion& blobMotion, Motion& tileMotion)
+{
+	if (DebugSystem::in_debug_mode)
+	{
+		DebugSystem::createBox(blobMotion.position, blobMotion.scale, 0.f);
+		DebugSystem::createBox(tileMotion.position, tileMotion.scale, 0.f);
+		DebugSystem::createDirectionLine(blobMotion.position, blobMotion.velocity, blobMotion.scale);
+	}
+}
+
+
 void CollisionSystem::initialize_collisions() {
     
     // Audio initialization.
@@ -221,10 +244,8 @@ void CollisionSystem::initialize_collisions() {
 
 		float derivedAngle = circle_circle_complex_collision_resolution(blobMotion1, blobMotion2);
 		circle_circle_penetration_free_collision(blobMotion1, blobMotion2);
-		// adding collision debug box
-		DebugSystem::createBox(blobMotion1.position, blobMotion1.scale, derivedAngle);
-		DebugSystem::createBox(blobMotion2.position, blobMotion2.scale, derivedAngle);
-
+		
+		circleCircleHandleDebug(blobMotion1, blobMotion2, derivedAngle);
         // Play collision_sound.
         Mix_PlayChannel(-1, collision_sound, 0);
 	};
@@ -321,8 +342,8 @@ void CollisionSystem::initialize_collisions() {
 			// pen free must go before complex collision or errors will occur
 			circle_square_penetration_free_collision(blobMotion, tileMotion);
 			circle_square_complex_collision_handling(blobMotion, tileMotion, dir);
-			DebugSystem::createBox(blobMotion.position, blobMotion.scale, 0.f);
-			DebugSystem::createBox(tileMotion.position, tileMotion.scale, 0.f);
+
+			circleSquareHandleDebug(blobMotion, tileMotion);
 			
             Mix_PlayChannel(-1, collision_sound, 0);
 		}

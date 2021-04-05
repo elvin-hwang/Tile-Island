@@ -12,6 +12,8 @@ namespace DebugSystem {
 	// debug in bounding boxes
 	void createBox(vec2 position, vec2 size, float angle);
 
+	void createDirectionLine(vec2 position, vec2 velocity, vec2 size);
+
 	// Removes all debugging graphics in ECS, called at every iteration of the game loop
 	void clearDebugComponents();
 };
