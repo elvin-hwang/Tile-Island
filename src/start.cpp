@@ -44,7 +44,7 @@ ECS::Entity Menu::createMenu(vec2 position, GameState gameState)
         RenderSystem::createSprite(resource, textures_path("story_7.png"), "textured");
         break;
     case GameState::Level:
-        RenderSystem::createSprite(resource, textures_path("start_menu.png"), "textured");
+        RenderSystem::createSprite(resource, textures_path("level_menu.png"), "textured");
         break;
     }
 
