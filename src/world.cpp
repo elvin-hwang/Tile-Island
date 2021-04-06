@@ -10,6 +10,7 @@
 #include "collisions.hpp"
 #include "utils.hpp"
 #include "map_loader.hpp"
+#include "render.hpp"
 
 // stlib
 #include <string.h>
@@ -356,7 +357,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         ECS::registry<Blobule>.get(active_player).active_player = true;
         auto& blobule_movement = ECS::registry<Motion>.get(active_player);
         auto blobule_position = blobule_movement.position;
-
+        
         // For when you press an arrow key and the salmon starts moving.
         if (action == GLFW_PRESS || action == GLFW_REPEAT)
         {
@@ -428,6 +429,75 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         // Turn based system
         if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS && canPressEnter)
         {
+            // Replace next unhighlighted blobule with highlighted blobule.
+            /*
+            std::string active_colour_after = ECS::registry<Blobule>.get(active_player).color;
+            blobuleCol col_after = ECS::registry<Blobule>.get(active_player).colEnum;
+            ECS::registry<ShadedMeshRef>.remove(active_player);
+            
+            std::string key_after = "blobule_h_" + active_colour_after;
+            ShadedMesh& resource_after = cache_resource(key_after);
+            if (resource_after.effect.program.resource == 0)
+            {
+                resource_after = ShadedMesh();
+                resource_after.num_rows = 2.f;
+                resource_after.num_columns = 3.f;
+                std::string path;
+                switch (col_after) {
+                case blobuleCol::Blue:
+                    path = textures_path("blue_highlight.png");
+                    break;
+                case blobuleCol::Red:
+                    path = textures_path("red_highlight.png");
+                    break;
+                case blobuleCol::Yellow:
+                    path = textures_path("yellow_highlight.png");
+                    break;
+                case blobuleCol::Green:
+                    path = textures_path("green_highlight.png");
+                    break;
+                default:
+                    path = textures_path("blue_highlight.png");
+                }
+                RenderSystem::createSprite(resource_after, path, "textured");
+            }
+            ECS::registry<ShadedMeshRef>.emplace(active_player, resource_after);
+            */
+            
+            // Replace current highlighted blobule with unhighlighted blobule.
+            std::string active_colour = ECS::registry<Blobule>.get(active_player).color;
+            blobuleCol col = ECS::registry<Blobule>.get(active_player).colEnum;
+            ECS::registry<ShadedMeshRef>.remove(active_player);
+            
+            std::string key = "blobule_after_highlight_" + active_colour;
+            ShadedMesh& resource = cache_resource(key);
+            if (resource.effect.program.resource == 0)
+            {
+                resource = ShadedMesh();
+                resource.num_rows = 2.f;
+                resource.num_columns = 3.f;
+                std::string path;
+                switch (col) {
+                case blobuleCol::Blue:
+                    path = textures_path("blue.png");
+                    break;
+                case blobuleCol::Red:
+                    path = textures_path("red.png");
+                    break;
+                case blobuleCol::Yellow:
+                    path = textures_path("yellow.png");
+                    break;
+                case blobuleCol::Green:
+                    path = textures_path("green.png");
+                    break;
+                default:
+                    path = textures_path("blue.png");
+                }
+                RenderSystem::createSprite(resource, path, "textured");
+            }
+            ECS::registry<ShadedMeshRef>.emplace(active_player, resource);
+            
+            // Update active player.
             if (playerMove != 3) {
                 playerMove++;
                 current_turn++;
@@ -436,6 +506,40 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                 playerMove = 0;
                 current_turn++;
             }
+            
+            // Replace next unhighlighted blobule with highlighted blobule.
+            active_player = MapLoader::getBlobule(playerMove);
+            std::string active_colour2 = ECS::registry<Blobule>.get(active_player).color;
+            blobuleCol col2 = ECS::registry<Blobule>.get(active_player).colEnum;
+            ECS::registry<ShadedMeshRef>.remove(active_player);
+            
+            std::string key2 = "blobule_before_highlight_" + active_colour2;
+            ShadedMesh& resource2 = cache_resource(key2);
+            if (resource2.effect.program.resource == 0)
+            {
+                resource2 = ShadedMesh();
+                resource2.num_rows = 2.f;
+                resource2.num_columns = 3.f;
+                std::string path;
+                switch (col2) {
+                case blobuleCol::Blue:
+                    path = textures_path("blue_highlight.png");
+                    break;
+                case blobuleCol::Red:
+                    path = textures_path("red_highlight.png");
+                    break;
+                case blobuleCol::Yellow:
+                    path = textures_path("yellow_highlight.png");
+                    break;
+                case blobuleCol::Green:
+                    path = textures_path("green_highlight.png");
+                    break;
+                default:
+                    path = textures_path("blue_highlight.png");
+                }
+                RenderSystem::createSprite(resource2, path, "textured");
+            }
+            ECS::registry<ShadedMeshRef>.emplace(active_player, resource2);
 
             if (ECS::registry<Egg>.components.size() < MAX_EGGS)
             {
@@ -600,7 +704,6 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 float velocityMagnitude = Utils::getVelocityMagnitude(blobMotion);
                 
                 std::string active_colour = ECS::registry<Blobule>.get(active_player).color;
-                
                 if (active_colour == "blue"){
                     if (velocityMagnitude > max_blue_speed) {
                         blobMotion.velocity = { cos(blobAngle) * max_blue_speed, sin(blobAngle) * max_blue_speed };
