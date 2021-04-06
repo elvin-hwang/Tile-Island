@@ -429,41 +429,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         // Turn based system
         if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS && canPressEnter)
         {
-            // Replace next unhighlighted blobule with highlighted blobule.
-            /*
-            std::string active_colour_after = ECS::registry<Blobule>.get(active_player).color;
-            blobuleCol col_after = ECS::registry<Blobule>.get(active_player).colEnum;
-            ECS::registry<ShadedMeshRef>.remove(active_player);
-            
-            std::string key_after = "blobule_h_" + active_colour_after;
-            ShadedMesh& resource_after = cache_resource(key_after);
-            if (resource_after.effect.program.resource == 0)
-            {
-                resource_after = ShadedMesh();
-                resource_after.num_rows = 2.f;
-                resource_after.num_columns = 3.f;
-                std::string path;
-                switch (col_after) {
-                case blobuleCol::Blue:
-                    path = textures_path("blue_highlight.png");
-                    break;
-                case blobuleCol::Red:
-                    path = textures_path("red_highlight.png");
-                    break;
-                case blobuleCol::Yellow:
-                    path = textures_path("yellow_highlight.png");
-                    break;
-                case blobuleCol::Green:
-                    path = textures_path("green_highlight.png");
-                    break;
-                default:
-                    path = textures_path("blue_highlight.png");
-                }
-                RenderSystem::createSprite(resource_after, path, "textured");
-            }
-            ECS::registry<ShadedMeshRef>.emplace(active_player, resource_after);
-            */
-            
             // Replace current highlighted blobule with unhighlighted blobule.
             std::string active_colour = ECS::registry<Blobule>.get(active_player).color;
             blobuleCol col = ECS::registry<Blobule>.get(active_player).colEnum;
