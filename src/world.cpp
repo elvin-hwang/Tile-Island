@@ -27,7 +27,7 @@
 
 // Game Configuration
 namespace fs = std::filesystem;
-std::map<std::string, ECS::Entity> levelButtons; 
+std::map<std::string, ECS::Entity> levelButtons;
 std::string load_map_location = "data/level/map_1.json";
 
 // Tile Configurations
@@ -198,7 +198,7 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
         // Updating Score UI
         std::stringstream scores;
         std::stringstream current_player;
-        
+
         // Switch Player Statement
         std::string end_turn_message = "Press Enter to End Your Turn";
         std::string winner_colour = "Blue";
@@ -281,6 +281,7 @@ void WorldSystem::restart() {
 		Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Start);
 		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, ButtonEnum::StartGame, "Start");
 		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 },ButtonEnum::LoadGame, "Load");
+        level_editor_button = Button::createButton({ window_width / 2, window_height / 2 + 200 }, { 0.75,0.75 }, ButtonEnum::LevelEditor, "Level Editor");
     }
     else if (gameState == GameState::Level) {
         Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Level);
@@ -301,11 +302,7 @@ void WorldSystem::restart() {
             count++;
         }
     }
-    else if (gameState != GameState::Game)
-    {
-        Menu::createMenu({ window_width / 2, window_height / 2 }, gameState);
-    }
-    else
+    else if (gameState == GameState::Game)
     {
         std::cout << "Restarting\n";
 
@@ -319,7 +316,7 @@ void WorldSystem::restart() {
         MAX_TURNS = 20;
 
         // Remove all entities that we created (those that have a motion component)
-        while (ECS::registry<Motion>.entities.size() > 0) 
+        while (ECS::registry<Motion>.entities.size() > 0)
             ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
 
         while (ECS::registry<ShadedMeshRef>.entities.size() > 0)
@@ -342,7 +339,7 @@ void WorldSystem::restart() {
         ECS::registry<Blobule>.get(active_player).active_player = true;
 
         // Clearing Text from previous game
-        if (ECS::registry<Text>.components.size() > 0){
+        if (ECS::registry<Text>.components.size() > 0) {
             ECS::registry<Text>.clear();
         }
 
@@ -356,6 +353,9 @@ void WorldSystem::restart() {
         auto& motion = ECS::registry<Motion>.get(active_player);
         vec2 diff = vec2(window_width / 2, window_height / 2) - motion.position;
         Utils::moveCamera(diff.x, diff.y);
+    }
+    else {
+        Menu::createMenu({ window_width / 2, window_height / 2 }, gameState);
     }
 }
 
@@ -461,7 +461,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             std::string active_colour = ECS::registry<Blobule>.get(active_player).color;
             blobuleCol col = ECS::registry<Blobule>.get(active_player).colEnum;
             ECS::registry<ShadedMeshRef>.remove(active_player);
-            
+
             std::string key = "blobule_after_highlight_" + active_colour;
             ShadedMesh& resource = cache_resource(key);
             if (resource.effect.program.resource == 0)
@@ -489,7 +489,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                 RenderSystem::createSprite(resource, path, "textured");
             }
             ECS::registry<ShadedMeshRef>.emplace(active_player, resource);
-            
+
             // Update active player.
             if (playerMove != 3) {
                 playerMove++;
@@ -499,13 +499,13 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                 playerMove = 0;
                 current_turn++;
             }
-            
+
             // Replace next unhighlighted blobule with highlighted blobule.
             active_player = MapLoader::getBlobule(playerMove);
             std::string active_colour2 = ECS::registry<Blobule>.get(active_player).color;
             blobuleCol col2 = ECS::registry<Blobule>.get(active_player).colEnum;
             ECS::registry<ShadedMeshRef>.remove(active_player);
-            
+
             std::string key2 = "blobule_before_highlight_" + active_colour2;
             ShadedMesh& resource2 = cache_resource(key2);
             if (resource2.effect.program.resource == 0)
@@ -536,7 +536,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
             ECS::registry<Blobule>.get(active_player).active_player = false;
             active_player = MapLoader::getBlobule(playerMove);
-            
+
 
             ECS::registry<Blobule>.get(active_player).active_player = true;
 
@@ -572,7 +572,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             {
                 DebugSystem::in_debug_mode = true;
             }
-            else 
+            else
             {
                 DebugSystem::in_debug_mode = false;
                 DebugSystem::clearDebugComponents();
@@ -584,6 +584,10 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 // On mouse move callback
 void WorldSystem::on_mouse_move(vec2 mouse_pos)
 {
+    // Do not continue if not in Game state
+    if (gameState != GameState::Game)
+        return;
+
 	if (ECS::registry<Blobule>.has(active_player) && mouse_move)
 	{
 		auto& blobMotion = ECS::registry<Motion>.get(active_player);
@@ -602,10 +606,13 @@ void WorldSystem::on_mouse_move(vec2 mouse_pos)
 void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 {
 	glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
-	if (gameState == GameState::Start) {
+    // Handle clicks for start menu
+	if (gameState == GameState::Start)
+    {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
             auto start_clicked = PhysicsSystem::is_entity_clicked(start_button, mouse_press_x, mouse_press_y);
             auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
+            auto level_editor_clicked = PhysicsSystem::is_entity_clicked(level_editor_button, mouse_press_x, mouse_press_y);
             if (start_clicked) {
                 Mix_PlayChannel(-1, game_start_sound, 0);
                 gameState = GameState::Intro;
@@ -623,9 +630,16 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 ECS::registry<Text>.clear();
                 should_restart_game = true;
             }
+            else if (level_editor_clicked) {
+                gameState = GameState::LevelEditor;
+                ECS::registry<Text>.clear();
+                restart();
+            }
         }
 	}
-    else if (gameState == GameState::Level) {
+    // Handle clicks for level selection
+    else if (gameState == GameState::Level)
+    {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
             for (const auto& buttonPair : levelButtons) {
                 auto button_clicked = PhysicsSystem::is_entity_clicked(buttonPair.second, mouse_press_x, mouse_press_y);
@@ -640,38 +654,8 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
             }
         }
     }
-    else if (gameState != GameState::Game)
-    {
-        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-            switch (gameState) {
-            case GameState::Intro:
-                gameState = GameState::Yellow;
-                break;
-            case GameState::Yellow:
-                gameState = GameState::Green;
-                break;
-            case GameState::Green:
-                gameState = GameState::Red;
-                break;
-            case GameState::Red:
-                gameState = GameState::Blue;
-                break;
-            case GameState::Blue:
-                gameState = GameState::Paint;
-                break;
-            case GameState::Paint:
-                gameState = GameState::Island;
-                break;
-            case GameState::Island:
-                gameState = GameState::Level;
-                break;
-            }
-            ECS::registry<Text>.clear();
-            should_restart_game = true;
-
-        }
-    }
-    else if (current_turn < MAX_TURNS)
+    // Handle clicks for core game
+    else if (gameState == GameState::Game && current_turn < MAX_TURNS)
     {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !blobuleMoved)
         {
@@ -699,7 +683,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 blobMotion.velocity = { cos(blobAngle) * blobPower, sin(blobAngle) * blobPower };
 
                 float velocityMagnitude = Utils::getVelocityMagnitude(blobMotion);
-                
+
                 std::string active_colour = ECS::registry<Blobule>.get(active_player).color;
                 if (active_colour == "blue"){
                     if (velocityMagnitude > max_blue_speed) {
@@ -711,11 +695,11 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                         blobMotion.velocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
                     }
                 }
-                
+
                 Blobule::removeTrajectory(active_player);
                 blobuleMoved = true;
             }
-            else 
+            else
             {
                 mouse_move = false;
             }
@@ -746,6 +730,40 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
             }
         }
     }
+    // Handle clicks for level editor
+    else if (gameState == GameState::LevelEditor)
+    {
+        std::cout << "Level editor click registered" << std::endl;
+    }
+    // Handle clicks for progressing through story
+    else
+    {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+            switch (gameState) {
+            case GameState::Intro:
+                gameState = GameState::Yellow;
+                break;
+            case GameState::Yellow:
+                gameState = GameState::Green;
+                break;
+            case GameState::Green:
+                gameState = GameState::Red;
+                break;
+            case GameState::Red:
+                gameState = GameState::Blue;
+                break;
+            case GameState::Blue:
+                gameState = GameState::Paint;
+                break;
+            case GameState::Paint:
+                gameState = GameState::Island;
+                break;
+            case GameState::Island:
+                gameState = GameState::Level;
+                break;
+            }
+            ECS::registry<Text>.clear();
+            restart();
+        }
+    }
 }
-
-

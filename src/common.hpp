@@ -77,4 +77,5 @@ enum class GameState {
 	Island,
 	Level,
 	Game,
+	LevelEditor,
 };
