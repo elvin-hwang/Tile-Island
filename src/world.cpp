@@ -52,7 +52,7 @@ int playerMove = 0;
 bool blobuleMoved = false;
 bool mouse_move = false;
 bool isDraggedFarEnough = false;
-bool canPressEnter = true;
+bool canPressEnter = false;
 
 int current_turn = 0;
 int MAX_TURNS = 20;
