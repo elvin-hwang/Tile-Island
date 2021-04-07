@@ -87,8 +87,46 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     ShadedMesh& resource = cache_resource(key);
     if (resource.effect.program.resource == 0)
     {
-        resource = ShadedMesh();
-        RenderSystem::createSprite(resource, textures_path(key.append(".png")), "textured");
+        if (key == "tile_water")
+        {
+            std::vector<ColoredVertex> vertices;
+            std::vector<uint16_t> indices;
+
+            constexpr float z = -0.1f;
+
+            ColoredVertex v;
+            v.position = { -0.5f, -0.5f, z };
+            v.color = { 0.8, 0.8, 0.8 };
+            vertices.push_back(v);
+
+            v.position = { -0.5f, 0.5f, z };
+            v.color = { 0.8, 0.8, 0.8 };
+            vertices.push_back(v);
+
+            v.position = { 0.5f, 0.5f, z };
+            v.color = { 0.8, 0.8, 0.8 };
+            vertices.push_back(v);
+
+            v.position = { 0.5f, -0.5f, z };
+            v.color = { 0.8, 0.8, 0.8 };
+            vertices.push_back(v);
+
+            indices.push_back(static_cast<uint16_t>(0));
+            indices.push_back(static_cast<uint16_t>(1));
+            indices.push_back(static_cast<uint16_t>(2));
+            indices.push_back(static_cast<uint16_t>(2));
+            indices.push_back(static_cast<uint16_t>(3));
+            indices.push_back(static_cast<uint16_t>(0));
+
+            resource.mesh.vertices = vertices;
+            resource.mesh.vertex_indices = indices;
+            RenderSystem::createColoredMesh(resource, "colored_mesh");
+        }
+
+        else {
+            resource = ShadedMesh();
+            RenderSystem::createSprite(resource, textures_path(key.append(".png")), "textured");
+        }
 
     }
 
@@ -112,7 +150,9 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     motion.angle = 0.f;
     motion.velocity = { 0.f, 0.f };
     motion.position = position;
-    motion.scale = vec2({ size, size }) * static_cast<vec2>(resource.texture.size);
+    std::cout << static_cast<vec2>(resource.texture.size).x << ", " << static_cast<vec2>(resource.texture.size).y << std::endl;
+
+    motion.scale = vec2({ size, size }) * 342.f;
     motion.shape = "square";
     
     auto& terrain = ECS::registry<Terrain>.emplace(entity);
