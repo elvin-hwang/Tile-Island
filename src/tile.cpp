@@ -3,6 +3,7 @@
 #include "render.hpp"
 #include "blobule.hpp"
 #include <iostream>
+#include "common.hpp"
 
 // Initialize size of tiles.
 float size = 0.13f;
@@ -150,9 +151,7 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     motion.angle = 0.f;
     motion.velocity = { 0.f, 0.f };
     motion.position = position;
-    std::cout << static_cast<vec2>(resource.texture.size).x << ", " << static_cast<vec2>(resource.texture.size).y << std::endl;
-
-    motion.scale = vec2({ size, size }) * 342.f;
+    motion.scale = vec2({ tileSize, tileSize });
     motion.shape = "square";
     
     auto& terrain = ECS::registry<Terrain>.emplace(entity);

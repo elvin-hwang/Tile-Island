@@ -19,6 +19,8 @@
 using namespace glm;
 static const float PI = 3.14159265359f;
 
+static const float tileSize = 45.f;
+
 // Simple utility functions to avoid mistyping directory name
 inline std::string data_path() { return "data"; };
 inline std::string shader_path(const std::string& name) { return data_path() + "/shaders/" + name;};

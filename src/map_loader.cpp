@@ -28,7 +28,6 @@ std::string loadedGridLocation;
 
 const std::string savedGridLocation = "data/saved/grid.csv";
 const std::string savedMapLocation = "data/saved/map.json";
-const float tile_width = 44.46f;
 
 void createTileIsland(std::vector<std::vector<std::string>> csvGrid) {
 	tileIsland.clear();
@@ -40,8 +39,8 @@ void createTileIsland(std::vector<std::vector<std::string>> csvGrid) {
 			std::string value = row[j];
 			value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
 
-			float xPos = tile_width * (j + 1);
-			float yPos = tile_width * (i + 1);
+			float xPos = tileSize * (j + 1);
+			float yPos = tileSize * (i + 1);
 
 			if (value == "Block") {
 				tile = Tile::createTile({ xPos, yPos }, Block);
@@ -125,10 +124,10 @@ void createWaterBorder(vec2 windowSize) {
 	vec2 topLeft = ECS::registry<Motion>.get(tileIsland[0][0]).position;
 	vec2 bottomRight = ECS::registry<Motion>.get(tileIsland[heightNum - 1][widthNum - 1]).position;
 
-	float top = topLeft.y - tile_width;
-	float bot = bottomRight.y + tile_width;
-	float left = topLeft.x - tile_width;
-	float right = bottomRight.x + tile_width;
+	float top = topLeft.y - tileSize;
+	float bot = bottomRight.y + tileSize;
+	float left = topLeft.x - tileSize;
+	float right = bottomRight.x + tileSize;
 
 	float rightBound = windowSize.x + waterBorderWidth;
 	float bottomBound = windowSize.y + waterBorderWidth;
@@ -136,37 +135,41 @@ void createWaterBorder(vec2 windowSize) {
 	float topBound = -waterBorderWidth;
 
 	// Top Water Border
-	for (float y = top; y >= topBound; y -= tile_width) {
-		for (float x = rightBound; x >= leftBound; x -= tile_width) {
+	for (float y = top; y >= topBound; y -= tileSize) {
+		for (float x = rightBound; x >= leftBound; x -= tileSize) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
 
 	// Bottom Water Border
-	for (float y = bot; y <= bottomBound; y += tile_width) {
-		for (float x = rightBound; x >= leftBound; x -= tile_width) {
+	for (float y = bot; y <= bottomBound; y += tileSize) {
+		for (float x = rightBound; x >= leftBound; x -= tileSize) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
 
 	// Left Water Border
-	for (float x = left; x >= leftBound; x -= tile_width) {
-		for (float y = topLeft.y; y < bot; y += tile_width) {
+	for (float x = left; x >= leftBound; x -= tileSize) {
+		for (float y = topLeft.y; y < bot; y += tileSize) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
 
 	// Right Water Border
-	for (float x = right; x <= rightBound; x += tile_width) {
-		for (float y = topLeft.y; y < bot; y += tile_width) {
+	for (float x = right; x <= rightBound; x += tileSize) {
+		for (float y = topLeft.y; y < bot; y += tileSize) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
 }
 
-void centerIsland(vec2 windowSize) {
+vec2 MapLoader::getcenterIslandCoords() {
 	auto& motion = ECS::registry<Motion>.get(tileIsland[heightNum / 2][widthNum / 2]);
-	vec2 offset = vec2{ windowSize.x / 2, windowSize.y / 2 } - motion.position;
+	return motion.position;
+}
+
+void centerIsland(vec2 windowSize) {
+	vec2 offset = vec2{ windowSize.x / 2, windowSize.y / 2 } - MapLoader::getcenterIslandCoords();
 	Utils::moveCamera(offset.x, offset.y);
 }
 
