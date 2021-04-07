@@ -43,6 +43,14 @@ public:
 
 	// OpenGL window handle
 	GLFWwindow* window;
+
+	static void enable_settings(bool enable);
+	static void quit_game();
+	static void set_game_to_restart();
+	static bool get_blobule_moved();
+	static int get_current_turn();
+	static int get_player_move();
+
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
@@ -68,7 +76,6 @@ private:
 
 	ECS::Entity start_button;
 	ECS::Entity load_button;
-	ECS::Entity save_button;
 	ECS::Entity settings_button;
 
 	// C++ random number generator
