@@ -97,7 +97,11 @@ void RenderSystem::drawTexturedMesh(ECS::Entity entity, const mat3& projection)
 	}
 	else
 	{
-		throw std::runtime_error("This type of entity is not yet supported");
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), reinterpret_cast<void*>(0));
+		GLuint time_uloc = glGetUniformLocation(texmesh.effect.program, "time");
+		double x = glfwGetTime() * 10.0f;
+		glUniform1f(time_uloc, static_cast<float>(x));
 	}
 	gl_has_errors();
 
