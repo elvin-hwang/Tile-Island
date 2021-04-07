@@ -4,7 +4,7 @@
 
 ECS::Entity Blobule::createBlobule(vec2 position, blobuleCol col, std::string colString)
 {
-    // Reserve an entity
+    // Reserve an entity 
     auto entity = ECS::Entity();
 
     // Create the rendering components
