@@ -10,6 +10,7 @@
 #include "collisions.hpp"
 #include "utils.hpp"
 #include "map_loader.hpp"
+#include "camera.hpp"
 
 // stlib
 #include <string.h>
@@ -288,9 +289,6 @@ void WorldSystem::restart() {
     }
     else
     {
-        // Debugging for memory/component leaks
-        //ECS::ContainerInterface::list_all_components();
-
         std::cout << "Restarting\n";
 
         // Reset other stuff
@@ -335,6 +333,12 @@ void WorldSystem::restart() {
         player_text = Text::create_text("player", { 82, 30 }, font_size);
         end_turn_text = Text::create_text("end_turn", { window_size.x / 5 , window_size.y - 50 }, font_size);
         save_button = Button::createButton({177, 730}, { 0.35, 0.35 }, "Save");
+
+        auto& activePlayerCoords = ECS::registry<Motion>.get(active_player);
+        vec2 centerIslandCoords = MapLoader::getcenterIslandCoords();
+        vec2 diff = centerIslandCoords - activePlayerCoords.position;
+        camera = Camera::createCamera(centerIslandCoords);
+        Utils::moveCamera(diff.x, diff.y);
     }
 }
 
@@ -350,39 +354,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 {
     if (gameState == GameState::Game)
     {
-        ECS::registry<Blobule>.get(active_player).active_player = false;
-        active_player = MapLoader::getBlobule(playerMove);
-
-        ECS::registry<Blobule>.get(active_player).active_player = true;
         auto& blobule_movement = ECS::registry<Motion>.get(active_player);
         auto blobule_position = blobule_movement.position;
-
-        // For when you press an arrow key and the salmon starts moving.
-        if (action == GLFW_PRESS || action == GLFW_REPEAT)
-        {
-            //if (key == GLFW_KEY_UP)
-            //{
-            //    // Note: Subtraction causes upwards movement.
-            //    blobule_movement.velocity.y = -moveSpeed;
-            //}
-            //if (key == GLFW_KEY_DOWN)
-            //{
-            //    // Note: Addition causes downwards movement.
-            //    blobule_movement.velocity.y = moveSpeed;
-            //}
-            //if (key == GLFW_KEY_LEFT)
-            //{
-            //    blobule_movement.velocity.x = -moveSpeed;
-
-            //}
-            //if (key == GLFW_KEY_RIGHT)
-            //{
-            //    blobule_movement.velocity.x = moveSpeed;
-
-            //}
-
-
-        }
 
         if (key == GLFW_KEY_H) {
             if (action == GLFW_PRESS) {
@@ -398,7 +371,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             }
         }
 
-
         // For when you press a WASD key and the camera starts moving.
         if (action == GLFW_PRESS || action == GLFW_REPEAT)
         {
@@ -408,16 +380,16 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             float yOffset = 0;
             switch (key) {
                 case GLFW_KEY_W:
-                    yOffset = 10.f;
+                    yOffset = tileSize / 2;
                     break;
                 case GLFW_KEY_S:
-                    yOffset = -10.f;
+                    yOffset = -tileSize / 2;
                     break;
                 case GLFW_KEY_A:
-                    xOffset = 10.f;
+                    xOffset = tileSize / 2;
                     break;
                 case GLFW_KEY_D:
-                    xOffset = -10.f;
+                    xOffset = -tileSize / 2;
                     break;
                 default:
                     break;
@@ -437,12 +409,22 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                 current_turn++;
             }
 
+            ECS::registry<Blobule>.get(active_player).active_player = false;
+            active_player = MapLoader::getBlobule(playerMove);
+            
+
+            ECS::registry<Blobule>.get(active_player).active_player = true;
+
+            auto& cameraCoords = ECS::registry<Motion>.get(camera);
+            auto& activePlayerCoords = ECS::registry<Motion>.get(active_player);
+            vec2 diff = cameraCoords.position - activePlayerCoords.position;
+            Utils::moveCamera(diff.x, diff.y);
+
             if (ECS::registry<Egg>.components.size() < MAX_EGGS)
             {
                 next_egg_spawn--;
                 if (next_egg_spawn < 0)
                     next_egg_spawn = 0;
-                std::cout << next_egg_spawn << std::endl;
             }
             canPressEnter = false;
             blobuleMoved = false;
