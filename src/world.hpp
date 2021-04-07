@@ -75,4 +75,6 @@ private:
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 
 	ECS::Entity active_player;
+
+	ECS::Entity camera;
 };
