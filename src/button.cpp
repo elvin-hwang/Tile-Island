@@ -21,6 +21,9 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, std::string buttonst
         if (buttonstring == "Save") {
             path = textures_path("yellow_button.png");
         }
+        if (buttonstring == "Settings") {
+            path = textures_path("settings.png");
+        }
 
         RenderSystem::createSprite(resource, path, "textured");
     }
@@ -39,7 +42,7 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, std::string buttonst
     if (buttonstring == "Save") {
         Text::create_text(buttonstring, { position.x - 40, position.y + 5 }, 0.4);
     }
-    else {
+    else if (buttonstring != "Settings"){
         Text::create_text(buttonstring, { position.x - 60, position.y + 10 }, buttonFontSize);
     }
 

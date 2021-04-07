@@ -335,6 +335,7 @@ void WorldSystem::restart() {
         player_text = Text::create_text("player", { 82, 30 }, font_size);
         end_turn_text = Text::create_text("end_turn", { window_size.x / 5 , window_size.y - 50 }, font_size);
         save_button = Button::createButton({177, 730}, { 0.35, 0.35 }, "Save");
+        settings_button = Button::createButton({ 200, 730 }, { 0.35, 0.35 }, "Settings");
     }
 }
 

@@ -69,6 +69,7 @@ private:
 	ECS::Entity start_button;
 	ECS::Entity load_button;
 	ECS::Entity save_button;
+	ECS::Entity settings_button;
 
 	// C++ random number generator
 	std::default_random_engine rng;
