@@ -253,7 +253,9 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
         }
         auto& motion = ECS::registry<Motion>.get(active_player);
         vec2 diff = vec2{ window_size_in_game_units.x / 2, window_size_in_game_units.y / 2 } - motion.position;
-        Utils::moveCamera(diff.x, diff.y);
+        if (diff.x != 0 && diff.y != 0) {
+            Utils::moveCamera(diff.x, diff.y);
+        }
     }
 }
 
