@@ -75,6 +75,8 @@ if (IS_OS_LINUX OR IS_OS_MAC)
     
     pkg_search_module(FREETYPE REQUIRED freetype2)
 
+    find_package( OpenCV REQUIRED )
+
     # Link Frameworks on OSX
     if (IS_OS_MAC)
        find_library(COCOA_LIBRARY Cocoa)
@@ -168,12 +170,14 @@ endif()
 target_include_directories(${PROJECT_NAME} PUBLIC ${GLFW_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${SDL2_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${FREETYPE_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCV_INCLUDE_DIRS} )
 
 target_link_libraries(${PROJECT_NAME}
     PUBLIC ${GLFW_LIBRARIES}
     ${SDL2_LIBRARIES}
     ${SDL2MIXER_LIBRARIES}
     ${FREETYPE_LIBRARIES}
+        ${OpenCV_LIBRARIES}
     glm::glm
 )
 
