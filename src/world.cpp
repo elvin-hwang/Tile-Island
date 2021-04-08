@@ -11,7 +11,6 @@
 #include "utils.hpp"
 #include "map_loader.hpp"
 #include "render.hpp"
-#include "camera.hpp"
 
 // stlib
 #include <string.h>
