@@ -59,7 +59,7 @@ bool blobuleMoved = false;
 bool mouse_move = false;
 bool isDraggedFarEnough = false;
 bool canPressEnter = false;
-
+bool sound_effect_enabled = true;
 
 int current_turn = 0;
 int MAX_TURNS = 20;
@@ -80,6 +80,11 @@ bool noBlobulesMoving() {
     return true;
 }
 
+void playSoundEffect() {
+    if (sound_effect_enabled) {
+
+    }
+}
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
 {
@@ -353,7 +358,7 @@ void WorldSystem::restart() {
         // initializing text
         score_text = Text::create_text("score", { 82, 60 }, font_size);
         player_text = Text::create_text("player", { 82, 30 }, font_size);
-        end_turn_text = Text::create_text("end_turn", { window_size.x /6.2 , window_size.y - 10 }, font_size);
+        end_turn_text = Text::create_text("end_turn", { window_size.x /6.2 , window_size.y - 30 }, font_size);
         settings_button = Button::createButton({ window_size.x/15, window_size.y - 50 }, { 0.16,0.16 }, ButtonEnum::OpenSettings, "");
 
         auto& activePlayerCoords = ECS::registry<Motion>.get(active_player);

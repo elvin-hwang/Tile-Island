@@ -12,7 +12,9 @@ enum ButtonEnum {
 	ExitSettings,
 	LoadMaps,
 	RestartGame,
-	QuitGame
+	QuitGame,
+	SoundOn,
+	SoundOff
 };
 
 struct Button

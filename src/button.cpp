@@ -52,6 +52,12 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, ButtonEnum buttonEnu
             case ButtonEnum:: OpenSettings:
                 path = textures_path("open_settings.png");
                 break;
+            case ButtonEnum:: SoundOn:
+                path = textures_path("sound_on.png");
+                break;
+            case ButtonEnum:: SoundOff:
+                path = textures_path("sound_off.png");
+                break;
             default:
                 path = textures_path("blue_button.png");
                 break;
