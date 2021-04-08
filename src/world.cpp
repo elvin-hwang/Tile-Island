@@ -317,7 +317,6 @@ void WorldSystem::restart() {
         blobuleMoved = false;
         mouse_move = false;
         settings_is_active = false;
-        help_tool_is_active = false;
         current_turn = 0;
         MAX_TURNS = 20;
 
@@ -365,11 +364,12 @@ bool WorldSystem::is_over() const
 
 void WorldSystem::enable_settings(bool enable)
 {
-    settings_is_active = enable;
     if (enable) {
+        settings_is_active = true;
         settings_tool = Settings::createSettings({ window_size.x / 2, window_size.y / 2 }, { 1.5,1.5 });
     }
     else {
+        settings_is_active = false;
         ECS::ContainerInterface::remove_all_components_of(settings_tool);
     }
 }
