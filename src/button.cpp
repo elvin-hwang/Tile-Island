@@ -4,7 +4,7 @@
 
 #include <text.hpp>
 float blueButtonFontSize = 0.66;
-float yellowButtonFontSize = 0.4;
+float yellowButtonFontSize = 0.45;
 
 
 void createButtonText(Button& button, vec2 position, ButtonEnum buttonEnum, std::string buttonText) {
@@ -16,7 +16,6 @@ void createButtonText(Button& button, vec2 position, ButtonEnum buttonEnum, std:
     case ButtonEnum::RestartGame:
         button.text_entity = Text::create_text(buttonText, { position.x - 60, position.y + 5 }, yellowButtonFontSize);
         break;
-
     default:
         button.text_entity = Text::create_text(buttonText, { position.x - 60, position.y + 10 }, blueButtonFontSize);
         break;
@@ -44,12 +43,14 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, ButtonEnum buttonEnu
             case ButtonEnum::SaveGame:
             case ButtonEnum::LoadGame_Settings:
             case ButtonEnum::QuitGame:
-            case ButtonEnum::OpenSettings:
             case ButtonEnum:: RestartGame:
                 path = textures_path("yellow_button.png");
                 break;
             case ButtonEnum:: ExitSettings:
-                path =textures_path("exit.png");
+                path = textures_path("exit.png");
+                break;
+            case ButtonEnum:: OpenSettings:
+                path = textures_path("open_settings.png");
                 break;
             default:
                 path = textures_path("blue_button.png");

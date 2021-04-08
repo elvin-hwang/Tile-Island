@@ -69,7 +69,7 @@ ECS::Entity Settings::createSettings(vec2 position, vec2 scale)
 	load_button = Button::createButton({ motion.position.x, motion.position.y + 100 }, { 0.50, 0.50 }, ButtonEnum::LoadGame_Settings, "Load");
 	restart_button = Button::createButton({ motion.position.x, motion.position.y + 180 }, { 0.50, 0.50 }, ButtonEnum::RestartGame, "Restart");
 	quit_button = Button::createButton({ motion.position.x, motion.position.y + 260 }, { 0.50, 0.50 }, ButtonEnum::QuitGame, "Quit");
-	exit_button = Button::createButton({ motion.position.x + 425, motion.position.y - 275 }, { 0.35,0.35 }, ButtonEnum::ExitSettings, "");
+	exit_button = Button::createButton({ motion.position.x + 425, motion.position.y - 275 }, { 0.40,0.40 }, ButtonEnum::ExitSettings, "");
 	auto& settings = ECS::registry<Settings>.emplace(entity);
 
 	return entity;
@@ -90,6 +90,10 @@ void Settings::handleSettingClicks(double mouse_x, double mouse_y)
 				WorldSystem::quit_game();
 			}
 			else if (PhysicsSystem::is_entity_clicked(restart_button, mouse_x, mouse_y)) {
+				WorldSystem::set_game_to_restart();
+			}
+			else if (PhysicsSystem::is_entity_clicked(load_button, mouse_x, mouse_y)) {
+				WorldSystem::set_load_map_location("data/saved/map.json");
 				WorldSystem::set_game_to_restart();
 			}
 }

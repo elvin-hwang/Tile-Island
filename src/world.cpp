@@ -348,8 +348,8 @@ void WorldSystem::restart() {
         // initializing text
         score_text = Text::create_text("score", { 82, 60 }, font_size);
         player_text = Text::create_text("player", { 82, 30 }, font_size);
-        end_turn_text = Text::create_text("end_turn", { window_size.x / 5 , window_size.y - 10 }, font_size);
-        settings_button = Button::createButton({ 855, 730 }, { 0.35,0.35 }, ButtonEnum::OpenSettings, "Settings");
+        end_turn_text = Text::create_text("end_turn", { window_size.x /6.2 , window_size.y - 10 }, font_size);
+        settings_button = Button::createButton({ window_size.x/15, window_size.y - 50 }, { 0.16,0.16 }, ButtonEnum::OpenSettings, "");
 
         auto& activePlayerCoords = ECS::registry<Motion>.get(active_player);
         vec2 centerIslandCoords = MapLoader::getcenterIslandCoords();
@@ -399,6 +399,11 @@ int WorldSystem::get_current_turn()
 int WorldSystem::get_player_move()
 {
     return playerMove;
+}
+
+void WorldSystem::set_load_map_location(std::string loc)
+{
+    load_map_location = loc;
 }
 
 // On key callback
@@ -627,7 +632,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 gameState = GameState::Game;
                 ECS::ContainerInterface::remove_all_components_of(start_button);
                 ECS::ContainerInterface::remove_all_components_of(load_button);
-                load_map_location = "data/saved/map.json";
+                set_load_map_location("data/saved/map.json");
                 ECS::registry<Text>.clear();
                 should_restart_game = true;
             }
@@ -640,7 +645,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 if (button_clicked) {
                     Mix_PlayChannel(-1, game_start_sound, 0);
                     gameState = GameState::Game;
-                    load_map_location = buttonPair.first;
+                    set_load_map_location(buttonPair.first);
                     ECS::registry<Text>.clear();
                     should_restart_game = true;
                     break;

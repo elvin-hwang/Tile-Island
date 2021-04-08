@@ -50,6 +50,7 @@ public:
 	static bool get_blobule_moved();
 	static int get_current_turn();
 	static int get_player_move();
+	static void set_load_map_location(std::string loc);
 
 private:
 	// Input callback functions
