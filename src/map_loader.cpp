@@ -163,13 +163,8 @@ void createWaterBorder(vec2 windowSize) {
 	}
 }
 
-vec2 MapLoader::getcenterIslandCoords() {
-	auto& motion = ECS::registry<Motion>.get(tileIsland[heightNum / 2][widthNum / 2]);
-	return motion.position;
-}
-
 void centerIsland(vec2 windowSize) {
-	vec2 offset = vec2{ windowSize.x / 2, windowSize.y / 2 } - MapLoader::getcenterIslandCoords();
+	vec2 offset = vec2{ windowSize.x / 2, windowSize.y / 2 } - ECS::registry<Motion>.get(tileIsland[heightNum / 2][widthNum / 2]).position;
 	Utils::moveCamera(offset.x, offset.y);
 }
 

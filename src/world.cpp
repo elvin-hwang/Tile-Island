@@ -250,7 +250,15 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
         else
         {
             ECS::registry<Text>.get(end_turn_text).content = "";
+
+            // camera follows active blob
+
+            float step_seconds = 1.0f * (elapsed_ms / 1000.f);
+            auto& motion = ECS::registry<Motion>.get(active_player);
+            vec2 vel = (step_seconds * motion.velocity);
+            Utils::moveCamera(-vel.x, -vel.y);
         }
+
     }
 }
 
@@ -333,7 +341,7 @@ void WorldSystem::restart() {
         save_button = Button::createButton({177, 730}, { 0.35, 0.35 }, "Save");
 
         auto& activePlayerCoords = ECS::registry<Motion>.get(active_player);
-        vec2 centerIslandCoords = MapLoader::getcenterIslandCoords();
+        vec2 centerIslandCoords = window_size / 2.f;
         vec2 diff = centerIslandCoords - activePlayerCoords.position;
         camera = Camera::createCamera(centerIslandCoords);
         Utils::moveCamera(diff.x, diff.y);
