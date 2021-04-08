@@ -17,6 +17,7 @@ ECS::Entity background_music_button;
 ECS::Entity sound_effects_button;
 ECS::Entity background_music_text;
 ECS::Entity sound_effects_text;
+ECS::Entity save_text;
 bool sound_effects_on;
 bool background_music_on;
 
@@ -35,6 +36,7 @@ void closeSettings() {
 	ECS::ContainerInterface::remove_all_components_of(sound_effects_text);
 	ECS::ContainerInterface::remove_all_components_of(background_music_button);
 	ECS::ContainerInterface::remove_all_components_of(sound_effects_button);
+	ECS::ContainerInterface::remove_all_components_of(save_text);
 }
 
 void enableSoundEffects() {
@@ -85,6 +87,9 @@ void saveGame() {
 		}
 	}
 	MapLoader::saveMap(currPlayer, WorldSystem::get_current_turn());
+	auto& entity = ECS::registry<Text>.get(save_text);
+	entity.content = "Save Complete";
+
 }
 //public functions
 ECS::Entity Settings::createSettings(vec2 position, vec2 scale)
@@ -128,6 +133,7 @@ ECS::Entity Settings::createSettings(vec2 position, vec2 scale)
 	sound_effects_button = Button::createButton({ motion.position.x + 275, motion.position.y - 140 }, { 0.77, 0.77 }, sound_effect_buttonEnum, "");
 	background_music_text = Text::create_text(background_music_str, {motion.position.x/1.75, motion.position.y - 180 }, 0.5);
 	sound_effects_text = Text::create_text(sound_effects_str, { motion.position.x/1.75, motion.position.y - 130 }, 0.5);
+	save_text = Text::create_text("", { motion.position.x/1.37, motion.position.y + 255}, 0.5);
 
 	auto& settings = ECS::registry<Settings>.emplace(entity);
 
