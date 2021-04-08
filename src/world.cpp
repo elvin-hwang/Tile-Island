@@ -262,7 +262,15 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
         else
         {
             ECS::registry<Text>.get(end_turn_text).content = "";
+
+            // camera follows active blob
+
+            float step_seconds = 1.0f * (elapsed_ms / 1000.f);
+            auto& motion = ECS::registry<Motion>.get(active_player);
+            vec2 vel = (step_seconds * motion.velocity);
+            Utils::moveCamera(-vel.x, -vel.y);
         }
+
     }
 }
 
@@ -314,9 +322,6 @@ void WorldSystem::restart() {
         current_turn = 0;
         MAX_TURNS = 20;
 
-        // Reset the game speed
-        current_speed = 1.f;
-
         // Remove all entities that we created (those that have a motion component)
         while (ECS::registry<Motion>.entities.size() > 0) 
             ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
@@ -352,7 +357,7 @@ void WorldSystem::restart() {
         settings_button = Button::createButton({ window_size.x/15, window_size.y - 50 }, { 0.16,0.16 }, ButtonEnum::OpenSettings, "");
 
         auto& activePlayerCoords = ECS::registry<Motion>.get(active_player);
-        vec2 centerIslandCoords = MapLoader::getcenterIslandCoords();
+        vec2 centerIslandCoords = window_size / 2.f;
         vec2 diff = centerIslandCoords - activePlayerCoords.position;
         camera = Camera::createCamera(centerIslandCoords);
         Utils::moveCamera(diff.x, diff.y);
@@ -578,19 +583,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                 DebugSystem::clearDebugComponents();
             }
         }
-
-        // Control the current speed with `<` `>`
-        if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
-        {
-            current_speed -= 0.1f;
-            std::cout << "Current speed = " << current_speed << std::endl;
-        }
-        if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
-        {
-            current_speed += 0.1f;
-            std::cout << "Current speed = " << current_speed << std::endl;
-        }
-        current_speed = std::max(0.f, current_speed);
     }
 }
 

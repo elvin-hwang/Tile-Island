@@ -16,7 +16,5 @@ struct MapLoader
 	static ECS::Entity getBlobule(int index);
 
 	static std::vector<int> getInitialInfo();
-
-	static vec2 getcenterIslandCoords();
 };
 
