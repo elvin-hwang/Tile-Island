@@ -58,7 +58,6 @@ bool blobuleMoved = false;
 bool mouse_move = false;
 bool isDraggedFarEnough = false;
 bool canPressEnter = false;
-bool sound_effect_enabled = true;
 
 int current_turn = 0;
 int MAX_TURNS = 20;
@@ -79,11 +78,6 @@ bool noBlobulesMoving() {
     return true;
 }
 
-void playSoundEffect() {
-    if (sound_effect_enabled) {
-
-    }
-}
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
 {
