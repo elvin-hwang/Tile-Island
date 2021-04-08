@@ -7,6 +7,8 @@
 #include <iostream>
 #include <egg.hpp>
 #include <helptool.hpp>
+#include <button.hpp>
+#include <settings.hpp>
 
 float ANIMATION_FREQUENCY = 500.f; // Milliseconds between sprite frame updates
 float time_elapsed = 0.f;
@@ -234,6 +236,12 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 	for (ECS::Entity entity : ECS::registry<ShadedMeshRef>.entities)
 	{
 		if (ECS::registry<HelpTool>.has(entity)) {
+			overlay.push_back(entity);
+		}
+		if (ECS::registry<Button>.has(entity)) {
+			overlay.push_back(entity);
+		}
+		if (ECS::registry<Settings>.has(entity)) {
 			overlay.push_back(entity);
 		}
 		if (ECS::registry<Blobule>.has(entity) || ECS::registry<Egg>.has(entity)) {

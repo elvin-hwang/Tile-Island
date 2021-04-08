@@ -23,6 +23,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <regex>
+#include <settings.hpp>
 
 // Game Configuration
 namespace fs = std::filesystem;
@@ -45,6 +46,11 @@ vec2 window_size;
 ECS::Entity help_tool;
 bool help_tool_is_active = false;
 
+//settings
+ECS::Entity settings_tool;
+bool settings_is_active = false;
+bool should_quit_game = false;
+bool should_restart_game = false;
 double mouse_press_x, mouse_press_y;
 
 int playerMove = 0;
@@ -52,6 +58,7 @@ bool blobuleMoved = false;
 bool mouse_move = false;
 bool isDraggedFarEnough = false;
 bool canPressEnter = false;
+bool sound_effect_enabled = true;
 
 int current_turn = 0;
 int MAX_TURNS = 20;
@@ -72,6 +79,11 @@ bool noBlobulesMoving() {
     return true;
 }
 
+void playSoundEffect() {
+    if (sound_effect_enabled) {
+
+    }
+}
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
 {
@@ -172,6 +184,11 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 {
     (void)elapsed_ms; // silence unused warning
     (void)window_size_in_game_units; // silence unused warning
+
+    if (should_restart_game) {
+        restart();
+    }
+
     if (gameState == GameState::Game) {
         std::string active_colour = "";
         if (ECS::registry<Blobule>.has(active_player)) {
@@ -261,11 +278,12 @@ void WorldSystem::restart() {
     // Generate our default grid first.
     int window_width, window_height;
     glfwGetWindowSize(window, &window_width, &window_height);
+    should_restart_game = false;
 
 	if (gameState == GameState::Start) {
 		Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Start);
-		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, "Start");
-		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 }, "Load");
+		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, ButtonEnum::StartGame, "Start");
+		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 },ButtonEnum::LoadGame, "Load");
     }
     else if (gameState == GameState::Level) {
         Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Level);
@@ -282,7 +300,7 @@ void WorldSystem::restart() {
             mapName = std::regex_replace(mapName, std::regex("\\.json"), "");
             mapName = std::regex_replace(mapName, std::regex("map_"), "");
 
-            levelButtons.insert({ filePath, Button::createButton({ window_width / 2, initialYPos + 100 * count}, { 0.75,0.75 }, "Map " + mapName) });
+            levelButtons.insert({ filePath, Button::createButton({ window_width / 2, initialYPos + 100 * count}, { 0.75,0.75 }, ButtonEnum::LoadMaps,"Map " + mapName) });
             count++;
         }
     }
@@ -298,6 +316,7 @@ void WorldSystem::restart() {
         playerMove = 0;
         blobuleMoved = false;
         mouse_move = false;
+        settings_is_active = false;
         current_turn = 0;
         MAX_TURNS = 20;
 
@@ -307,6 +326,7 @@ void WorldSystem::restart() {
 
         while (ECS::registry<ShadedMeshRef>.entities.size() > 0)
             ECS::ContainerInterface::remove_all_components_of(ECS::registry<ShadedMeshRef>.entities.back());
+
 
         // Debugging for memory/component leaks
         ECS::ContainerInterface::list_all_components();
@@ -331,15 +351,57 @@ void WorldSystem::restart() {
         // initializing text
         score_text = Text::create_text("score", { 82, 60 }, font_size);
         player_text = Text::create_text("player", { 82, 30 }, font_size);
-        end_turn_text = Text::create_text("end_turn", { window_size.x / 5 , window_size.y - 50 }, font_size);
-        save_button = Button::createButton({177, 730}, { 0.35, 0.35 }, "Save");
+        end_turn_text = Text::create_text("end_turn", { window_size.x /6.2 , window_size.y - 30 }, font_size);
+        settings_button = Button::createButton({ window_size.x/15, window_size.y - 50 }, { 0.16,0.16 }, ButtonEnum::OpenSettings, "");
     }
 }
 
 // Should the game be over ?
 bool WorldSystem::is_over() const
 {
-	return glfwWindowShouldClose(window) > 0;
+    return (glfwWindowShouldClose(window) > 0 || (should_quit_game == true));
+}
+
+void WorldSystem::enable_settings(bool enable)
+{
+    if (enable) {
+        settings_is_active = true;
+        settings_tool = Settings::createSettings({ window_size.x / 2, window_size.y / 2 }, { 1.5,1.5 });
+    }
+    else {
+        settings_is_active = false;
+        ECS::ContainerInterface::remove_all_components_of(settings_tool);
+    }
+}
+
+void WorldSystem::quit_game()
+{
+    should_quit_game = true;
+}
+
+void WorldSystem::set_game_to_restart()
+{
+    should_restart_game = true;
+}
+
+bool WorldSystem::get_blobule_moved()
+{
+    return blobuleMoved;
+}
+
+int WorldSystem::get_current_turn()
+{
+    return current_turn;
+}
+
+int WorldSystem::get_player_move()
+{
+    return playerMove;
+}
+
+void WorldSystem::set_load_map_location(std::string loc)
+{
+    load_map_location = loc;
 }
 
 // On key callback
@@ -538,16 +600,21 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
             auto start_clicked = PhysicsSystem::is_entity_clicked(start_button, mouse_press_x, mouse_press_y);
             auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
             if (start_clicked) {
+                Mix_PlayChannel(-1, game_start_sound, 0);
                 gameState = GameState::Intro;
+                ECS::ContainerInterface::remove_all_components_of(start_button);
+                ECS::ContainerInterface::remove_all_components_of(load_button);
                 ECS::registry<Text>.clear();
-                restart();
+                should_restart_game = true;
             }
             else if (load_clicked) {
                 Mix_PlayChannel(-1, game_start_sound, 0);
                 gameState = GameState::Game;
-                load_map_location = "data/saved/map.json";
+                ECS::ContainerInterface::remove_all_components_of(start_button);
+                ECS::ContainerInterface::remove_all_components_of(load_button);
+                set_load_map_location("data/saved/map.json");
                 ECS::registry<Text>.clear();
-                restart();
+                should_restart_game = true;
             }
         }
 	}
@@ -558,9 +625,9 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 if (button_clicked) {
                     Mix_PlayChannel(-1, game_start_sound, 0);
                     gameState = GameState::Game;
-                    load_map_location = buttonPair.first;
+                    set_load_map_location(buttonPair.first);
                     ECS::registry<Text>.clear();
-                    restart();
+                    should_restart_game = true;
                     break;
                 }
             }
@@ -593,7 +660,8 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 break;
             }
             ECS::registry<Text>.clear();
-            restart();
+            should_restart_game = true;
+
         }
     }
     else if (current_turn < MAX_TURNS)
@@ -647,19 +715,19 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
         }
 
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-            auto save_clicked = PhysicsSystem::is_entity_clicked(save_button, mouse_press_x, mouse_press_y);
-            if (save_clicked) {
-                //call save function here
-                int currPlayer = playerMove;
-                if (blobuleMoved) {
-                    currPlayer++;
-                    if (currPlayer > 3) {
-                        currPlayer = 0;
-                    }
-                }
-                MapLoader::saveMap(currPlayer, current_turn);
+            auto settings_clicked = PhysicsSystem::is_entity_clicked(settings_button, mouse_press_x, mouse_press_y);
+            if (settings_clicked) {
+                enable_settings(true);
+            }
+        }
+
+        if (settings_is_active && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+            auto settings_clicked = PhysicsSystem::is_entity_clicked(settings_tool, mouse_press_x, mouse_press_y);
+            if (settings_clicked) {
+                Settings::handleSettingClicks(mouse_press_x, mouse_press_y);
             }
         }
     }
 }
+
 

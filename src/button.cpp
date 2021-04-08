@@ -3,25 +3,65 @@
 #include "render.hpp"
 
 #include <text.hpp>
-float buttonFontSize = 0.66;
+float blueButtonFontSize = 0.66;
+float yellowButtonFontSize = 0.45;
 
-ECS::Entity Button::createButton(vec2 position, vec2 scale, std::string buttonstring)
+
+void createButtonText(Button& button, vec2 position, ButtonEnum buttonEnum, std::string buttonText) {
+    switch (buttonEnum) {
+    case ButtonEnum::SaveGame:
+    case ButtonEnum::LoadGame_Settings:
+    case ButtonEnum::QuitGame:
+    case ButtonEnum::OpenSettings:
+    case ButtonEnum::RestartGame:
+        button.text_entity = Text::create_text(buttonText, { position.x - 60, position.y + 5 }, yellowButtonFontSize);
+        break;
+    default:
+        button.text_entity = Text::create_text(buttonText, { position.x - 60, position.y + 10 }, blueButtonFontSize);
+        break;
+    } 
+}
+
+
+ECS::Entity Button::createButton(vec2 position, vec2 scale, ButtonEnum buttonEnum, std::string buttonText)
 {
     // Reserve an entity
     auto entity = ECS::Entity();
-
+ 
     // Create the rendering components
-    std::string key = "button" + buttonstring;
+    std::string key = "button" + std::to_string(buttonEnum);
+    if (buttonEnum == ButtonEnum::LoadMaps) {
+        key += buttonText;
+    }
     ShadedMesh& resource = cache_resource(key);
     if (resource.effect.program.resource == 0)
     {
         resource = ShadedMesh();
-        std::string path = textures_path("blue_button.png");;
+        std::string path;
 
-        if (buttonstring == "Save") {
-            path = textures_path("yellow_button.png");
+        switch (buttonEnum) {
+            case ButtonEnum::SaveGame:
+            case ButtonEnum::LoadGame_Settings:
+            case ButtonEnum::QuitGame:
+            case ButtonEnum:: RestartGame:
+                path = textures_path("yellow_button.png");
+                break;
+            case ButtonEnum:: ExitSettings:
+                path = textures_path("exit.png");
+                break;
+            case ButtonEnum:: OpenSettings:
+                path = textures_path("open_settings.png");
+                break;
+            case ButtonEnum:: SoundOn:
+                path = textures_path("sound_on.png");
+                break;
+            case ButtonEnum:: SoundOff:
+                path = textures_path("sound_off.png");
+                break;
+            default:
+                path = textures_path("blue_button.png");
+                break;
         }
-
         RenderSystem::createSprite(resource, path, "textured");
     }
     // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
@@ -36,15 +76,8 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, std::string buttonst
     motion.friction = 0.f;
     motion.scale = scale * static_cast<vec2>(resource.texture.size);
 
-    if (buttonstring == "Save") {
-        Text::create_text(buttonstring, { position.x - 40, position.y + 5 }, 0.4);
-    }
-    else {
-        Text::create_text(buttonstring, { position.x - 60, position.y + 10 }, buttonFontSize);
-    }
-
     auto& button = ECS::registry<Button>.emplace(entity);
+    createButtonText(button, motion.position, buttonEnum, buttonText);
+
     return entity;
 }
-
-
