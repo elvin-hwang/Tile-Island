@@ -11,7 +11,6 @@
 #include "utils.hpp"
 #include "map_loader.hpp"
 #include "render.hpp"
-#include "camera.hpp"
 
 // stlib
 #include <string.h>
@@ -267,15 +266,10 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
         else
         {
             ECS::registry<Text>.get(end_turn_text).content = "";
-
-            // camera follows active blob
-
-            float step_seconds = 1.0f * (elapsed_ms / 1000.f);
-            auto& motion = ECS::registry<Motion>.get(active_player);
-            vec2 vel = (step_seconds * motion.velocity);
-            Utils::moveCamera(-vel.x, -vel.y);
         }
-
+        auto& motion = ECS::registry<Motion>.get(active_player);
+        vec2 diff = vec2{ window_size_in_game_units.x / 2, window_size_in_game_units.y / 2 } - motion.position;
+        Utils::moveCamera(diff.x, diff.y);
     }
 }
 
@@ -360,12 +354,6 @@ void WorldSystem::restart() {
         player_text = Text::create_text("player", { 82, 30 }, font_size);
         end_turn_text = Text::create_text("end_turn", { window_size.x /6.2 , window_size.y - 30 }, font_size);
         settings_button = Button::createButton({ window_size.x/15, window_size.y - 50 }, { 0.16,0.16 }, ButtonEnum::OpenSettings, "");
-
-        auto& activePlayerCoords = ECS::registry<Motion>.get(active_player);
-        vec2 centerIslandCoords = window_size / 2.f;
-        vec2 diff = centerIslandCoords - activePlayerCoords.position;
-        camera = Camera::createCamera(centerIslandCoords);
-        Utils::moveCamera(diff.x, diff.y);
     }
 }
 
@@ -550,11 +538,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             
 
             ECS::registry<Blobule>.get(active_player).active_player = true;
-
-            auto& cameraCoords = ECS::registry<Motion>.get(camera);
-            auto& activePlayerCoords = ECS::registry<Motion>.get(active_player);
-            vec2 diff = cameraCoords.position - activePlayerCoords.position;
-            Utils::moveCamera(diff.x, diff.y);
 
             if (ECS::registry<Egg>.components.size() < MAX_EGGS)
             {
