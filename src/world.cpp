@@ -24,6 +24,10 @@
 #include <algorithm>
 #include <regex>
 #include <settings.hpp>
+#include <opencv2/videoio.hpp>
+#include "opencv2/opencv.hpp"
+
+using namespace cv;
 
 // Game Configuration
 namespace fs = std::filesystem;
@@ -65,6 +69,15 @@ int next_egg_spawn = 3;
 int MAX_EGGS = 1;
 
 float font_size = 0.58;
+
+
+cv::VideoCapture cap;
+//void play_intro_video()
+//{
+//    cap.open(video_path("narration.mp4"));
+//    m_frame.init();
+//    game_state = game_narration;
+//}
 
 bool noBlobulesMoving() {
     for (ECS::Entity entity : ECS::registry<Blobule>.entities)
@@ -269,6 +282,11 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 
 // Reset the world state to its initial state
 void WorldSystem::restart() {
+//    cap.open("/Users/vincent/Tile-Island/data/video/tutorial.mp4");
+//    if(!cap.isOpened())
+//    {
+//        std::cout<<"not open"<<std::endl;
+//    }
     // Generate our default grid first.
     int window_width, window_height;
     glfwGetWindowSize(window, &window_width, &window_height);
@@ -315,7 +333,7 @@ void WorldSystem::restart() {
         MAX_TURNS = 20;
 
         // Remove all entities that we created (those that have a motion component)
-        while (ECS::registry<Motion>.entities.size() > 0) 
+        while (ECS::registry<Motion>.entities.size() > 0)
             ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
 
         while (ECS::registry<ShadedMeshRef>.entities.size() > 0)
@@ -650,6 +668,41 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 gameState = GameState::Island;
                 break;
             case GameState::Island:
+//                cap.open("/Users/vincent/Tile-Island/data/video/tutorial.mp4");
+//                gameState = GameState::Tutorial;
+//                    if(cap.open("data/video/tutorial.mp4")){
+//                        std::cout<<"opened"<<std::endl;
+//                        gameState = GameState::Tutorial;
+//                    }
+//
+//                            if(!cap.isOpened()){
+//            break;
+//        }
+                    cap.open("/Users/vincent/Tile-Island/data/video/tutorial.mp4");
+         while(1){
+                Mat frame;
+                cap >> frame;
+//            cap.read(frame);
+
+            // convert frame to texture
+//             cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
+//             cv::flip(frame, frame, -1);
+//             cv::flip(frame, frame, 1);
+//             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame.cols, frame.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, frame.data);
+
+                if (frame.empty())
+                break;
+
+                imshow( "Frame", frame );
+                char c=(char)waitKey(25);
+                if(c==27)
+                break;
+            }
+
+            cap.release();
+                    gameState = GameState::Level;
+                break;
+            case GameState::Tutorial:
                 gameState = GameState::Level;
                 break;
             }

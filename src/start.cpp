@@ -1,7 +1,33 @@
 // Header
 #include "start.hpp"
 #include "render.hpp"
+#include <opencv2/videoio.hpp>
+#include "opencv2/opencv.hpp"
 
+
+
+using namespace std;
+using namespace cv;
+
+//cv::VideoCapture cap("~/Tile-Island/data/video/tutorial.mp4");
+//        if(!cap.isOpened()){
+//            break;
+//        }
+//         while(1){
+//                Mat frame;
+//                cap >> frame;
+//
+//                if (frame.empty())
+//                break;
+//
+//                imshow( "Frame", frame );
+//                char c=(char)waitKey(25);
+//                if(c==27)
+//                break;
+//            }
+//
+//            cap.release();
+cv::VideoCapture capture;
 ECS::Entity Menu::createMenu(vec2 position, GameState gameState)
 {
     // Reserve an entity
@@ -43,19 +69,32 @@ ECS::Entity Menu::createMenu(vec2 position, GameState gameState)
     case GameState::Island:
         RenderSystem::createSprite(resource, textures_path("story_7.png"), "textured");
         break;
+    case GameState::Tutorial:
+        std::cout<<"tutorial state"<<std::endl;
+//        cv::VideoCapture capture("/Users/vincent/Tile-Island/data/video/tutorial.mp4");
+//            std::cout<<"open"<<std::endl;
+//            if(!capture.isOpened())
+//            {
+//                std::cout<<"not open"<<std::endl;
+//            }
+        break;
     case GameState::Level:
         RenderSystem::createSprite(resource, textures_path("level_menu.png"), "textured");
         break;
     }
 
-    // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-    ECS::registry<ShadedMeshRef>.emplace(entity, resource);
+    if (gameState != GameState::Tutorial) {
 
-    // Initialize the position, scale and physics components.
-    // The only relevant component is position, as the others will not be used.
-    auto& motion = ECS::registry<Motion>.emplace(entity);
-    motion.position = position;
-    motion.scale = (gameState == GameState::Start ? vec2({ 0.65f, 0.7f }) : vec2(1.f, 1.f)) * static_cast<vec2>(resource.texture.size);
+        // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+        ECS::registry<ShadedMeshRef>.emplace(entity, resource);
+
+        // Initialize the position, scale and physics components.
+        // The only relevant component is position, as the others will not be used.
+        auto &motion = ECS::registry<Motion>.emplace(entity);
+        motion.position = position;
+        motion.scale = (gameState == GameState::Start ? vec2({0.65f, 0.7f}) : vec2(1.f, 1.f)) *
+                       static_cast<vec2>(resource.texture.size);
+    }
 
     return entity;
 }
