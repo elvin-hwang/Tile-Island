@@ -678,7 +678,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 //                            if(!cap.isOpened()){
 //            break;
 //        }
-                    cap.open("/Users/vincent/Tile-Island/data/video/tutorial.mp4");
+                    cap.open("data/video/tutorial.mp4");
          while(1){
                 Mat frame;
                 cap >> frame;
