@@ -315,6 +315,7 @@ void WorldSystem::restart() {
         blobuleMoved = false;
         mouse_move = false;
         settings_is_active = false;
+        help_tool_is_active = false;
         current_turn = 0;
         MAX_TURNS = 20;
 
@@ -350,7 +351,8 @@ void WorldSystem::restart() {
         score_text = Text::create_text("score", { 82, 60 }, font_size);
         player_text = Text::create_text("player", { 82, 30 }, font_size);
         end_turn_text = Text::create_text("end_turn", { window_size.x /6.2 , window_size.y - 30 }, font_size);
-        settings_button = Button::createButton({ window_size.x/15, window_size.y - 50 }, { 0.16,0.16 }, ButtonEnum::OpenSettings, "");
+        settings_button = Button::createButton({ window_size.x/15, window_size.y - 40 }, { 0.16,0.16 }, ButtonEnum::OpenSettings, "");
+        help_button = Button::createButton({ window_size.x/1.07, window_size.y - 46 }, { 0.085,0.085 }, ButtonEnum::OpenHelp, "");
     }
 }
 
@@ -369,6 +371,18 @@ void WorldSystem::enable_settings(bool enable)
     else {
         settings_is_active = false;
         ECS::ContainerInterface::remove_all_components_of(settings_tool);
+    }
+}
+
+void WorldSystem::enable_help(bool enable)
+{
+    if (enable) {
+        help_tool_is_active = true;
+        help_tool = HelpTool::createHelpTool({ window_size.x / 2, window_size.y / 2 });
+    }
+    else {
+        help_tool_is_active = false;
+        ECS::ContainerInterface::remove_all_components_of(help_tool);
     }
 }
 
@@ -410,20 +424,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
     {
         auto& blobule_movement = ECS::registry<Motion>.get(active_player);
         auto blobule_position = blobule_movement.position;
-
-        if (key == GLFW_KEY_H) {
-            if (action == GLFW_PRESS) {
-                if (help_tool_is_active)
-                {
-                    help_tool_is_active = false;
-                    ECS::ContainerInterface::remove_all_components_of(help_tool);
-                }
-                else {
-                    help_tool_is_active = true;
-                    help_tool = HelpTool::createHelpTool({ window_size.x / 2, window_size.y / 2 });
-                }
-            }
-        }
 
         // For when you press a WASD key and the camera starts moving.
         if (action == GLFW_PRESS || action == GLFW_REPEAT)
@@ -713,16 +713,27 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
         }
 
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-            auto settings_clicked = PhysicsSystem::is_entity_clicked(settings_button, mouse_press_x, mouse_press_y);
-            if (settings_clicked) {
-                enable_settings(true);
+            if (!settings_is_active  && !help_tool_is_active) {
+                auto settings_clicked = PhysicsSystem::is_entity_clicked(settings_button, mouse_press_x, mouse_press_y);
+                if (settings_clicked) {
+                    enable_settings(true);
+                }
+                auto help_clicked = PhysicsSystem::is_entity_clicked(help_button, mouse_press_x, mouse_press_y);
+                if (help_clicked) {
+                    enable_help(true);
+                }
             }
-        }
-
-        if (settings_is_active && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-            auto settings_clicked = PhysicsSystem::is_entity_clicked(settings_tool, mouse_press_x, mouse_press_y);
-            if (settings_clicked) {
-                Settings::handleSettingClicks(mouse_press_x, mouse_press_y);
+            else if (settings_is_active) {
+                auto settings_clicked = PhysicsSystem::is_entity_clicked(settings_tool, mouse_press_x, mouse_press_y);
+                if (settings_clicked) {
+                    Settings::handleSettingClicks(mouse_press_x, mouse_press_y);
+                }
+            }
+            else if (help_tool_is_active) {
+                auto help_clicked = PhysicsSystem::is_entity_clicked(help_tool, mouse_press_x, mouse_press_y);
+                if (help_clicked) {
+                    HelpTool::handleHelpToolClicks(mouse_press_x, mouse_press_y);
+                }
             }
         }
     }

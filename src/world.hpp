@@ -45,6 +45,7 @@ public:
 	GLFWwindow* window;
 
 	static void enable_settings(bool enable);
+	static void enable_help(bool enable);
 	static void quit_game();
 	static void set_game_to_restart();
 	static bool get_blobule_moved();
@@ -78,6 +79,7 @@ private:
 	ECS::Entity start_button;
 	ECS::Entity load_button;
 	ECS::Entity settings_button;
+	ECS::Entity help_button;
 
 	// C++ random number generator
 	std::default_random_engine rng;
