@@ -79,3 +79,5 @@ enum class GameState {
 	Game,
 	LevelEditor,
 };
+
+static const float tile_width = 44.46f;

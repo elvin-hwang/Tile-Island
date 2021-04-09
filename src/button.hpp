@@ -17,6 +17,7 @@ enum ButtonEnum {
 	SoundOff,
 	OpenHelp,
 	LevelEditor,
+	StartMenu,
 };
 
 struct Button

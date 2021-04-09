@@ -11,6 +11,7 @@
 #include "utils.hpp"
 #include "map_loader.hpp"
 #include "render.hpp"
+#include "level_editor.hpp"
 
 // stlib
 #include <string.h>
@@ -29,6 +30,7 @@
 namespace fs = std::filesystem;
 std::map<std::string, ECS::Entity> levelButtons;
 std::string load_map_location = "data/level/map_1.json";
+std::string level_editor_map_location = "data/level/default_level_editor.json";
 
 // Tile Configurations
 int numWidth = 0;
@@ -278,10 +280,17 @@ void WorldSystem::restart() {
     should_restart_game = false;
 
 	if (gameState == GameState::Start) {
+        // Remove all entities that we created (those that have a motion component)
+        while (ECS::registry<Motion>.entities.size() > 0)
+            ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
+
+        while (ECS::registry<ShadedMeshRef>.entities.size() > 0)
+            ECS::ContainerInterface::remove_all_components_of(ECS::registry<ShadedMeshRef>.entities.back());
+
 		Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Start);
 		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, ButtonEnum::StartGame, "Start");
 		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 },ButtonEnum::LoadGame, "Load");
-        level_editor_button = Button::createButton({ window_width / 2, window_height / 2 + 200 }, { 0.75,0.75 }, ButtonEnum::LevelEditor, "Level Editor");
+        level_editor_button = Button::createButton({ window_width / 2, window_height / 2 + 200 }, { 0.75,0.75 }, ButtonEnum::LevelEditor, "Editor");
     }
     else if (gameState == GameState::Level) {
         Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Level);
@@ -354,7 +363,48 @@ void WorldSystem::restart() {
         vec2 diff = vec2(window_width / 2, window_height / 2) - motion.position;
         Utils::moveCamera(diff.x, diff.y);
     }
-    else {
+    // Level editor
+    else if (gameState == GameState::LevelEditor)
+    {
+        // Set up map
+        islandGrid = MapLoader::loadMap(level_editor_map_location, { window_width, window_height });
+        numHeight = islandGrid.size();
+        numWidth = islandGrid[0].size();
+
+        // Add blobules to the LevelEditor context
+        for (ECS::Entity blobule : ECS::registry<Blobule>.entities)
+        {
+            LevelEditor::add_blobule(blobule);
+        }
+
+        // Create clickable tiles + egg at bottom of the screen
+        float leftmost_tile = ECS::registry<Motion>.get(islandGrid[0][0]).position.x;
+        float bottom_of_window = window_height - 50.f;
+        editor_water = Tile::createTile({ leftmost_tile, bottom_of_window }, TerrainType::Water);
+        editor_block = Tile::createTile({ leftmost_tile + 50.f, bottom_of_window }, TerrainType::Block);
+        editor_ice = Tile::createTile({ leftmost_tile + 100.f, bottom_of_window }, TerrainType::Ice);
+        editor_mud = Tile::createTile({ leftmost_tile + 150.f, bottom_of_window }, TerrainType::Mud);
+        editor_sand = Tile::createTile({ leftmost_tile + 200.f, bottom_of_window }, TerrainType::Sand);
+        editor_acid = Tile::createTile({ leftmost_tile + 250.f, bottom_of_window }, TerrainType::Acid);
+        editor_speed = Tile::createTile({ leftmost_tile + 300.f, bottom_of_window }, TerrainType::Speed);
+        editor_speed_UP = Tile::createTile({ leftmost_tile + 350.f, bottom_of_window }, TerrainType::Speed_UP);
+        editor_speed_LEFT = Tile::createTile({ leftmost_tile + 400.f, bottom_of_window }, TerrainType::Speed_LEFT);
+        editor_speed_RIGHT = Tile::createTile({ leftmost_tile + 450.f, bottom_of_window }, TerrainType::Speed_RIGHT);
+        editor_speed_DOWN = Tile::createTile({ leftmost_tile + 500.f, bottom_of_window }, TerrainType::Speed_DOWN);
+        editor_teleport = Tile::createTile({ leftmost_tile + 550.f, bottom_of_window }, TerrainType::Teleport);
+        editor_yellow_blob = Blobule::createBlobule({ leftmost_tile + 600.f, bottom_of_window }, blobuleCol::Yellow, "yellow");
+        editor_green_blob = Blobule::createBlobule({ leftmost_tile + 650.f, bottom_of_window }, blobuleCol::Green, "green");
+        editor_red_blob = Blobule::createBlobule({ leftmost_tile + 700.f, bottom_of_window }, blobuleCol::Red, "red");
+        editor_blue_blob = Blobule::createBlobule({ leftmost_tile + 750.f, bottom_of_window }, blobuleCol::Blue, "blue");
+        editor_egg = Egg::createEgg({ leftmost_tile + 800.f , bottom_of_window });
+
+        // Create start and save buttons
+        editor_save_button = Button::createButton({ leftmost_tile, 50.f }, { 0.35, 0.35 }, ButtonEnum::SaveGame, "Save");
+        editor_home_button = Button::createButton({ 500.f, 50.f }, { 0.35, 0.35 }, ButtonEnum::StartMenu, "Main Menu");
+    }
+    // Otherwise we're in a story menu
+    else
+    {
         Menu::createMenu({ window_width / 2, window_height / 2 }, gameState);
     }
 }
@@ -733,7 +783,68 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
     // Handle clicks for level editor
     else if (gameState == GameState::LevelEditor)
     {
-        std::cout << "Level editor click registered" << std::endl;
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        {
+            // Check if the click is within in the map
+            Motion& first_tile_motion = ECS::registry<Motion>.get(islandGrid[0][0]);
+            Motion& last_tile_motion = ECS::registry<Motion>.get(islandGrid[islandGrid.size() - 1][islandGrid[0].size() - 1]);
+            vec2 top_left = { first_tile_motion.position.x - first_tile_motion.scale.x / 2, first_tile_motion.position.y - first_tile_motion.scale.y / 2 };
+            vec2 bottom_right = { last_tile_motion.position.x + last_tile_motion.scale.x / 2, last_tile_motion.position.y + last_tile_motion.scale.y / 2 };
+
+            // Inside map
+            if (mouse_press_x >= top_left.x && mouse_press_x <= bottom_right.x && mouse_press_y >= top_left.y && mouse_press_y <= bottom_right.y)
+            {
+                int mouse_to_grid_x = floor((mouse_press_x - top_left.x) / tile_width);
+                int mouse_to_grid_y = floor((mouse_press_y - top_left.y) / tile_width);
+                LevelEditor::place_entity(islandGrid, selected_editor_entity, { mouse_to_grid_x, mouse_to_grid_y });
+            }
+            // Check if a new editor entity has been selected or if save has been clicked
+            else
+            {
+                if (PhysicsSystem::is_entity_clicked(editor_water, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Water;
+                else if (PhysicsSystem::is_entity_clicked(editor_block, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Block;
+                else if (PhysicsSystem::is_entity_clicked(editor_ice, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Ice;
+                else if (PhysicsSystem::is_entity_clicked(editor_mud, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Mud;
+                else if (PhysicsSystem::is_entity_clicked(editor_sand, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Sand;
+                else if (PhysicsSystem::is_entity_clicked(editor_acid, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Acid;
+                else if (PhysicsSystem::is_entity_clicked(editor_speed, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Speed;
+                else if (PhysicsSystem::is_entity_clicked(editor_speed_UP, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Speed_UP;
+                else if (PhysicsSystem::is_entity_clicked(editor_speed_LEFT, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Speed_LEFT;
+                else if (PhysicsSystem::is_entity_clicked(editor_speed_RIGHT, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Speed_RIGHT;
+                else if (PhysicsSystem::is_entity_clicked(editor_speed_DOWN, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Speed_DOWN;
+                else if (PhysicsSystem::is_entity_clicked(editor_teleport, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Teleport;
+                else if (PhysicsSystem::is_entity_clicked(editor_yellow_blob, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::YellowBlob;
+                else if (PhysicsSystem::is_entity_clicked(editor_green_blob, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::GreenBlob;
+                else if (PhysicsSystem::is_entity_clicked(editor_red_blob, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::RedBlob;
+                else if (PhysicsSystem::is_entity_clicked(editor_blue_blob, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::BlueBlob;
+                else if (PhysicsSystem::is_entity_clicked(editor_egg, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Egg;
+                else if (PhysicsSystem::is_entity_clicked(editor_save_button, mouse_press_x, mouse_press_y))
+                    LevelEditor::save_map(islandGrid);
+                else if (PhysicsSystem::is_entity_clicked(editor_home_button, mouse_press_x, mouse_press_y))
+                {
+                    gameState = GameState::Start;
+                    ECS::registry<Text>.clear();
+                    restart();
+                }
+            }
+        }
     }
     // Handle clicks for progressing through story
     else
