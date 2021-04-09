@@ -694,7 +694,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 break;
 
                 imshow( "Frame", frame );
-                char c=(char)waitKey(25);
+                char c=(char)waitKey(1);
                 if(c==27)
                 break;
             }
