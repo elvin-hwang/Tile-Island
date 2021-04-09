@@ -300,6 +300,13 @@ void WorldSystem::restart() {
 
         for (const auto& entry : fs::directory_iterator("data/level/")) {
             std::string filePath = entry.path().string();
+            std::cout << filePath << std::endl;
+            
+            // We want to ignore the files for the level editor template
+            if (filePath.find("default_level_editor") != std::string::npos) {
+                continue;
+            }
+
             if (filePath.find(".json") == std::string::npos) {
                 continue;
             }
@@ -668,6 +675,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 gameState = GameState::Intro;
                 ECS::ContainerInterface::remove_all_components_of(start_button);
                 ECS::ContainerInterface::remove_all_components_of(load_button);
+                ECS::ContainerInterface::remove_all_components_of(level_editor_button);
                 ECS::registry<Text>.clear();
                 should_restart_game = true;
             }
@@ -676,12 +684,16 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 gameState = GameState::Game;
                 ECS::ContainerInterface::remove_all_components_of(start_button);
                 ECS::ContainerInterface::remove_all_components_of(load_button);
+                ECS::ContainerInterface::remove_all_components_of(level_editor_button);
                 set_load_map_location("data/saved/map.json");
                 ECS::registry<Text>.clear();
                 should_restart_game = true;
             }
             else if (level_editor_clicked) {
                 gameState = GameState::LevelEditor;
+                ECS::ContainerInterface::remove_all_components_of(start_button);
+                ECS::ContainerInterface::remove_all_components_of(load_button);
+                ECS::ContainerInterface::remove_all_components_of(level_editor_button);
                 ECS::registry<Text>.clear();
                 restart();
             }
