@@ -257,16 +257,15 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
             ECS::registry<Text>.get(end_turn_text).content = end_turn_message;
             canPressEnter = true;
         }
-        else if (ECS::registry<Motion>.get(active_player).velocity.x != 0 && ECS::registry<Motion>.get(active_player).velocity.y != 0)
-        {
-            ECS::registry<Text>.get(end_turn_text).content = "";
-            auto& motion = ECS::registry<Motion>.get(active_player);
-            vec2 diff = vec2(window_size_in_game_units.x / 2, window_size_in_game_units.y / 2) - motion.position;
-            Utils::moveCamera(diff.x, diff.y);
-        }
         else
         {
             ECS::registry<Text>.get(end_turn_text).content = "";
+            ECS::registry<Text>.get(end_turn_text).content = "";
+            auto& motion = ECS::registry<Motion>.get(active_player);
+            vec2 diff = vec2(window_size_in_game_units.x / 2, window_size_in_game_units.y / 2) - motion.position;
+            if (motion.velocity.x != 0 && motion.velocity.y != 0) {
+                Utils::moveCamera(diff.x, diff.y);
+            }
         }
     }
 }
@@ -353,6 +352,10 @@ void WorldSystem::restart() {
         end_turn_text = Text::create_text("end_turn", { window_size.x /6.2 , window_size.y - 30 }, font_size);
         settings_button = Button::createButton({ window_size.x/15, window_size.y - 40 }, { 0.16,0.16 }, ButtonEnum::OpenSettings, "");
         help_button = Button::createButton({ window_size.x/1.07, window_size.y - 46 }, { 0.085,0.085 }, ButtonEnum::OpenHelp, "");
+
+        auto& motion = ECS::registry<Motion>.get(active_player);
+        vec2 diff = vec2(window_width / 2, window_height / 2) - motion.position;
+        Utils::moveCamera(diff.x, diff.y);
     }
 }
 
@@ -545,6 +548,12 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             }
             canPressEnter = false;
             blobuleMoved = false;
+
+            auto& motion = ECS::registry<Motion>.get(active_player);
+            int window_width, window_height;
+            glfwGetWindowSize(window, &window_width, &window_height);
+            vec2 diff = vec2(window_width / 2, window_height / 2) - motion.position;
+            Utils::moveCamera(diff.x, diff.y);
         }
 
         // Resetting game
