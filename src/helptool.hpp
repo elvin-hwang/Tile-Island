@@ -7,4 +7,5 @@
 struct HelpTool
 {
     static ECS::Entity createHelpTool(vec2 position);
+    static void handleHelpToolClicks(double mouse_x, double mouse_y);
 };

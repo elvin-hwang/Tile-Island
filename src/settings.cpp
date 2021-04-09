@@ -128,7 +128,7 @@ ECS::Entity Settings::createSettings(vec2 position, vec2 scale)
 	load_button = Button::createButton({ motion.position.x, motion.position.y + 20}, { 0.50, 0.50 }, ButtonEnum::LoadGame_Settings, "Load");
 	restart_button = Button::createButton({ motion.position.x, motion.position.y + 100 }, { 0.50, 0.50 }, ButtonEnum::RestartGame, "Restart");
 	quit_button = Button::createButton({ motion.position.x, motion.position.y + 180 }, { 0.50, 0.50 }, ButtonEnum::QuitGame, "Quit");
-	exit_button = Button::createButton({ motion.position.x + 425, motion.position.y - 275 }, { 0.40,0.40 }, ButtonEnum::ExitSettings, "");
+	exit_button = Button::createButton({ motion.position.x + 425, motion.position.y - 275 }, { 0.40,0.40 }, ButtonEnum::ExitTool, "");
 	background_music_button = Button::createButton({ motion.position.x +275, motion.position.y - 190 }, { 0.77,0.77}, background_music_buttonEnum, "");
 	sound_effects_button = Button::createButton({ motion.position.x + 275, motion.position.y - 140 }, { 0.77, 0.77 }, sound_effect_buttonEnum, "");
 	background_music_text = Text::create_text(background_music_str, {motion.position.x/1.75, motion.position.y - 180 }, 0.5);

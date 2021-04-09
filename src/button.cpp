@@ -46,7 +46,7 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, ButtonEnum buttonEnu
             case ButtonEnum:: RestartGame:
                 path = textures_path("yellow_button.png");
                 break;
-            case ButtonEnum:: ExitSettings:
+            case ButtonEnum:: ExitTool:
                 path = textures_path("exit.png");
                 break;
             case ButtonEnum:: OpenSettings:
@@ -57,6 +57,9 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, ButtonEnum buttonEnu
                 break;
             case ButtonEnum:: SoundOff:
                 path = textures_path("sound_off.png");
+                break;
+            case ButtonEnum::OpenHelp:
+                path = textures_path("open_help.png");
                 break;
             default:
                 path = textures_path("blue_button.png");
