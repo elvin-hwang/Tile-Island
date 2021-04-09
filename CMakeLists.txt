@@ -43,15 +43,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS 0)
 target_include_directories(${PROJECT_NAME} PUBLIC ext/stb_image/)
 target_include_directories(${PROJECT_NAME} PUBLIC ext/gl3w)
 
-# Find OpenGL
-find_package(OpenCV REQUIRED)
-if (OpenCV_FOUND)
-    target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCV_INCLUDE_DIRS})
-    message("in opencv found")
-    message("${OpenCV_INCLUDE_DIRS}")
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenCV_LIBS})
-endif()
-
 find_package(OpenGL REQUIRED)
 
 
@@ -84,8 +75,14 @@ if (IS_OS_LINUX OR IS_OS_MAC)
     
     pkg_search_module(FREETYPE REQUIRED freetype2)
 
+    find_package(OpenCV REQUIRED)
+    if (OpenCV_FOUND)
+        target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCV_INCLUDE_DIRS})
+        message("in opencv found")
+        message("${OpenCV_INCLUDE_DIRS}")
+        target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenCV_LIBS})
+    endif()    # Link Frameworks on OSX
 
-    # Link Frameworks on OSX
     if (IS_OS_MAC)
        find_library(COCOA_LIBRARY Cocoa)
        find_library(CF_LIBRARY CoreFoundation)
@@ -102,6 +99,9 @@ elseif (IS_OS_WINDOWS)
     set(GLFW_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw/include")
     set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/include/SDL")
     set(FREETYPE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ext/freetype/include")
+    set(OPENCV_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ext/opencv/build/include")
+    set(OPENCV_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/opencv/build/x64/vc14/lib/opencv_world452d.lib")
+    set(OPENCV_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/opencv/build/x64/vc14/bin/opencv_world452d.dll")
 
     if (${CMAKE_SIZEOF_VOID_P} MATCHES "8")
         set(GLFW_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw/lib/glfw3dll-x64.lib")
@@ -140,6 +140,10 @@ elseif (IS_OS_WINDOWS)
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${FREETYPE_DLL}"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/freetype.dll")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${OPENCV_DLL}"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/opencv.dll")
     # Make program run in the directory that it lives in (this is not the default VS behaviour for some strange reason)
     set_target_properties(
         ${PROJECT_NAME} PROPERTIES
@@ -173,17 +177,22 @@ elif(NOT FREETYPE_FOUND)
     message(FATAL_ERROR "Can't find FreeType.")
 elif(NOT SDL2_FOUND)
     message(FATAL_ERROR "Can't find SDL." )
+elif(NOT OPENCV_FOUND)
+    message(FATAL_ERROR "Can't find opencv.")
 endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${GLFW_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${SDL2_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${FREETYPE_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${OPENCV_INCLUDE_DIRS})
+
 
 target_link_libraries(${PROJECT_NAME}
     PUBLIC ${GLFW_LIBRARIES}
     ${SDL2_LIBRARIES}
     ${SDL2MIXER_LIBRARIES}
     ${FREETYPE_LIBRARIES}
+    ${OPENCV_LIBRARIES}
     glm::glm
 )
 
