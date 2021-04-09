@@ -16,6 +16,7 @@
 namespace fs = std::filesystem;
 std::vector<ECS::Entity> editor_blobule_list = {};
 std::vector<ECS::Entity> editor_egg_list = {};
+bool has_changes = false;
 
 bool is_tile(LevelEditor::EditorEntity entity) {
 	return (
@@ -32,6 +33,12 @@ bool is_tile(LevelEditor::EditorEntity entity) {
 		entity == LevelEditor::EditorEntity::Speed_DOWN ||
 		entity == LevelEditor::EditorEntity::Teleport
 		);
+}
+
+// Do not let blobules be placed on block tiles or water tiles
+bool bad_blobule_placement(ECS::Entity entity) {
+	Tile tile_component = ECS::registry<Tile>.get(entity);
+	return (tile_component.terrain_type == TerrainType::Block || tile_component.terrain_type == TerrainType::Water);
 }
 
 TerrainType entity_to_terrain_type(LevelEditor::EditorEntity entity) {
@@ -131,6 +138,9 @@ void LevelEditor::add_blobule(ECS::Entity blobule) {
 // Place an entity on the specified grid coordinate
 // Will replace existing tiles/existing blobs
 void LevelEditor::place_entity(std::vector<std::vector<ECS::Entity>>& grid, EditorEntity entity, vec2 grid_coords) {
+	// Mark the map as changed and new
+	has_changes = true;
+
 	// Find the tile we're placing on
 	int x_coord = grid_coords.x;
 	int y_coord = grid_coords.y;
@@ -140,15 +150,42 @@ void LevelEditor::place_entity(std::vector<std::vector<ECS::Entity>>& grid, Edit
 	// If the entity that's being placed is a tile, replace the selected tile
 	if (is_tile(entity))
 	{
+		// Do not place block/water tiles or other blobules on tiles with existing blobules
+		if (entity == EditorEntity::Block || entity == EditorEntity::Water)
+		{
+			for (ECS::Entity blob : editor_blobule_list)
+			{
+				if (ECS::registry<Blobule>.get(blob).currentGrid[0] == x_coord && ECS::registry<Blobule>.get(blob).currentGrid[1] == y_coord)
+				{
+					return;
+				}
+			}
+		}
+
 		ECS::registry<Tile>.remove(selected_tile);
 		ECS::Entity tile = Tile::createTile(selected_tile_motion.position, entity_to_terrain_type(entity));
 		grid[y_coord][x_coord] = tile;
 		auto& tile_component = ECS::registry<Tile>.get(tile);
 		tile_component.gridLocation = { y_coord, x_coord };
 	}
-	// If the entity that is being placed is a blob, remove the blob it's replacing
+	// If the entity that is being placed is a blob, move it appropriately
 	else if (entity == EditorEntity::YellowBlob)
 	{
+		// Check for water/block tiles
+		if (bad_blobule_placement(selected_tile))
+			return;
+
+		// Check that we're not trying to take another blob's spot
+		for (ECS::Entity blob : editor_blobule_list)
+		{
+			if (ECS::registry<Blobule>.get(blob).color != "yellow")
+			{
+				if (ECS::registry<Blobule>.get(blob).currentGrid[0] == x_coord && ECS::registry<Blobule>.get(blob).currentGrid[1] == y_coord)
+					return;
+			}
+		}
+
+		// Find the right blob and move it
 		for (ECS::Entity blob : editor_blobule_list)
 		{
 			if (ECS::registry<Blobule>.get(blob).color == "yellow")
@@ -160,6 +197,21 @@ void LevelEditor::place_entity(std::vector<std::vector<ECS::Entity>>& grid, Edit
 	}
 	else if (entity == EditorEntity::GreenBlob)
 	{
+		// Check for water/block tiles
+		if (bad_blobule_placement(selected_tile))
+			return;
+
+		// Check that we're not trying to take another blob's spot
+		for (ECS::Entity blob : editor_blobule_list)
+		{
+			if (ECS::registry<Blobule>.get(blob).color != "green")
+			{
+				if (ECS::registry<Blobule>.get(blob).currentGrid[0] == x_coord && ECS::registry<Blobule>.get(blob).currentGrid[1] == y_coord)
+					return;
+			}
+		}
+
+		// Find the right blob and move it
 		for (ECS::Entity blob : editor_blobule_list)
 		{
 			if (ECS::registry<Blobule>.get(blob).color == "green")
@@ -171,6 +223,21 @@ void LevelEditor::place_entity(std::vector<std::vector<ECS::Entity>>& grid, Edit
 	}
 	else if (entity == EditorEntity::RedBlob)
 	{
+		// Check for water/block tiles
+		if (bad_blobule_placement(selected_tile))
+			return;
+
+		// Check that we're not trying to take another blob's spot
+		for (ECS::Entity blob : editor_blobule_list)
+		{
+			if (ECS::registry<Blobule>.get(blob).color != "red")
+			{
+				if (ECS::registry<Blobule>.get(blob).currentGrid[0] == x_coord && ECS::registry<Blobule>.get(blob).currentGrid[1] == y_coord)
+					return;
+			}
+		}
+
+		// Find the right blob and move it
 		for (ECS::Entity blob : editor_blobule_list)
 		{
 			if (ECS::registry<Blobule>.get(blob).color == "red")
@@ -182,14 +249,29 @@ void LevelEditor::place_entity(std::vector<std::vector<ECS::Entity>>& grid, Edit
 	}
 	else if (entity == EditorEntity::BlueBlob)
 	{
-		for (ECS::Entity blob : editor_blobule_list)
+	// Check for water/block tiles
+	if (bad_blobule_placement(selected_tile))
+		return;
+
+	// Check that we're not trying to take another blob's spot
+	for (ECS::Entity blob : editor_blobule_list)
+	{
+		if (ECS::registry<Blobule>.get(blob).color != "blue")
 		{
-			if (ECS::registry<Blobule>.get(blob).color == "blue")
-			{
-				ECS::registry<Motion>.get(blob).position = selected_tile_motion.position;
-				ECS::registry<Blobule>.get(blob).currentGrid = { x_coord, y_coord };
-			}
+			if (ECS::registry<Blobule>.get(blob).currentGrid[0] == x_coord && ECS::registry<Blobule>.get(blob).currentGrid[1] == y_coord)
+				return;
 		}
+	}
+
+	// Find the right blob and move it
+	for (ECS::Entity blob : editor_blobule_list)
+	{
+		if (ECS::registry<Blobule>.get(blob).color == "blue")
+		{
+			ECS::registry<Motion>.get(blob).position = selected_tile_motion.position;
+			ECS::registry<Blobule>.get(blob).currentGrid = { x_coord, y_coord };
+		}
+	}
 	}
 	else if (entity == EditorEntity::Egg)
 	{
@@ -201,11 +283,20 @@ void LevelEditor::place_entity(std::vector<std::vector<ECS::Entity>>& grid, Edit
 
 // Save the map that is on the screen to the '\data\level' folder
 void LevelEditor::save_map(std::vector<std::vector<ECS::Entity>> grid) {
-	// Run checks to see if all requirements are fulfilled
+	// Checks how many maps we already have
+	int numMaps = std::distance(fs::directory_iterator("data/level/"), fs::directory_iterator()) / 2 - 1;
+
+	// Don't save a new save if nothing has changed or we've hit map limit
+	if (!has_changes || numMaps >= 6)
+	{
+		return;
+	}
 
 	// Save CSV
-	fs::path grid_path = fs::current_path() / "data" / "level" / "grid_3.csv";
-	fs::path map_info_path = fs::current_path() / "data" / "level" / "map_3.json";
+	std::string grid_name = "grid_" + std::to_string(numMaps + 1) + ".csv";
+	std::string map_info_name = "map_" + std::to_string(numMaps + 1) + ".json";
+	fs::path grid_path = fs::current_path() / "data" / "level" / grid_name;
+	fs::path map_info_path = fs::current_path() / "data" / "level" / map_info_name;
 
 	std::ofstream gridFile(grid_path, std::ios::binary);
 
@@ -267,4 +358,7 @@ void LevelEditor::save_map(std::vector<std::vector<ECS::Entity>> grid) {
 	mapInfo["blueSplat"] = blueSplats;
 
 	mapInfoFile << mapInfo;
+
+	// All changes have been saved
+	has_changes = false;
 }

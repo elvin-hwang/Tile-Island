@@ -7,6 +7,7 @@
 
 enum TerrainType {
     Water,
+    Water_Old,
     Block,
     Ice,
     Mud,

@@ -295,12 +295,11 @@ void WorldSystem::restart() {
     else if (gameState == GameState::Level) {
         Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Level);
         int count = 0;
-        int numMaps = std::distance(fs::directory_iterator("data/level/"), fs::directory_iterator()) / 2;
+        int numMaps = std::distance(fs::directory_iterator("data/level/"), fs::directory_iterator()) / 2 - 1;
         float initialYPos = window_height / 2 - 100 * (numMaps / 2);
 
         for (const auto& entry : fs::directory_iterator("data/level/")) {
             std::string filePath = entry.path().string();
-            std::cout << filePath << std::endl;
             
             // We want to ignore the files for the level editor template
             if (filePath.find("default_level_editor") != std::string::npos) {
@@ -385,29 +384,30 @@ void WorldSystem::restart() {
         }
 
         // Create clickable tiles + egg at bottom of the screen
-        float leftmost_tile = ECS::registry<Motion>.get(islandGrid[0][0]).position.x;
+        Motion& leftmost_tile = ECS::registry<Motion>.get(islandGrid[0][0]);
+        Motion& rightmost_tile = ECS::registry<Motion>.get(islandGrid[0][islandGrid[0].size() - 1]);
         float bottom_of_window = window_height - 50.f;
-        editor_water = Tile::createTile({ leftmost_tile, bottom_of_window }, TerrainType::Water);
-        editor_block = Tile::createTile({ leftmost_tile + 50.f, bottom_of_window }, TerrainType::Block);
-        editor_ice = Tile::createTile({ leftmost_tile + 100.f, bottom_of_window }, TerrainType::Ice);
-        editor_mud = Tile::createTile({ leftmost_tile + 150.f, bottom_of_window }, TerrainType::Mud);
-        editor_sand = Tile::createTile({ leftmost_tile + 200.f, bottom_of_window }, TerrainType::Sand);
-        editor_acid = Tile::createTile({ leftmost_tile + 250.f, bottom_of_window }, TerrainType::Acid);
-        editor_speed = Tile::createTile({ leftmost_tile + 300.f, bottom_of_window }, TerrainType::Speed);
-        editor_speed_UP = Tile::createTile({ leftmost_tile + 350.f, bottom_of_window }, TerrainType::Speed_UP);
-        editor_speed_LEFT = Tile::createTile({ leftmost_tile + 400.f, bottom_of_window }, TerrainType::Speed_LEFT);
-        editor_speed_RIGHT = Tile::createTile({ leftmost_tile + 450.f, bottom_of_window }, TerrainType::Speed_RIGHT);
-        editor_speed_DOWN = Tile::createTile({ leftmost_tile + 500.f, bottom_of_window }, TerrainType::Speed_DOWN);
-        editor_teleport = Tile::createTile({ leftmost_tile + 550.f, bottom_of_window }, TerrainType::Teleport);
-        editor_yellow_blob = Blobule::createBlobule({ leftmost_tile + 600.f, bottom_of_window }, blobuleCol::Yellow, "yellow");
-        editor_green_blob = Blobule::createBlobule({ leftmost_tile + 650.f, bottom_of_window }, blobuleCol::Green, "green");
-        editor_red_blob = Blobule::createBlobule({ leftmost_tile + 700.f, bottom_of_window }, blobuleCol::Red, "red");
-        editor_blue_blob = Blobule::createBlobule({ leftmost_tile + 750.f, bottom_of_window }, blobuleCol::Blue, "blue");
-        editor_egg = Egg::createEgg({ leftmost_tile + 800.f , bottom_of_window });
+        editor_water = Tile::createTile({ leftmost_tile.position.x, bottom_of_window }, TerrainType::Water_Old);
+        editor_block = Tile::createTile({ leftmost_tile.position.x + 50.f, bottom_of_window }, TerrainType::Block);
+        editor_ice = Tile::createTile({ leftmost_tile.position.x + 100.f, bottom_of_window }, TerrainType::Ice);
+        editor_mud = Tile::createTile({ leftmost_tile.position.x + 150.f, bottom_of_window }, TerrainType::Mud);
+        editor_sand = Tile::createTile({ leftmost_tile.position.x + 200.f, bottom_of_window }, TerrainType::Sand);
+        editor_acid = Tile::createTile({ leftmost_tile.position.x + 250.f, bottom_of_window }, TerrainType::Acid);
+        editor_speed = Tile::createTile({ leftmost_tile.position.x + 300.f, bottom_of_window }, TerrainType::Speed);
+        editor_speed_UP = Tile::createTile({ leftmost_tile.position.x + 350.f, bottom_of_window }, TerrainType::Speed_UP);
+        editor_speed_LEFT = Tile::createTile({ leftmost_tile.position.x + 400.f, bottom_of_window }, TerrainType::Speed_LEFT);
+        editor_speed_RIGHT = Tile::createTile({ leftmost_tile.position.x + 450.f, bottom_of_window }, TerrainType::Speed_RIGHT);
+        editor_speed_DOWN = Tile::createTile({ leftmost_tile.position.x + 500.f, bottom_of_window }, TerrainType::Speed_DOWN);
+        editor_teleport = Tile::createTile({ leftmost_tile.position.x + 550.f, bottom_of_window }, TerrainType::Teleport);
+        editor_yellow_blob = Blobule::createBlobule({ leftmost_tile.position.x + 600.f, bottom_of_window }, blobuleCol::Yellow, "yellow");
+        editor_green_blob = Blobule::createBlobule({ leftmost_tile.position.x + 650.f, bottom_of_window }, blobuleCol::Green, "green");
+        editor_red_blob = Blobule::createBlobule({ leftmost_tile.position.x + 700.f, bottom_of_window }, blobuleCol::Red, "red");
+        editor_blue_blob = Blobule::createBlobule({ leftmost_tile.position.x + 750.f, bottom_of_window }, blobuleCol::Blue, "blue");
+        editor_egg = Egg::createEgg({ leftmost_tile.position.x + 800.f , bottom_of_window });
 
         // Create start and save buttons
-        editor_save_button = Button::createButton({ leftmost_tile, 50.f }, { 0.35, 0.35 }, ButtonEnum::SaveGame, "Save");
-        editor_home_button = Button::createButton({ 500.f, 50.f }, { 0.35, 0.35 }, ButtonEnum::StartMenu, "Main Menu");
+        editor_save_button = Button::createButton({ 137.f, 30.f }, { 0.35, 0.35 }, ButtonEnum::SaveGame, "Save");
+        editor_home_button = Button::createButton({ rightmost_tile.position.x, 30.f }, { 0.40,0.40 }, ButtonEnum::ExitTool, "");
     }
     // Otherwise we're in a story menu
     else

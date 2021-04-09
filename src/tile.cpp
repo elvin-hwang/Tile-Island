@@ -29,6 +29,11 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
         tile.terrain_type = TerrainType::Water;
         motion.isCollidable = true;
         break;
+    case Water_Old:
+        key = "tile_water_old";
+        tile.terrain_type = TerrainType::Water_Old;
+        motion.isCollidable = true;
+        break;
     case Block:
         key = "tile_grey";
         tile.terrain_type = TerrainType::Block;
