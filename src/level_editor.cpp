@@ -131,6 +131,11 @@ std::string tile_to_CSV(Tile tile) {
 	return CSV_value;
 }
 
+void LevelEditor::clear_entity_lists() {
+	editor_blobule_list.clear();
+	editor_egg_list.clear();
+}
+
 void LevelEditor::add_blobule(ECS::Entity blobule) {
 	editor_blobule_list.push_back(blobule);
 }

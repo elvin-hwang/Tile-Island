@@ -28,5 +28,6 @@ struct LevelEditor
 
 	static void place_entity(std::vector<std::vector<ECS::Entity>>& grid, EditorEntity entity, vec2 grid_coords);
 	static void save_map(std::vector<std::vector<ECS::Entity>> grid);
+    static void clear_entity_lists();
     static void add_blobule(ECS::Entity blobule);
 };

@@ -47,7 +47,7 @@ public:
 
 	static void enable_settings(bool enable);
 	static void enable_help(bool enable);
-	static void quit_game();
+	static void go_to_main_menu();
 	static void set_game_to_restart();
 	static bool get_blobule_moved();
 	static int get_current_turn();
@@ -80,6 +80,7 @@ private:
 	ECS::Entity start_button;
 	ECS::Entity load_button;
 	ECS::Entity level_editor_button;
+	ECS::Entity quit_button;
 	ECS::Entity settings_button;
 	ECS::Entity help_button;
 	ECS::Entity save_button;
