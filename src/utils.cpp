@@ -6,6 +6,7 @@
 #include "utils.hpp"
 #include "tile.hpp"
 #include "egg.hpp"
+#include <render_components.hpp>
 
 ECS::Entity& Utils::getActivePlayerBlobule()
 {
@@ -36,6 +37,11 @@ void Utils::moveCamera(float xOffset, float yOffset) {
 	for (auto& egg : ECS::registry<Egg>.entities)
 	{
 		ECS::registry<Motion>.get(egg).position += vec2({ xOffset, yOffset });
+	}
+
+	for (auto& debuglines : ECS::registry<DebugComponent>.entities)
+	{
+		ECS::registry<Motion>.get(debuglines).position += vec2({ xOffset, yOffset });
 	}
 }
 

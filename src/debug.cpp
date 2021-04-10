@@ -13,13 +13,13 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 namespace DebugSystem 
 {
-	void createLine(vec2 position, vec2 scale) {
+	void createLine(vec2 position, vec2 scale, float angle) {
 		auto entity = ECS::Entity();
 
 		std::string key = "thick_line";
 		ShadedMesh& resource = cache_resource(key);
 		if (resource.effect.program.resource == 0) {
-			// create a procedural circle
+
 			constexpr float z = -0.1f;
 			vec3 red = { 0.8,0.1,0.1 };
 
@@ -54,7 +54,7 @@ namespace DebugSystem
 
 		// Create motion
 		auto& motion = ECS::registry<Motion>.emplace(entity);
-		motion.angle = 0.f;
+		motion.angle = angle;
 		motion.velocity = { 0, 0 };
 		motion.position = position;
 		motion.scale = scale;
@@ -70,29 +70,70 @@ namespace DebugSystem
         }
 	}
 
-	void createBox(vec2 position, vec2 size)
+	void createBox(vec2 position, vec2 size, float angle)
 	{
 		auto scale_horizontal_line = size;
-		scale_horizontal_line.y *= 0.05f;
+		scale_horizontal_line.y *= 0.08f;
 		auto scale_vertical_line = size;
-		scale_vertical_line.x *= 0.05f;
+		scale_vertical_line.x *= 0.08f;
+		float biggerSize;
 
 		vec2 topPoint = position;
 		topPoint.y -= size.y / 2;
 
+		float x = ((topPoint.x - position.x) * cos(angle) - (topPoint.y - position.y) * sin(angle)) + position.x;
+		float y = ((topPoint.x - position.x) * sin(angle) + (topPoint.y - position.y) * cos(angle)) + position.y;
+		topPoint = { x, y };
+
 		vec2 bottomPoint = position;
 		bottomPoint.y += size.y / 2;
+
+		x = ((bottomPoint.x - position.x) * cos(angle) - (bottomPoint.y - position.y) * sin(angle)) + position.x;
+		y = ((bottomPoint.x - position.x) * sin(angle) + (bottomPoint.y - position.y) * cos(angle)) + position.y;
+		bottomPoint = { x, y };
 
 		vec2 leftPoint = position;
 		leftPoint.x -= size.x / 2;
 
+		x = ((leftPoint.x - position.x) * cos(angle) - (leftPoint.y - position.y) * sin(angle)) + position.x;
+		y = ((leftPoint.x - position.x) * sin(angle) + (leftPoint.y - position.y) * cos(angle)) + position.y;
+		leftPoint = { x, y };
+
 		vec2 rightPoint = position;
 		rightPoint.x += size.x / 2;
 
-		DebugSystem::createLine(topPoint, scale_horizontal_line);
-		DebugSystem::createLine(bottomPoint, scale_horizontal_line);
-		DebugSystem::createLine(leftPoint, scale_vertical_line);
-		DebugSystem::createLine(rightPoint, scale_vertical_line);
+		x = ((rightPoint.x - position.x) * cos(angle) - (rightPoint.y - position.y) * sin(angle)) + position.x;
+		y = ((rightPoint.x - position.x) * sin(angle) + (rightPoint.y - position.y) * cos(angle)) + position.y;
+		rightPoint = { x, y };
+
+		DebugSystem::createLine(topPoint, scale_horizontal_line, angle);
+		DebugSystem::createLine(bottomPoint, scale_horizontal_line, angle);
+		DebugSystem::createLine(leftPoint, scale_vertical_line, angle);
+		DebugSystem::createLine(rightPoint, scale_vertical_line, angle);
+	}
+
+	void createDirectionLine(vec2 position, vec2 velocity, vec2 size)
+	{
+		auto scale_horizontal_line = size;
+		scale_horizontal_line.y *= 0.2f;
+		scale_horizontal_line.x *= 1.2f;
+
+		vec2 topPoint = position;
+		topPoint.y -= size.y / 2;
+		topPoint.x += size.x / 2;
+
+		vec2 bottomPoint = position;
+		bottomPoint.y += size.y / 2;
+		bottomPoint.x += size.x / 2;
+
+		vec2 futurePos = position + velocity;
+
+		float y = futurePos.y - position.y;
+		float x = futurePos.x - position.x;
+
+		float angle = atan2(y, x);
+
+		DebugSystem::createLine(position, scale_horizontal_line, angle);
 	}
 
 	bool in_debug_mode = false;

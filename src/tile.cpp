@@ -3,6 +3,7 @@
 #include "render.hpp"
 #include "blobule.hpp"
 #include <iostream>
+#include "common.hpp"
 
 // Initialize size of tiles.
 float size = 0.13f;
@@ -18,63 +19,83 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     std::string key = ""; // Key is the texture file name without the ".png"
     float friction = 0.f;
 
+    // Create and (empty) Tile component to be able to refer to all tiles
+    auto& tile = ECS::registry<Tile>.emplace(entity);
     auto& motion = ECS::registry<Motion>.emplace(entity);
+
     switch (type) {
     case Water:
         key = "tile_water";
+        tile.terrain_type = TerrainType::Water;
+        motion.isCollidable = true;
+        break;
+    case Water_Old:
+        key = "tile_water_old";
+        tile.terrain_type = TerrainType::Water_Old;
         motion.isCollidable = true;
         break;
     case Block:
         key = "tile_grey";
+        tile.terrain_type = TerrainType::Block;
         motion.isCollidable = true;
         break;
     case Ice:
         key = "tile_blue";
+        tile.terrain_type = TerrainType::Ice;
         friction = 0.01f;
         motion.isCollidable = false;
         break;
     case Mud:
         key = "tile_purple";
+        tile.terrain_type = TerrainType::Mud;
         friction = 0.03f;
         motion.isCollidable = false;
         break;
     case Sand:
         key = "tile_brown";
+        tile.terrain_type = TerrainType::Sand;
         friction = 0.02f;
         motion.isCollidable = false;
         break;
     case Acid:
         key = "tile_green";
+        tile.terrain_type = TerrainType::Acid;
         friction = 0.08f;
         motion.isCollidable = false;
         break;
     case Speed:
         key = "tile_speed";
+        tile.terrain_type = TerrainType::Speed;
         friction = 0.01f;
         motion.isCollidable = false;
         break;
     case Speed_UP:
         key = "tile_speed_up";
+        tile.terrain_type = TerrainType::Speed_UP;
         friction = 0.01f;
         motion.isCollidable = false;
         break;
     case Speed_LEFT:
         key = "tile_speed_left";
+        tile.terrain_type = TerrainType::Speed_LEFT;
         friction = 0.01f;
         motion.isCollidable = false;
         break;
     case Speed_RIGHT:
         key = "tile_speed_right";
+        tile.terrain_type = TerrainType::Speed_RIGHT;
         friction = 0.01f;
         motion.isCollidable = false;
         break;
     case Speed_DOWN:
         key = "tile_speed_down";
+        tile.terrain_type = TerrainType::Speed_DOWN;
         friction = 0.01f;
         motion.isCollidable = false;
         break;
     case Teleport:
         key = "tile_teleport";
+        tile.terrain_type = TerrainType::Teleport;
         friction = 0.01f;
         motion.isCollidable = false;
         ECS::registry<Teleporting>.emplace(entity);
@@ -87,8 +108,46 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     ShadedMesh& resource = cache_resource(key);
     if (resource.effect.program.resource == 0)
     {
-        resource = ShadedMesh();
-        RenderSystem::createSprite(resource, textures_path(key.append(".png")), "textured");
+        if (key == "tile_water")
+        {
+            std::vector<ColoredVertex> vertices;
+            std::vector<uint16_t> indices;
+
+            constexpr float z = -0.1f;
+
+            ColoredVertex v;
+            v.position = { -0.5f, -0.5f, z };
+            v.color = { 0.8, 0.8, 0.8 };
+            vertices.push_back(v);
+
+            v.position = { -0.5f, 0.5f, z };
+            v.color = { 0.8, 0.8, 0.8 };
+            vertices.push_back(v);
+
+            v.position = { 0.5f, 0.5f, z };
+            v.color = { 0.8, 0.8, 0.8 };
+            vertices.push_back(v);
+
+            v.position = { 0.5f, -0.5f, z };
+            v.color = { 0.8, 0.8, 0.8 };
+            vertices.push_back(v);
+
+            indices.push_back(static_cast<uint16_t>(0));
+            indices.push_back(static_cast<uint16_t>(1));
+            indices.push_back(static_cast<uint16_t>(2));
+            indices.push_back(static_cast<uint16_t>(2));
+            indices.push_back(static_cast<uint16_t>(3));
+            indices.push_back(static_cast<uint16_t>(0));
+
+            resource.mesh.vertices = vertices;
+            resource.mesh.vertex_indices = indices;
+            RenderSystem::createColoredMesh(resource, "water_tile");
+        }
+
+        else {
+            resource = ShadedMesh();
+            RenderSystem::createSprite(resource, textures_path(key.append(".png")), "textured");
+        }
 
     }
 
@@ -112,18 +171,16 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
     motion.angle = 0.f;
     motion.velocity = { 0.f, 0.f };
     motion.position = position;
-    motion.scale = vec2({ size, size }) * static_cast<vec2>(resource.texture.size);
+    motion.scale = vec2({ tileSize, tileSize });
     motion.shape = "square";
     
     auto& terrain = ECS::registry<Terrain>.emplace(entity);
     terrain.type = type;
     terrain.friction = friction;
 
-    // Create and (empty) Tile component to be able to refer to all tiles
-    auto& tile = ECS::registry<Tile>.emplace(entity);
     tile.splatEntity = ECS::Entity();
     ECS::registry<Motion>.emplace(tile.splatEntity);
-    
+
     return entity;
 }
 
@@ -269,4 +326,3 @@ void Tile::setRandomSplat(ECS::Entity entity)
         splatMotion.isCollidable = false;
     }
 }
-

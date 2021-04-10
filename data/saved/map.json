@@ -1,1 +1,21 @@
-{"blobulePositions":[[3,7],[17,1],[1,12],[17,12]],"blueSplat":[[17,12]],"currentPlayer":0,"currentRound":0,"eggPositions":[[9,7]],"greenSplat":[[17,1]],"gridInfo":"../../../data/level/grid_1.csv","numHeight":14,"numWidth":19,"redSplat":[[1,12]],"yellowSplat":[[1,1],[1,2],[1,3],[2,3],[2,4],[2,5],[2,6],[3,6],[2,7],[3,7]]}
+{
+  "numWidth": 19,
+  "numHeight": 14,
+  "gridInfo": "data/saved/grid.csv",
+  "blobulePositions": [
+    [ 1, 1 ],
+    [ 17, 1 ],
+    [ 1, 12 ],
+    [ 17, 12 ]
+  ],
+  "eggPositions": [
+    [ 9, 7 ]
+  ],
+  "blobuleScales": [],
+  "currentRound": 0,
+  "currentPlayer": 0,
+  "yellowSplat": [],
+  "greenSplat": [],
+  "redSplat": [],
+  "blueSplat": []
+}

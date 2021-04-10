@@ -56,12 +56,14 @@ int main()
 		float elapsed_ms = static_cast<float>((std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count()) / 1000.f;
 		t = now;
 
-		DebugSystem::clearDebugComponents();
-		ai.step(elapsed_ms, window_size_in_game_units);
-		world.step(elapsed_ms, window_size_in_game_units);
-		physics.step(elapsed_ms, window_size_in_game_units);
-		powerup.handle_powerups();
-		collision.handle_collisions();
+		if (world.gameState != GameState::LevelEditor)
+		{
+			ai.step(elapsed_ms, window_size_in_game_units);
+			world.step(elapsed_ms, window_size_in_game_units);
+			physics.step(elapsed_ms, window_size_in_game_units);
+			powerup.handle_powerups();
+			collision.handle_collisions();
+		}
 		renderer.draw(elapsed_ms, window_size_in_game_units);
 	}
 

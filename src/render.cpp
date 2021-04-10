@@ -7,6 +7,8 @@
 #include <iostream>
 #include <egg.hpp>
 #include <helptool.hpp>
+#include <button.hpp>
+#include <settings.hpp>
 
 float ANIMATION_FREQUENCY = 500.f; // Milliseconds between sprite frame updates
 float time_elapsed = 0.f;
@@ -97,7 +99,11 @@ void RenderSystem::drawTexturedMesh(ECS::Entity entity, const mat3& projection)
 	}
 	else
 	{
-		throw std::runtime_error("This type of entity is not yet supported");
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), reinterpret_cast<void*>(0));
+		GLuint time_uloc = glGetUniformLocation(texmesh.effect.program, "time");
+		double x = glfwGetTime() * 10.0f;
+		glUniform1f(time_uloc, static_cast<float>(x));
 	}
 	gl_has_errors();
 
@@ -223,6 +229,7 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 
 	std::vector<ECS::Entity> overlay;
 	std::vector<ECS::Entity> firstEntities;
+	std::vector<ECS::Entity> debugEntities;
 	std::vector<ECS::Entity> secondEntities;
 	std::vector<ECS::Entity> thirdEntities;
 
@@ -231,11 +238,21 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 		if (ECS::registry<HelpTool>.has(entity)) {
 			overlay.push_back(entity);
 		}
+		if (ECS::registry<Button>.has(entity)) {
+			overlay.push_back(entity);
+		}
+		if (ECS::registry<Settings>.has(entity)) {
+			overlay.push_back(entity);
+		}
 		if (ECS::registry<Blobule>.has(entity) || ECS::registry<Egg>.has(entity)) {
 			firstEntities.push_back(entity);
 		}
 		else if (ECS::registry<BlueSplat>.has(entity) || ECS::registry<RedSplat>.has(entity) || ECS::registry<YellowSplat>.has(entity) || ECS::registry<GreenSplat>.has(entity)) {
 			secondEntities.push_back(entity);
+		}
+		else if (ECS::registry<DebugComponent>.has(entity))
+		{
+			debugEntities.push_back(entity);
 		}
 		else {
 			thirdEntities.push_back(entity);
@@ -253,6 +270,16 @@ void RenderSystem::draw(float elapsed_ms, vec2 window_size_in_game_units)
 
 	// Renders splats and other second level entities
 	for (ECS::Entity entity : secondEntities)
+	{
+		if (!ECS::registry<Motion>.has(entity))
+			continue;
+		// Note, its not very efficient to access elements indirectly via the entity albeit iterating through all Sprites in sequence
+		drawTexturedMesh(entity, projection_2D);
+		gl_has_errors();
+	}
+
+	// Renders debug level entities
+	for (ECS::Entity entity : debugEntities)
 	{
 		if (!ECS::registry<Motion>.has(entity))
 			continue;

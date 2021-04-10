@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 int widthNum;
 int heightNum;
@@ -27,7 +28,6 @@ std::string loadedGridLocation;
 
 const std::string savedGridLocation = "data/saved/grid.csv";
 const std::string savedMapLocation = "data/saved/map.json";
-const float tile_width = 44.46f;
 
 void createTileIsland(std::vector<std::vector<std::string>> csvGrid) {
 	tileIsland.clear();
@@ -36,10 +36,11 @@ void createTileIsland(std::vector<std::vector<std::string>> csvGrid) {
 		std::vector<ECS::Entity> newRow;
 		for (int j = 0; j < row.size(); j++) {
 			ECS::Entity tile;
-			auto value = row[j];
+			std::string value = row[j];
+			value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
 
-			float xPos = tile_width * (j + 1);
-			float yPos = tile_width * (i + 1);
+			float xPos = tileSize * (j + 1);
+			float yPos = tileSize * (i + 1);
 
 			if (value == "Block") {
 				tile = Tile::createTile({ xPos, yPos }, Block);
@@ -105,6 +106,7 @@ void createBlobules(std::vector<std::vector<int>> blobulePositions) {
 			blob = Blobule::createBlobule(motion.position, blobuleCol::Blue, "blue");
 			break;
 		}
+		ECS::registry<Blobule>.get(blob).currentGrid = position;
 		blobuleList.push_back(blob);
 		count++;
 	}
@@ -123,10 +125,10 @@ void createWaterBorder(vec2 windowSize) {
 	vec2 topLeft = ECS::registry<Motion>.get(tileIsland[0][0]).position;
 	vec2 bottomRight = ECS::registry<Motion>.get(tileIsland[heightNum - 1][widthNum - 1]).position;
 
-	float top = topLeft.y - tile_width;
-	float bot = bottomRight.y + tile_width;
-	float left = topLeft.x - tile_width;
-	float right = bottomRight.x + tile_width;
+	float top = topLeft.y - tileSize;
+	float bot = bottomRight.y + tileSize;
+	float left = topLeft.x - tileSize;
+	float right = bottomRight.x + tileSize;
 
 	float rightBound = windowSize.x + waterBorderWidth;
 	float bottomBound = windowSize.y + waterBorderWidth;
@@ -134,37 +136,36 @@ void createWaterBorder(vec2 windowSize) {
 	float topBound = -waterBorderWidth;
 
 	// Top Water Border
-	for (float y = top; y >= topBound; y -= tile_width) {
-		for (float x = rightBound; x >= leftBound; x -= tile_width) {
+	for (float y = top; y >= topBound; y -= tileSize) {
+		for (float x = rightBound; x >= leftBound; x -= tileSize) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
 
 	// Bottom Water Border
-	for (float y = bot; y <= bottomBound; y += tile_width) {
-		for (float x = rightBound; x >= leftBound; x -= tile_width) {
+	for (float y = bot; y <= bottomBound; y += tileSize) {
+		for (float x = rightBound; x >= leftBound; x -= tileSize) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
 
 	// Left Water Border
-	for (float x = left; x >= leftBound; x -= tile_width) {
-		for (float y = topLeft.y; y <= bottomRight.y; y += tile_width) {
+	for (float x = left; x >= leftBound; x -= tileSize) {
+		for (float y = topLeft.y; y < bot; y += tileSize) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
 
 	// Right Water Border
-	for (float x = right; x <= rightBound; x += tile_width) {
-		for (float y = topLeft.y; y <= bottomRight.y; y += tile_width) {
+	for (float x = right; x <= rightBound; x += tileSize) {
+		for (float y = topLeft.y; y < bot; y += tileSize) {
 			Tile::createTile({ x, y }, Water);
 		}
 	}
 }
 
 void centerIsland(vec2 windowSize) {
-	auto& motion = ECS::registry<Motion>.get(tileIsland[heightNum / 2][widthNum / 2]);
-	vec2 offset = vec2{ windowSize.x / 2, windowSize.y / 2 } - motion.position;
+	vec2 offset = vec2{ windowSize.x / 2, windowSize.y / 2 } - ECS::registry<Motion>.get(tileIsland[heightNum / 2][widthNum / 2]).position;
 	Utils::moveCamera(offset.x, offset.y);
 }
 
@@ -190,7 +191,7 @@ void setSplatPositions(nlohmann::json mapInfo) {
 }
 
 void setBlobuleScales(std::vector<std::vector<float>> blobuleScales) {
-	for (int i = 0; i < blobuleList.size(); i++) {
+	for (int i = 0; i < blobuleScales.size(); i++) {
 		auto entity = blobuleList[i];
 		auto scale = blobuleScales[i];
 		auto& motion = ECS::registry<Motion>.get(entity);
@@ -226,18 +227,8 @@ std::vector<std::vector<ECS::Entity>> MapLoader::loadMap(std::string fileLocatio
 	createEggs(mapInfo["eggPositions"]);
 	centerIsland(windowSize);
 	createWaterBorder(windowSize);
-	return tileIsland;
-}
 
-std::vector<std::vector<ECS::Entity>> MapLoader::loadSavedMap(vec2 windowSize) {
-	loadedGridLocation = savedGridLocation;
-	tileIsland = MapLoader::loadMap(savedMapLocation, windowSize);
-
-
-	nlohmann::json mapInfo;
-	std::ifstream map_file(savedMapLocation, std::ifstream::binary);
-	map_file >> mapInfo;
-
+	// Relevant only to saved maps
 	setSplatPositions(mapInfo);
 	setBlobuleScales(mapInfo["blobuleScales"]);
 
@@ -263,6 +254,8 @@ void MapLoader::saveMap(int currentPlayer, int currentTurn) {
 
 	// Save grid info
 	mapInfo["gridInfo"] = savedGridLocation;
+	mapInfo["numWidth"] = widthNum;
+	mapInfo["numHeight"] = heightNum;
 
 	// Save current info
 	mapInfo["currentPlayer"] = currentPlayer;

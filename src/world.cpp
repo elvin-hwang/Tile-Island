@@ -10,6 +10,8 @@
 #include "collisions.hpp"
 #include "utils.hpp"
 #include "map_loader.hpp"
+#include "render.hpp"
+#include "level_editor.hpp"
 
 // stlib
 #include <string.h>
@@ -19,9 +21,21 @@
 #include <egg.hpp>
 #include <text.hpp>
 #include <button.hpp>
+#include <filesystem>
+#include <algorithm>
+#include <regex>
+#include <settings.hpp>
+#include <opencv2/videoio.hpp>
+#include "opencv2/opencv.hpp"
 
+
+using namespace cv;
 
 // Game Configuration
+namespace fs = std::filesystem;
+std::map<std::string, ECS::Entity> levelButtons;
+std::string load_map_location = "data/level/map_1.json";
+std::string level_editor_map_location = "data/level/default_level_editor.json";
 
 // Tile Configurations
 int numWidth = 0;
@@ -32,20 +46,54 @@ std::vector<std::vector<ECS::Entity>> islandGrid;
 float moveSpeed = 200.f;
 float terminalVelocity = 20.f;
 float max_blobule_speed = 250.f;
+float max_blue_speed = 161.f;
 vec2 window_size;
-ECS::Entity help_tool;
 
+// helptool and helptool status
+ECS::Entity help_tool;
+bool help_tool_is_active = false;
+
+//settings
+ECS::Entity settings_tool;
+bool settings_is_active = false;
+bool should_quit_game = false;
+bool should_go_to_main_menu = false;
+bool should_restart_game = false;
 double mouse_press_x, mouse_press_y;
 
 int playerMove = 0;
 bool blobuleMoved = false;
 bool mouse_move = false;
-bool load_game = false;
+bool isDraggedFarEnough = false;
+bool canPressEnter = false;
 
 int current_turn = 0;
 int MAX_TURNS = 20;
 int next_egg_spawn = 3;
 int MAX_EGGS = 1;
+
+float font_size = 0.58;
+
+
+cv::VideoCapture cap;
+//void play_intro_video()
+//{
+//    cap.open(video_path("narration.mp4"));
+//    m_frame.init();
+//    game_state = game_narration;
+//}
+
+bool noBlobulesMoving() {
+    for (ECS::Entity entity : ECS::registry<Blobule>.entities)
+    {
+        Motion& motion = ECS::registry<Motion>.get(entity);
+        if (motion.velocity.x != 0 || motion.velocity.y != 0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer; but it also defines the callbacks to the mouse and keyboard. That is why it is called here.
 WorldSystem::WorldSystem(ivec2 window_size_px)
@@ -147,6 +195,14 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 {
     (void)elapsed_ms; // silence unused warning
     (void)window_size_in_game_units; // silence unused warning
+
+    if (should_restart_game) {
+        if (should_go_to_main_menu) {
+            gameState = GameState::Start;
+        }
+        restart();
+    }
+
     if (gameState == GameState::Game) {
         std::string active_colour = "";
         if (ECS::registry<Blobule>.has(active_player)) {
@@ -162,6 +218,9 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
         // Updating Score UI
         std::stringstream scores;
         std::stringstream current_player;
+
+        // Switch Player Statement
+        std::string end_turn_message = "Press Enter to End Your Turn";
         std::string winner_colour = "Blue";
 
         if (current_turn == MAX_TURNS)
@@ -212,54 +271,108 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
                 motion.velocity = { 0.f, 0.f };
             }
         }
+
+        if (blobuleMoved && noBlobulesMoving())
+        {
+            ECS::registry<Text>.get(end_turn_text).content = end_turn_message;
+            canPressEnter = true;
+        }
+        else
+        {
+            ECS::registry<Text>.get(end_turn_text).content = "";
+            ECS::registry<Text>.get(end_turn_text).content = "";
+            auto& motion = ECS::registry<Motion>.get(active_player);
+            vec2 diff = vec2(window_size_in_game_units.x / 2, window_size_in_game_units.y / 2) - motion.position;
+            if (motion.velocity.x != 0 && motion.velocity.y != 0) {
+                Utils::moveCamera(diff.x, diff.y);
+            }
+        }
     }
 }
 
 // Reset the world state to its initial state
 void WorldSystem::restart() {
+//    cap.open("/Users/vincent/Tile-Island/data/video/tutorial.mp4");
+//    if(!cap.isOpened())
+//    {
+//        std::cout<<"not open"<<std::endl;
+//    }
     // Generate our default grid first.
     int window_width, window_height;
     glfwGetWindowSize(window, &window_width, &window_height);
+    should_restart_game = false;
+
+    // Remove all entities that we created (those that have a motion component)
+    while (ECS::registry<Motion>.entities.size() > 0)
+        ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
+
+    while (ECS::registry<ShadedMeshRef>.entities.size() > 0)
+        ECS::ContainerInterface::remove_all_components_of(ECS::registry<ShadedMeshRef>.entities.back());
+
+    // Remove buttons and text completely
+    ECS::registry<Button>.clear();
+    ECS::registry<Text>.clear();
 
 	if (gameState == GameState::Start) {
+        should_go_to_main_menu = false;
+
 		Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Start);
-		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, buttonType::Start, "start");
-		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 }, buttonType::Load, "load");
-	}
-    else if (gameState != GameState::Game)
-    {
-        Menu::createMenu({ window_width / 2, window_height / 2 }, gameState);
+		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, ButtonEnum::StartGame, "Start");
+		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 },ButtonEnum::LoadGame, "Load");
+        level_editor_button = Button::createButton({ window_width / 2, window_height / 2 + 200 }, { 0.75,0.75 }, ButtonEnum::LevelEditor, "Editor");
+        quit_button = Button::createButton({ window_width / 2, window_height / 2 + 300 }, { 0.75,0.75 }, ButtonEnum::QuitGame, "Quit");
     }
-    else
+    else if (gameState == GameState::Level) {
+        levelButtons.clear();
+
+        Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Level);
+        int numMaps = std::distance(fs::directory_iterator("data/level/"), fs::directory_iterator()) / 2 - 1;
+        float initialYPos = window_height / 2 - 100 * (numMaps / 2);
+
+        for (const auto& entry : fs::directory_iterator("data/level/")) {
+            std::string filePath = entry.path().string();
+            
+            // We want to ignore the files for the level editor template
+            if (filePath.find("default_level_editor") != std::string::npos) {
+                continue;
+            }
+
+            if (filePath.find(".json") == std::string::npos) {
+                continue;
+            }
+            std::string mapName = std::regex_replace(filePath, std::regex("data/level/"), "");
+            mapName = std::regex_replace(mapName, std::regex("\\.json"), "");
+            mapName = std::regex_replace(mapName, std::regex("map_"), "");
+
+            levelButtons.insert({ filePath, Button::createButton({ window_width / 2, initialYPos + 100 * (std::stoi(mapName) - 1)}, { 0.75,0.75 }, ButtonEnum::LoadMaps,"Map " + mapName) });
+        }
+    }
+    else if (gameState == GameState::Game)
     {
-        // Debugging for memory/component leaks
-        //ECS::ContainerInterface::list_all_components();
-
         std::cout << "Restarting\n";
-
 
         // Reset other stuff
         playerMove = 0;
         blobuleMoved = false;
         mouse_move = false;
+        settings_is_active = false;
+        help_tool_is_active = false;
         current_turn = 0;
         MAX_TURNS = 20;
 
-        // Reset the game speed
-        current_speed = 1.f;
-
         // Remove all entities that we created (those that have a motion component)
-        while (ECS::registry<Motion>.entities.size() > 0) 
+        while (ECS::registry<Motion>.entities.size() > 0)
             ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
 
         while (ECS::registry<ShadedMeshRef>.entities.size() > 0)
             ECS::ContainerInterface::remove_all_components_of(ECS::registry<ShadedMeshRef>.entities.back());
 
+
         // Debugging for memory/component leaks
         ECS::ContainerInterface::list_all_components();
 
         // Can replace loadMap with loadSavedMap
-        islandGrid = load_game ? MapLoader::loadSavedMap({ window_width, window_height }) : MapLoader::loadMap("data/level/map_1.json", { window_width, window_height });
+        islandGrid = MapLoader::loadMap(load_map_location, { window_width, window_height });
         numHeight = islandGrid.size();
         numWidth = islandGrid[0].size();
 
@@ -270,22 +383,128 @@ void WorldSystem::restart() {
         active_player = MapLoader::getBlobule(playerMove);
         ECS::registry<Blobule>.get(active_player).active_player = true;
 
-        //Create Text
-        if (ECS::registry<Text>.components.size() > 0){
+        // Clearing Text from previous game
+        if (ECS::registry<Text>.components.size() > 0) {
             ECS::registry<Text>.clear();
         }
 
-        score_text = Text::create_text("score", { 82, 60 }, 0.58);
-        player_text = Text::create_text("player", { 82, 30 }, 0.58);
-        save_button = Button::createButton({177, 730}, { 0.35,0.35 }, buttonType::Save, "save");
+        // initializing text
+        score_text = Text::create_text("score", { 82, 60 }, font_size);
+        player_text = Text::create_text("player", { 82, 30 }, font_size);
+        end_turn_text = Text::create_text("end_turn", { window_size.x /6.2 , window_size.y - 30 }, font_size);
+        settings_button = Button::createButton({ window_size.x/15, window_size.y - 40 }, { 0.16,0.16 }, ButtonEnum::OpenSettings, "");
+        help_button = Button::createButton({ window_size.x/1.07, window_size.y - 46 }, { 0.085,0.085 }, ButtonEnum::OpenHelp, "");
 
+        auto& motion = ECS::registry<Motion>.get(active_player);
+        vec2 diff = vec2(window_width / 2, window_height / 2) - motion.position;
+        Utils::moveCamera(diff.x, diff.y);
+    }
+    // Level editor
+    else if (gameState == GameState::LevelEditor)
+    {
+        // Set up map
+        islandGrid = MapLoader::loadMap(level_editor_map_location, { window_width, window_height });
+        numHeight = islandGrid.size();
+        numWidth = islandGrid[0].size();
+
+        // Add blobules to the LevelEditor context
+        LevelEditor::clear_entity_lists();
+        for (ECS::Entity blobule : ECS::registry<Blobule>.entities)
+        {
+            LevelEditor::add_blobule(blobule);
+        }
+
+        // Create clickable tiles + egg at bottom of the screen
+        Motion& leftmost_tile = ECS::registry<Motion>.get(islandGrid[0][0]);
+        Motion& rightmost_tile = ECS::registry<Motion>.get(islandGrid[0][islandGrid[0].size() - 1]);
+        float bottom_of_window = window_height - 50.f;
+        editor_water = Tile::createTile({ leftmost_tile.position.x, bottom_of_window }, TerrainType::Water_Old);
+        editor_block = Tile::createTile({ leftmost_tile.position.x + 50.f, bottom_of_window }, TerrainType::Block);
+        editor_ice = Tile::createTile({ leftmost_tile.position.x + 100.f, bottom_of_window }, TerrainType::Ice);
+        editor_mud = Tile::createTile({ leftmost_tile.position.x + 150.f, bottom_of_window }, TerrainType::Mud);
+        editor_sand = Tile::createTile({ leftmost_tile.position.x + 200.f, bottom_of_window }, TerrainType::Sand);
+        editor_acid = Tile::createTile({ leftmost_tile.position.x + 250.f, bottom_of_window }, TerrainType::Acid);
+        editor_speed = Tile::createTile({ leftmost_tile.position.x + 300.f, bottom_of_window }, TerrainType::Speed);
+        editor_speed_UP = Tile::createTile({ leftmost_tile.position.x + 350.f, bottom_of_window }, TerrainType::Speed_UP);
+        editor_speed_LEFT = Tile::createTile({ leftmost_tile.position.x + 400.f, bottom_of_window }, TerrainType::Speed_LEFT);
+        editor_speed_RIGHT = Tile::createTile({ leftmost_tile.position.x + 450.f, bottom_of_window }, TerrainType::Speed_RIGHT);
+        editor_speed_DOWN = Tile::createTile({ leftmost_tile.position.x + 500.f, bottom_of_window }, TerrainType::Speed_DOWN);
+        editor_teleport = Tile::createTile({ leftmost_tile.position.x + 550.f, bottom_of_window }, TerrainType::Teleport);
+        editor_yellow_blob = Blobule::createBlobule({ leftmost_tile.position.x + 600.f, bottom_of_window }, blobuleCol::Yellow, "yellow");
+        editor_green_blob = Blobule::createBlobule({ leftmost_tile.position.x + 650.f, bottom_of_window }, blobuleCol::Green, "green");
+        editor_red_blob = Blobule::createBlobule({ leftmost_tile.position.x + 700.f, bottom_of_window }, blobuleCol::Red, "red");
+        editor_blue_blob = Blobule::createBlobule({ leftmost_tile.position.x + 750.f, bottom_of_window }, blobuleCol::Blue, "blue");
+        editor_egg = Egg::createEgg({ leftmost_tile.position.x + 800.f , bottom_of_window });
+
+        // Create start and save buttons
+        editor_save_button = Button::createButton({ 137.f, 30.f }, { 0.35, 0.35 }, ButtonEnum::SaveGame, "Save");
+        editor_home_button = Button::createButton({ rightmost_tile.position.x, 30.f }, { 0.40,0.40 }, ButtonEnum::ExitTool, "");
+    }
+    // Otherwise we're in a story menu
+    else
+    {
+        Menu::createMenu({ window_width / 2, window_height / 2 }, gameState);
     }
 }
 
 // Should the game be over ?
 bool WorldSystem::is_over() const
 {
-	return glfwWindowShouldClose(window) > 0;
+    return (glfwWindowShouldClose(window) > 0 || (should_quit_game == true));
+}
+
+void WorldSystem::enable_settings(bool enable)
+{
+    if (enable) {
+        settings_is_active = true;
+        settings_tool = Settings::createSettings({ window_size.x / 2, window_size.y / 2 }, { 1.5,1.5 });
+    }
+    else {
+        settings_is_active = false;
+        ECS::ContainerInterface::remove_all_components_of(settings_tool);
+    }
+}
+
+void WorldSystem::enable_help(bool enable)
+{
+    if (enable) {
+        help_tool_is_active = true;
+        help_tool = HelpTool::createHelpTool({ window_size.x / 2, window_size.y / 2 });
+    }
+    else {
+        help_tool_is_active = false;
+        ECS::ContainerInterface::remove_all_components_of(help_tool);
+    }
+}
+
+void WorldSystem::go_to_main_menu()
+{
+    should_go_to_main_menu = true;
+}
+
+void WorldSystem::set_game_to_restart()
+{
+    should_restart_game = true;
+}
+
+bool WorldSystem::get_blobule_moved()
+{
+    return blobuleMoved;
+}
+
+int WorldSystem::get_current_turn()
+{
+    return current_turn;
+}
+
+int WorldSystem::get_player_move()
+{
+    return playerMove;
+}
+
+void WorldSystem::set_load_map_location(std::string loc)
+{
+    load_map_location = loc;
 }
 
 // On key callback
@@ -294,49 +513,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 {
     if (gameState == GameState::Game)
     {
-        ECS::registry<Blobule>.get(active_player).active_player = false;
-        active_player = MapLoader::getBlobule(playerMove);
-
-        ECS::registry<Blobule>.get(active_player).active_player = true;
         auto& blobule_movement = ECS::registry<Motion>.get(active_player);
         auto blobule_position = blobule_movement.position;
-
-        // For when you press an arrow key and the salmon starts moving.
-        if (action == GLFW_PRESS || action == GLFW_REPEAT)
-        {
-            if (key == GLFW_KEY_UP)
-            {
-                // Note: Subtraction causes upwards movement.
-                blobule_movement.velocity.y = -moveSpeed;
-            }
-            if (key == GLFW_KEY_DOWN)
-            {
-                // Note: Addition causes downwards movement.
-                blobule_movement.velocity.y = moveSpeed;
-            }
-            if (key == GLFW_KEY_LEFT)
-            {
-                blobule_movement.velocity.x = -moveSpeed;
-
-            }
-            if (key == GLFW_KEY_RIGHT)
-            {
-                blobule_movement.velocity.x = moveSpeed;
-
-            }
-
-
-        }
-
-        if (key == GLFW_KEY_H) {
-            if (action == GLFW_PRESS) {
-                help_tool = HelpTool :: createHelpTool({ window_size.x / 2, window_size.y / 2 });
-            }
-            if (action == GLFW_RELEASE) {
-                ECS::ContainerInterface::remove_all_components_of(help_tool);
-            }
-        }
-
 
         // For when you press a WASD key and the camera starts moving.
         if (action == GLFW_PRESS || action == GLFW_REPEAT)
@@ -347,16 +525,16 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             float yOffset = 0;
             switch (key) {
                 case GLFW_KEY_W:
-                    yOffset = 10.f;
+                    yOffset = tileSize / 2;
                     break;
                 case GLFW_KEY_S:
-                    yOffset = -10.f;
+                    yOffset = -tileSize / 2;
                     break;
                 case GLFW_KEY_A:
-                    xOffset = 10.f;
+                    xOffset = tileSize / 2;
                     break;
                 case GLFW_KEY_D:
-                    xOffset = -10.f;
+                    xOffset = -tileSize / 2;
                     break;
                 default:
                     break;
@@ -365,8 +543,42 @@ void WorldSystem::on_key(int key, int, int action, int mod)
         }
 
         // Turn based system
-        if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS)
+        if (action == GLFW_PRESS && key == GLFW_KEY_ENTER && current_turn < MAX_TURNS && canPressEnter)
         {
+            // Replace current highlighted blobule with unhighlighted blobule.
+            std::string active_colour = ECS::registry<Blobule>.get(active_player).color;
+            blobuleCol col = ECS::registry<Blobule>.get(active_player).colEnum;
+            ECS::registry<ShadedMeshRef>.remove(active_player);
+
+            std::string key = "blobule_after_highlight_" + active_colour;
+            ShadedMesh& resource = cache_resource(key);
+            if (resource.effect.program.resource == 0)
+            {
+                resource = ShadedMesh();
+                resource.num_rows = 2.f;
+                resource.num_columns = 3.f;
+                std::string path;
+                switch (col) {
+                case blobuleCol::Blue:
+                    path = textures_path("blue.png");
+                    break;
+                case blobuleCol::Red:
+                    path = textures_path("red.png");
+                    break;
+                case blobuleCol::Yellow:
+                    path = textures_path("yellow.png");
+                    break;
+                case blobuleCol::Green:
+                    path = textures_path("green.png");
+                    break;
+                default:
+                    path = textures_path("blue.png");
+                }
+                RenderSystem::createSprite(resource, path, "textured");
+            }
+            ECS::registry<ShadedMeshRef>.emplace(active_player, resource);
+
+            // Update active player.
             if (playerMove != 3) {
                 playerMove++;
                 current_turn++;
@@ -376,80 +588,298 @@ void WorldSystem::on_key(int key, int, int action, int mod)
                 current_turn++;
             }
 
+            // Replace next unhighlighted blobule with highlighted blobule.
+            active_player = MapLoader::getBlobule(playerMove);
+            std::string active_colour2 = ECS::registry<Blobule>.get(active_player).color;
+            blobuleCol col2 = ECS::registry<Blobule>.get(active_player).colEnum;
+            ECS::registry<ShadedMeshRef>.remove(active_player);
+
+            std::string key2 = "blobule_before_highlight_" + active_colour2;
+            ShadedMesh& resource2 = cache_resource(key2);
+            if (resource2.effect.program.resource == 0)
+            {
+                resource2 = ShadedMesh();
+                resource2.num_rows = 2.f;
+                resource2.num_columns = 3.f;
+                std::string path;
+                switch (col2) {
+                case blobuleCol::Blue:
+                    path = textures_path("blue_highlight.png");
+                    break;
+                case blobuleCol::Red:
+                    path = textures_path("red_highlight.png");
+                    break;
+                case blobuleCol::Yellow:
+                    path = textures_path("yellow_highlight.png");
+                    break;
+                case blobuleCol::Green:
+                    path = textures_path("green_highlight.png");
+                    break;
+                default:
+                    path = textures_path("blue_highlight.png");
+                }
+                RenderSystem::createSprite(resource2, path, "textured");
+            }
+            ECS::registry<ShadedMeshRef>.emplace(active_player, resource2);
+
+            ECS::registry<Blobule>.get(active_player).active_player = false;
+            active_player = MapLoader::getBlobule(playerMove);
+
+
+            ECS::registry<Blobule>.get(active_player).active_player = true;
+
             if (ECS::registry<Egg>.components.size() < MAX_EGGS)
             {
                 next_egg_spawn--;
                 if (next_egg_spawn < 0)
                     next_egg_spawn = 0;
-                std::cout << next_egg_spawn << std::endl;
             }
-
+            canPressEnter = false;
             blobuleMoved = false;
+
+            auto& motion = ECS::registry<Motion>.get(active_player);
+            int window_width, window_height;
+            glfwGetWindowSize(window, &window_width, &window_height);
+            vec2 diff = vec2(window_width / 2, window_height / 2) - motion.position;
+            Utils::moveCamera(diff.x, diff.y);
         }
 
-        // Resetting game
-        if (action == GLFW_RELEASE && key == GLFW_KEY_R)
-        {
-            int w, h;
-            glfwGetWindowSize(window, &w, &h);
-            Mix_PlayChannel(-1, game_start_sound, 0);
-            load_game = false;
-            restart();
-        }
 
         // Debugging
-        if (key == GLFW_KEY_Q)
-            DebugSystem::in_debug_mode = (action != GLFW_RELEASE);
-
-        // Control the current speed with `<` `>`
-        if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA)
+        if (key == GLFW_KEY_Q && action == GLFW_PRESS)
         {
-            current_speed -= 0.1f;
-            std::cout << "Current speed = " << current_speed << std::endl;
+            if (!DebugSystem::in_debug_mode)
+            {
+                DebugSystem::in_debug_mode = true;
+            }
+            else
+            {
+                DebugSystem::in_debug_mode = false;
+                DebugSystem::clearDebugComponents();
+            }
         }
-        if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD)
-        {
-            current_speed += 0.1f;
-            std::cout << "Current speed = " << current_speed << std::endl;
-        }
-        current_speed = std::max(0.f, current_speed);
     }
 }
 
 // On mouse move callback
 void WorldSystem::on_mouse_move(vec2 mouse_pos)
 {
+    // Do not continue if not in Game state
+    if (gameState != GameState::Game)
+        return;
+
 	if (ECS::registry<Blobule>.has(active_player) && mouse_move)
 	{
 		auto& blobMotion = ECS::registry<Motion>.get(active_player);
 		blobMotion.angle = atan2(mouse_pos.y - mouse_press_y, mouse_pos.x - mouse_press_x) - PI;
-		blobMotion.dragDistance = (((mouse_pos.y - mouse_press_y) * (mouse_pos.y - mouse_press_y)) + ((mouse_pos.x - mouse_press_x) * (mouse_pos.x - mouse_press_x))) * 0.01;
-		Blobule::setTrajectory(active_player);
+		float dragDistance = (((mouse_pos.y - mouse_press_y) * (mouse_pos.y - mouse_press_y)) + ((mouse_pos.x - mouse_press_x) * (mouse_pos.x - mouse_press_x))) * 0.01;
+        if (dragDistance > 30.f)
+        {
+            blobMotion.dragDistance = (((mouse_pos.y - mouse_press_y) * (mouse_pos.y - mouse_press_y)) + ((mouse_pos.x - mouse_press_x) * (mouse_pos.x - mouse_press_x))) * 0.01;
+            Blobule::setTrajectory(active_player);
+            isDraggedFarEnough = true;
+        }
 	}
-	(void)mouse_pos;
 }
 
 // On mouse button callback
 void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
 {
 	glfwGetCursorPos(wnd, &mouse_press_x, &mouse_press_y);
-	if (gameState == GameState::Start) {
+    // Handle clicks for start menu
+	if (gameState == GameState::Start)
+    {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
             auto start_clicked = PhysicsSystem::is_entity_clicked(start_button, mouse_press_x, mouse_press_y);
             auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
+            auto level_editor_clicked = PhysicsSystem::is_entity_clicked(level_editor_button, mouse_press_x, mouse_press_y);
+            auto quit_clicked = PhysicsSystem::is_entity_clicked(quit_button, mouse_press_x, mouse_press_y);
             if (start_clicked) {
+                Mix_PlayChannel(-1, game_start_sound, 0);
                 gameState = GameState::Intro;
-                restart();
+                ECS::registry<Button>.clear();
+                ECS::registry<Text>.clear();
+                should_restart_game = true;
             }
             else if (load_clicked) {
                 Mix_PlayChannel(-1, game_start_sound, 0);
                 gameState = GameState::Game;
-                load_game = load_clicked;
+                set_load_map_location("data/saved/map.json");
+                ECS::registry<Button>.clear();
+                ECS::registry<Text>.clear();
+                should_restart_game = true;
+            }
+            else if (level_editor_clicked) {
+                gameState = GameState::LevelEditor;
+                ECS::registry<Button>.clear();
+                ECS::registry<Text>.clear();
                 restart();
+            }
+            else if (quit_clicked) {
+                should_quit_game = true;
             }
         }
 	}
-    else if (gameState != GameState::Game)
+    // Handle clicks for level selection
+    else if (gameState == GameState::Level)
+    {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+            for (const auto& buttonPair : levelButtons) {
+                auto button_clicked = PhysicsSystem::is_entity_clicked(buttonPair.second, mouse_press_x, mouse_press_y);
+                if (button_clicked) {
+                    Mix_PlayChannel(-1, game_start_sound, 0);
+                    gameState = GameState::Game;
+                    set_load_map_location(buttonPair.first);
+                    ECS::registry<Text>.clear();
+                    should_restart_game = true;
+                    break;
+                }
+            }
+        }
+    }
+    // Handle clicks for core game
+    else if (gameState == GameState::Game && current_turn < MAX_TURNS)
+    {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !blobuleMoved)
+        {
+            mouse_move = PhysicsSystem::is_entity_clicked(active_player, mouse_press_x, mouse_press_y);
+            if (mouse_move){
+                Mix_PlayChannel(-1, slingshot_pull_sound, 0);
+            }
+        }
+
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE && !blobuleMoved)
+        {
+            // check if left mouse click was on the asset
+            if (mouse_move && isDraggedFarEnough)
+            {
+                Mix_PlayChannel(-1, slingshot_shot_sound, 0);
+                Mix_PlayChannel(-1, blobule_yipee_sound, 0);
+
+                mouse_move = false;
+                isDraggedFarEnough = false;
+
+                auto& blobMotion = ECS::registry<Motion>.get(active_player);
+                float blobAngle = blobMotion.angle;
+                float blobPower = blobMotion.dragDistance;
+
+                blobMotion.velocity = { cos(blobAngle) * blobPower, sin(blobAngle) * blobPower };
+
+                float velocityMagnitude = Utils::getVelocityMagnitude(blobMotion);
+
+                std::string active_colour = ECS::registry<Blobule>.get(active_player).color;
+                if (active_colour == "blue"){
+                    if (velocityMagnitude > max_blue_speed) {
+                        blobMotion.velocity = { cos(blobAngle) * max_blue_speed, sin(blobAngle) * max_blue_speed };
+                    }
+                }
+                else{
+                    if (velocityMagnitude > max_blobule_speed) {
+                        blobMotion.velocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
+                    }
+                }
+
+                Blobule::removeTrajectory(active_player);
+                blobuleMoved = true;
+            }
+            else
+            {
+                mouse_move = false;
+            }
+        }
+
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+            if (!settings_is_active  && !help_tool_is_active) {
+                auto settings_clicked = PhysicsSystem::is_entity_clicked(settings_button, mouse_press_x, mouse_press_y);
+                if (settings_clicked) {
+                    enable_settings(true);
+                }
+                auto help_clicked = PhysicsSystem::is_entity_clicked(help_button, mouse_press_x, mouse_press_y);
+                if (help_clicked) {
+                    enable_help(true);
+                }
+            }
+            else if (settings_is_active) {
+                auto settings_clicked = PhysicsSystem::is_entity_clicked(settings_tool, mouse_press_x, mouse_press_y);
+                if (settings_clicked) {
+                    Settings::handleSettingClicks(mouse_press_x, mouse_press_y);
+                }
+            }
+            else if (help_tool_is_active) {
+                auto help_clicked = PhysicsSystem::is_entity_clicked(help_tool, mouse_press_x, mouse_press_y);
+                if (help_clicked) {
+                    HelpTool::handleHelpToolClicks(mouse_press_x, mouse_press_y);
+                }
+            }
+        }
+    }
+    // Handle clicks for level editor
+    else if (gameState == GameState::LevelEditor)
+    {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        {
+            // Check if the click is within in the map
+            Motion& first_tile_motion = ECS::registry<Motion>.get(islandGrid[0][0]);
+            Motion& last_tile_motion = ECS::registry<Motion>.get(islandGrid[islandGrid.size() - 1][islandGrid[0].size() - 1]);
+            vec2 top_left = { first_tile_motion.position.x - first_tile_motion.scale.x / 2, first_tile_motion.position.y - first_tile_motion.scale.y / 2 };
+            vec2 bottom_right = { last_tile_motion.position.x + last_tile_motion.scale.x / 2, last_tile_motion.position.y + last_tile_motion.scale.y / 2 };
+
+            // Inside map
+            if (mouse_press_x >= top_left.x && mouse_press_x <= bottom_right.x && mouse_press_y >= top_left.y && mouse_press_y <= bottom_right.y)
+            {
+                int mouse_to_grid_x = floor((mouse_press_x - top_left.x) / tile_width);
+                int mouse_to_grid_y = floor((mouse_press_y - top_left.y) / tile_width);
+                LevelEditor::place_entity(islandGrid, selected_editor_entity, { mouse_to_grid_x, mouse_to_grid_y });
+            }
+            // Check if a new editor entity has been selected or if save has been clicked
+            else
+            {
+                if (PhysicsSystem::is_entity_clicked(editor_water, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Water;
+                else if (PhysicsSystem::is_entity_clicked(editor_block, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Block;
+                else if (PhysicsSystem::is_entity_clicked(editor_ice, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Ice;
+                else if (PhysicsSystem::is_entity_clicked(editor_mud, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Mud;
+                else if (PhysicsSystem::is_entity_clicked(editor_sand, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Sand;
+                else if (PhysicsSystem::is_entity_clicked(editor_acid, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Acid;
+                else if (PhysicsSystem::is_entity_clicked(editor_speed, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Speed;
+                else if (PhysicsSystem::is_entity_clicked(editor_speed_UP, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Speed_UP;
+                else if (PhysicsSystem::is_entity_clicked(editor_speed_LEFT, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Speed_LEFT;
+                else if (PhysicsSystem::is_entity_clicked(editor_speed_RIGHT, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Speed_RIGHT;
+                else if (PhysicsSystem::is_entity_clicked(editor_speed_DOWN, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Speed_DOWN;
+                else if (PhysicsSystem::is_entity_clicked(editor_teleport, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Teleport;
+                else if (PhysicsSystem::is_entity_clicked(editor_yellow_blob, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::YellowBlob;
+                else if (PhysicsSystem::is_entity_clicked(editor_green_blob, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::GreenBlob;
+                else if (PhysicsSystem::is_entity_clicked(editor_red_blob, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::RedBlob;
+                else if (PhysicsSystem::is_entity_clicked(editor_blue_blob, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::BlueBlob;
+                else if (PhysicsSystem::is_entity_clicked(editor_egg, mouse_press_x, mouse_press_y))
+                    selected_editor_entity = LevelEditor::EditorEntity::Egg;
+                else if (PhysicsSystem::is_entity_clicked(editor_save_button, mouse_press_x, mouse_press_y))
+                    LevelEditor::save_map(islandGrid);
+                else if (PhysicsSystem::is_entity_clicked(editor_home_button, mouse_press_x, mouse_press_y))
+                {
+                    gameState = GameState::Start;
+                    should_restart_game = true;
+                }
+            }
+        }
+    }
+    // Handle clicks for progressing through story
+    else
     {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
             switch (gameState) {
@@ -472,62 +902,29 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 gameState = GameState::Island;
                 break;
             case GameState::Island:
-                Mix_PlayChannel(-1, game_start_sound, 0);
-                gameState = GameState::Game;
+                gameState = GameState::Tutorial;
+                cap.open("data/video/tutorial.mp4");
+                 while(1){
+                        Mat frame;
+                        cap >> frame;
+
+                        if (frame.empty())
+                        break;
+
+                        imshow( "Frame", frame );
+                        char c=(char)waitKey(1);
+                        if(c==27)
+                        break;
+                    }
+
+                cap.release();
+                gameState = GameState::Level;
+                break;
+            case GameState::Tutorial:
                 break;
             }
+            ECS::registry<Text>.clear();
             restart();
-        }
-    }
-    else if (current_turn < MAX_TURNS)
-    {
-        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !blobuleMoved)
-        {
-            mouse_move = PhysicsSystem::is_entity_clicked(active_player, mouse_press_x, mouse_press_y);
-            if (mouse_move){
-                Mix_PlayChannel(-1, slingshot_pull_sound, 0);
-            }
-        }
-
-        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE && !blobuleMoved)
-        {
-            // check if left mouse click was on the asset
-            if (mouse_move)
-            {
-                Mix_PlayChannel(-1, slingshot_shot_sound, 0);
-                Mix_PlayChannel(-1, blobule_yipee_sound, 0);
-
-                mouse_move = false;
-
-                auto& blobMotion = ECS::registry<Motion>.get(active_player);
-                float blobAngle = blobMotion.angle;
-                float blobPower = blobMotion.dragDistance;
-
-                blobMotion.velocity = { cos(blobAngle) * blobPower, sin(blobAngle) * blobPower };
-
-                float velocityMagnitude = Utils::getVelocityMagnitude(blobMotion);
-                if (velocityMagnitude > max_blobule_speed) {
-                    blobMotion.velocity = { cos(blobAngle) * max_blobule_speed, sin(blobAngle) * max_blobule_speed };
-                }
-
-                Blobule::removeTrajectory(active_player);
-                blobuleMoved = true;
-            }
-        }
-
-        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-            auto save_clicked = PhysicsSystem::is_entity_clicked(save_button, mouse_press_x, mouse_press_y);
-            if (save_clicked) {
-                //call save function here
-                int currPlayer = playerMove;
-                if (blobuleMoved) {
-                    currPlayer++;
-                    if (currPlayer > 3) {
-                        currPlayer = 0;
-                    }
-                }
-                MapLoader::saveMap(currPlayer, current_turn);
-            }
         }
     }
 }

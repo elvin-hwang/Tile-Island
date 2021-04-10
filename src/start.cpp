@@ -43,16 +43,25 @@ ECS::Entity Menu::createMenu(vec2 position, GameState gameState)
     case GameState::Island:
         RenderSystem::createSprite(resource, textures_path("story_7.png"), "textured");
         break;
+    case GameState::Tutorial:
+        break;
+    case GameState::Level:
+        RenderSystem::createSprite(resource, textures_path("level_menu.png"), "textured");
+        break;
     }
 
-    // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-    ECS::registry<ShadedMeshRef>.emplace(entity, resource);
+    if (gameState != GameState::Tutorial) {
 
-    // Initialize the position, scale and physics components.
-    // The only relevant component is position, as the others will not be used.
-    auto& motion = ECS::registry<Motion>.emplace(entity);
-    motion.position = position;
-    motion.scale = (gameState == GameState::Start ? vec2({ 0.65f, 0.7f }) : vec2(1.f, 1.f)) * static_cast<vec2>(resource.texture.size);
+        // Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+        ECS::registry<ShadedMeshRef>.emplace(entity, resource);
+
+        // Initialize the position, scale and physics components.
+        // The only relevant component is position, as the others will not be used.
+        auto &motion = ECS::registry<Motion>.emplace(entity);
+        motion.position = position;
+        motion.scale = (gameState == GameState::Start ? vec2({0.65f, 0.7f}) : vec2(1.f, 1.f)) *
+                       static_cast<vec2>(resource.texture.size);
+    }
 
     return entity;
 }
