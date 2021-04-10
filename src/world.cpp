@@ -646,14 +646,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
             Utils::moveCamera(diff.x, diff.y);
         }
 
-        // Resetting game
-        if (action == GLFW_RELEASE && key == GLFW_KEY_R)
-        {
-            int w, h;
-            glfwGetWindowSize(window, &w, &h);
-            Mix_PlayChannel(-1, game_start_sound, 0);
-            restart();
-        }
 
         // Debugging
         if (key == GLFW_KEY_Q && action == GLFW_PRESS)
