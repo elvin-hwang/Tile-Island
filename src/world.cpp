@@ -326,7 +326,6 @@ void WorldSystem::restart() {
         levelButtons.clear();
 
         Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Level);
-        int count = 0;
         int numMaps = std::distance(fs::directory_iterator("data/level/"), fs::directory_iterator()) / 2 - 1;
         float initialYPos = window_height / 2 - 100 * (numMaps / 2);
 
@@ -345,8 +344,7 @@ void WorldSystem::restart() {
             mapName = std::regex_replace(mapName, std::regex("\\.json"), "");
             mapName = std::regex_replace(mapName, std::regex("map_"), "");
 
-            levelButtons.insert({ filePath, Button::createButton({ window_width / 2, initialYPos + 100 * count}, { 0.75,0.75 }, ButtonEnum::LoadMaps,"Map " + mapName) });
-            count++;
+            levelButtons.insert({ filePath, Button::createButton({ window_width / 2, initialYPos + 100 * (std::stoi(mapName) - 1)}, { 0.75,0.75 }, ButtonEnum::LoadMaps,"Map " + mapName) });
         }
     }
     else if (gameState == GameState::Game)

@@ -313,9 +313,13 @@ void CollisionSystem::initialize_collisions() {
 			}
 
 			ECS::Entity teleportDestination = entity_other;
+			int size = ECS::registry<Teleporting>.size();
 
-			while (entity_other.id == teleportDestination.id) {
-				int size = ECS::registry<Teleporting>.size();
+			if (size <= 1) {
+				return;
+			}
+
+			while (entity_other.id == teleportDestination.id && size > 1) {
 				teleportDestination = ECS::registry<Teleporting>.entities[(rand() % size)];
 			}
 
