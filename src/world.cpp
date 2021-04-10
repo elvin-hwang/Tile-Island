@@ -52,6 +52,7 @@ bool help_tool_is_active = false;
 ECS::Entity settings_tool;
 bool settings_is_active = false;
 bool should_quit_game = false;
+bool should_go_to_main_menu = false;
 bool should_restart_game = false;
 double mouse_press_x, mouse_press_y;
 
@@ -182,6 +183,9 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
     (void)window_size_in_game_units; // silence unused warning
 
     if (should_restart_game) {
+        if (should_go_to_main_menu) {
+            gameState = GameState::Start;
+        }
         restart();
     }
 
@@ -279,20 +283,29 @@ void WorldSystem::restart() {
     glfwGetWindowSize(window, &window_width, &window_height);
     should_restart_game = false;
 
-	if (gameState == GameState::Start) {
-        // Remove all entities that we created (those that have a motion component)
-        while (ECS::registry<Motion>.entities.size() > 0)
-            ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
+    // Remove all entities that we created (those that have a motion component)
+    while (ECS::registry<Motion>.entities.size() > 0)
+        ECS::ContainerInterface::remove_all_components_of(ECS::registry<Motion>.entities.back());
 
-        while (ECS::registry<ShadedMeshRef>.entities.size() > 0)
-            ECS::ContainerInterface::remove_all_components_of(ECS::registry<ShadedMeshRef>.entities.back());
+    while (ECS::registry<ShadedMeshRef>.entities.size() > 0)
+        ECS::ContainerInterface::remove_all_components_of(ECS::registry<ShadedMeshRef>.entities.back());
+
+    // Remove buttons and text completely
+    ECS::registry<Button>.clear();
+    ECS::registry<Text>.clear();
+
+	if (gameState == GameState::Start) {
+        should_go_to_main_menu = false;
 
 		Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Start);
 		start_button = Button::createButton({ window_width / 2, window_height / 2 }, { 0.75,0.75 }, ButtonEnum::StartGame, "Start");
 		load_button = Button::createButton({ window_width / 2, window_height / 2 + 100 }, { 0.75,0.75 },ButtonEnum::LoadGame, "Load");
         level_editor_button = Button::createButton({ window_width / 2, window_height / 2 + 200 }, { 0.75,0.75 }, ButtonEnum::LevelEditor, "Editor");
+        quit_button = Button::createButton({ window_width / 2, window_height / 2 + 300 }, { 0.75,0.75 }, ButtonEnum::QuitGame, "Quit");
     }
     else if (gameState == GameState::Level) {
+        levelButtons.clear();
+
         Menu::createMenu({ window_width / 2, window_height / 2 }, GameState::Level);
         int count = 0;
         int numMaps = std::distance(fs::directory_iterator("data/level/"), fs::directory_iterator()) / 2 - 1;
@@ -378,6 +391,7 @@ void WorldSystem::restart() {
         numWidth = islandGrid[0].size();
 
         // Add blobules to the LevelEditor context
+        LevelEditor::clear_entity_lists();
         for (ECS::Entity blobule : ECS::registry<Blobule>.entities)
         {
             LevelEditor::add_blobule(blobule);
@@ -446,9 +460,9 @@ void WorldSystem::enable_help(bool enable)
     }
 }
 
-void WorldSystem::quit_game()
+void WorldSystem::go_to_main_menu()
 {
-    should_quit_game = true;
+    should_go_to_main_menu = true;
 }
 
 void WorldSystem::set_game_to_restart()
@@ -670,32 +684,30 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
             auto start_clicked = PhysicsSystem::is_entity_clicked(start_button, mouse_press_x, mouse_press_y);
             auto load_clicked = PhysicsSystem::is_entity_clicked(load_button, mouse_press_x, mouse_press_y);
             auto level_editor_clicked = PhysicsSystem::is_entity_clicked(level_editor_button, mouse_press_x, mouse_press_y);
+            auto quit_clicked = PhysicsSystem::is_entity_clicked(quit_button, mouse_press_x, mouse_press_y);
             if (start_clicked) {
                 Mix_PlayChannel(-1, game_start_sound, 0);
                 gameState = GameState::Intro;
-                ECS::ContainerInterface::remove_all_components_of(start_button);
-                ECS::ContainerInterface::remove_all_components_of(load_button);
-                ECS::ContainerInterface::remove_all_components_of(level_editor_button);
+                ECS::registry<Button>.clear();
                 ECS::registry<Text>.clear();
                 should_restart_game = true;
             }
             else if (load_clicked) {
                 Mix_PlayChannel(-1, game_start_sound, 0);
                 gameState = GameState::Game;
-                ECS::ContainerInterface::remove_all_components_of(start_button);
-                ECS::ContainerInterface::remove_all_components_of(load_button);
-                ECS::ContainerInterface::remove_all_components_of(level_editor_button);
                 set_load_map_location("data/saved/map.json");
+                ECS::registry<Button>.clear();
                 ECS::registry<Text>.clear();
                 should_restart_game = true;
             }
             else if (level_editor_clicked) {
                 gameState = GameState::LevelEditor;
-                ECS::ContainerInterface::remove_all_components_of(start_button);
-                ECS::ContainerInterface::remove_all_components_of(load_button);
-                ECS::ContainerInterface::remove_all_components_of(level_editor_button);
+                ECS::registry<Button>.clear();
                 ECS::registry<Text>.clear();
                 restart();
+            }
+            else if (quit_clicked) {
+                should_quit_game = true;
             }
         }
 	}
@@ -852,8 +864,7 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 else if (PhysicsSystem::is_entity_clicked(editor_home_button, mouse_press_x, mouse_press_y))
                 {
                     gameState = GameState::Start;
-                    ECS::registry<Text>.clear();
-                    restart();
+                    should_restart_game = true;
                 }
             }
         }

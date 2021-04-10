@@ -11,7 +11,7 @@ void createButtonText(Button& button, vec2 position, ButtonEnum buttonEnum, std:
     switch (buttonEnum) {
     case ButtonEnum::SaveGame:
     case ButtonEnum::LoadGame_Settings:
-    case ButtonEnum::QuitGame:
+    case ButtonEnum::MainMenu:
     case ButtonEnum::OpenSettings:
     case ButtonEnum::RestartGame:
         button.text_entity = Text::create_text(buttonText, { position.x - 60, position.y + 5 }, yellowButtonFontSize);
@@ -42,8 +42,8 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, ButtonEnum buttonEnu
         switch (buttonEnum) {
             case ButtonEnum::SaveGame:
             case ButtonEnum::LoadGame_Settings:
-            case ButtonEnum::QuitGame:
-            case ButtonEnum:: RestartGame:
+            case ButtonEnum::MainMenu:
+            case ButtonEnum::RestartGame:
                 path = textures_path("yellow_button.png");
                 break;
             case ButtonEnum:: ExitTool:

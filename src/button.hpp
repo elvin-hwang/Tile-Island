@@ -13,11 +13,11 @@ enum ButtonEnum {
 	LoadMaps,
 	RestartGame,
 	QuitGame,
+	MainMenu,
 	SoundOn,
 	SoundOff,
 	OpenHelp,
 	LevelEditor,
-	StartMenu,
 };
 
 struct Button
