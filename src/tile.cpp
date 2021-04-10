@@ -141,7 +141,7 @@ ECS::Entity Tile::createTile(vec2 position, TerrainType type)
 
             resource.mesh.vertices = vertices;
             resource.mesh.vertex_indices = indices;
-            RenderSystem::createColoredMesh(resource, "colored_mesh");
+            RenderSystem::createColoredMesh(resource, "water_tile");
         }
 
         else {

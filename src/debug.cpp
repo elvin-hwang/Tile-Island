@@ -19,7 +19,7 @@ namespace DebugSystem
 		std::string key = "thick_line";
 		ShadedMesh& resource = cache_resource(key);
 		if (resource.effect.program.resource == 0) {
-			// create a procedural circle
+
 			constexpr float z = -0.1f;
 			vec3 red = { 0.8,0.1,0.1 };
 
@@ -62,8 +62,6 @@ namespace DebugSystem
 
 		ECS::registry<DebugComponent>.emplace(entity);
 	}
-
-	//void createCircle()
 
 	void clearDebugComponents() {
 		// Clear old debugging visualizations
