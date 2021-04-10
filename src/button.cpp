@@ -19,7 +19,7 @@ void createButtonText(Button& button, vec2 position, ButtonEnum buttonEnum, std:
     default:
         button.text_entity = Text::create_text(buttonText, { position.x - 60, position.y + 10 }, blueButtonFontSize);
         break;
-    } 
+    }
 }
 
 
@@ -27,7 +27,7 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, ButtonEnum buttonEnu
 {
     // Reserve an entity
     auto entity = ECS::Entity();
- 
+
     // Create the rendering components
     std::string key = "button" + std::to_string(buttonEnum);
     if (buttonEnum == ButtonEnum::LoadMaps) {

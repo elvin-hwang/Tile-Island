@@ -77,4 +77,7 @@ enum class GameState {
 	Island,
 	Level,
 	Game,
+	LevelEditor,
 };
+
+static const float tile_width = 44.46f;

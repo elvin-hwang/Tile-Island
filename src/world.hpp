@@ -3,6 +3,7 @@
 // internal
 #include "common.hpp"
 #include "blobule.hpp"
+#include "level_editor.hpp"
 
 // stlib
 #include <vector>
@@ -78,8 +79,10 @@ private:
 
 	ECS::Entity start_button;
 	ECS::Entity load_button;
+	ECS::Entity level_editor_button;
 	ECS::Entity settings_button;
 	ECS::Entity help_button;
+	ECS::Entity save_button;
 
 	// C++ random number generator
 	std::default_random_engine rng;
@@ -88,4 +91,26 @@ private:
 	ECS::Entity active_player;
 
 	ECS::Entity camera;
+
+	// Level editor
+	LevelEditor::EditorEntity selected_editor_entity = LevelEditor::EditorEntity::Sand;
+	ECS::Entity editor_save_button;
+	ECS::Entity editor_home_button;
+	ECS::Entity editor_water;
+	ECS::Entity editor_block;
+	ECS::Entity editor_ice;
+	ECS::Entity editor_mud;
+	ECS::Entity editor_sand;
+	ECS::Entity editor_acid;
+	ECS::Entity editor_speed;
+	ECS::Entity editor_speed_UP;
+	ECS::Entity editor_speed_LEFT;
+	ECS::Entity editor_speed_RIGHT;
+	ECS::Entity editor_speed_DOWN;
+	ECS::Entity editor_teleport;
+	ECS::Entity editor_yellow_blob;
+	ECS::Entity editor_green_blob;
+	ECS::Entity editor_red_blob;
+	ECS::Entity editor_blue_blob;
+	ECS::Entity editor_egg;
 };
