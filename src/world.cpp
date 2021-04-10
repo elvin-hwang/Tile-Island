@@ -25,6 +25,11 @@
 #include <algorithm>
 #include <regex>
 #include <settings.hpp>
+#include <opencv2/videoio.hpp>
+#include "opencv2/opencv.hpp"
+
+
+using namespace cv;
 
 // Game Configuration
 namespace fs = std::filesystem;
@@ -68,6 +73,15 @@ int next_egg_spawn = 3;
 int MAX_EGGS = 1;
 
 float font_size = 0.58;
+
+
+cv::VideoCapture cap;
+//void play_intro_video()
+//{
+//    cap.open(video_path("narration.mp4"));
+//    m_frame.init();
+//    game_state = game_narration;
+//}
 
 bool noBlobulesMoving() {
     for (ECS::Entity entity : ECS::registry<Blobule>.entities)
@@ -278,6 +292,11 @@ void WorldSystem::step(float elapsed_ms, vec2 window_size_in_game_units)
 
 // Reset the world state to its initial state
 void WorldSystem::restart() {
+//    cap.open("/Users/vincent/Tile-Island/data/video/tutorial.mp4");
+//    if(!cap.isOpened())
+//    {
+//        std::cout<<"not open"<<std::endl;
+//    }
     // Generate our default grid first.
     int window_width, window_height;
     glfwGetWindowSize(window, &window_width, &window_height);
@@ -893,7 +912,25 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 gameState = GameState::Island;
                 break;
             case GameState::Island:
+                gameState = GameState::Tutorial;
+                cap.open("data/video/tutorial.mp4");
+                 while(1){
+                        Mat frame;
+                        cap >> frame;
+
+                        if (frame.empty())
+                        break;
+
+                        imshow( "Frame", frame );
+                        char c=(char)waitKey(1);
+                        if(c==27)
+                        break;
+                    }
+
+                cap.release();
                 gameState = GameState::Level;
+                break;
+            case GameState::Tutorial:
                 break;
             }
             ECS::registry<Text>.clear();
