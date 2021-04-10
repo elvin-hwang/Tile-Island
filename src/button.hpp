@@ -9,12 +9,15 @@ enum ButtonEnum {
 	LoadGame_Settings,
 	OpenSettings,
 	StartGame,
-	ExitSettings,
+	ExitTool,
 	LoadMaps,
 	RestartGame,
 	QuitGame,
+	MainMenu,
 	SoundOn,
-	SoundOff
+	SoundOff,
+	OpenHelp,
+	LevelEditor,
 };
 
 struct Button

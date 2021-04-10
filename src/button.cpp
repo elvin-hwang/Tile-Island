@@ -11,7 +11,7 @@ void createButtonText(Button& button, vec2 position, ButtonEnum buttonEnum, std:
     switch (buttonEnum) {
     case ButtonEnum::SaveGame:
     case ButtonEnum::LoadGame_Settings:
-    case ButtonEnum::QuitGame:
+    case ButtonEnum::MainMenu:
     case ButtonEnum::OpenSettings:
     case ButtonEnum::RestartGame:
         button.text_entity = Text::create_text(buttonText, { position.x - 60, position.y + 5 }, yellowButtonFontSize);
@@ -19,7 +19,7 @@ void createButtonText(Button& button, vec2 position, ButtonEnum buttonEnum, std:
     default:
         button.text_entity = Text::create_text(buttonText, { position.x - 60, position.y + 10 }, blueButtonFontSize);
         break;
-    } 
+    }
 }
 
 
@@ -27,7 +27,7 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, ButtonEnum buttonEnu
 {
     // Reserve an entity
     auto entity = ECS::Entity();
- 
+
     // Create the rendering components
     std::string key = "button" + std::to_string(buttonEnum);
     if (buttonEnum == ButtonEnum::LoadMaps) {
@@ -42,11 +42,11 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, ButtonEnum buttonEnu
         switch (buttonEnum) {
             case ButtonEnum::SaveGame:
             case ButtonEnum::LoadGame_Settings:
-            case ButtonEnum::QuitGame:
-            case ButtonEnum:: RestartGame:
+            case ButtonEnum::MainMenu:
+            case ButtonEnum::RestartGame:
                 path = textures_path("yellow_button.png");
                 break;
-            case ButtonEnum:: ExitSettings:
+            case ButtonEnum:: ExitTool:
                 path = textures_path("exit.png");
                 break;
             case ButtonEnum:: OpenSettings:
@@ -57,6 +57,9 @@ ECS::Entity Button::createButton(vec2 position, vec2 scale, ButtonEnum buttonEnu
                 break;
             case ButtonEnum:: SoundOff:
                 path = textures_path("sound_off.png");
+                break;
+            case ButtonEnum::OpenHelp:
+                path = textures_path("open_help.png");
                 break;
             default:
                 path = textures_path("blue_button.png");

@@ -11,7 +11,7 @@
 ECS::Entity save_button;
 ECS::Entity load_button;
 ECS::Entity exit_button;
-ECS::Entity quit_button;
+ECS::Entity main_menu_button;
 ECS::Entity restart_button;
 ECS::Entity background_music_button;
 ECS::Entity sound_effects_button;
@@ -25,12 +25,12 @@ bool background_music_on;
 void closeSettings() {
 	ECS::ContainerInterface::remove_all_components_of(ECS::registry<Button>.get(save_button).text_entity);
 	ECS::ContainerInterface::remove_all_components_of(ECS::registry<Button>.get(load_button).text_entity);
-	ECS::ContainerInterface::remove_all_components_of(ECS::registry<Button>.get(quit_button).text_entity);
+	ECS::ContainerInterface::remove_all_components_of(ECS::registry<Button>.get(main_menu_button).text_entity);
 	ECS::ContainerInterface::remove_all_components_of(ECS::registry<Button>.get(restart_button).text_entity);
 	ECS::ContainerInterface::remove_all_components_of(save_button);
 	ECS::ContainerInterface::remove_all_components_of(load_button);
 	ECS::ContainerInterface::remove_all_components_of(exit_button);
-	ECS::ContainerInterface::remove_all_components_of(quit_button);
+	ECS::ContainerInterface::remove_all_components_of(main_menu_button);
 	ECS::ContainerInterface::remove_all_components_of(restart_button);
 	ECS::ContainerInterface::remove_all_components_of(background_music_text);
 	ECS::ContainerInterface::remove_all_components_of(sound_effects_text);
@@ -127,8 +127,8 @@ ECS::Entity Settings::createSettings(vec2 position, vec2 scale)
 	save_button = Button::createButton({ motion.position.x, motion.position.y - 60}, { 0.50, 0.50 }, ButtonEnum::SaveGame, "Save");
 	load_button = Button::createButton({ motion.position.x, motion.position.y + 20}, { 0.50, 0.50 }, ButtonEnum::LoadGame_Settings, "Load");
 	restart_button = Button::createButton({ motion.position.x, motion.position.y + 100 }, { 0.50, 0.50 }, ButtonEnum::RestartGame, "Restart");
-	quit_button = Button::createButton({ motion.position.x, motion.position.y + 180 }, { 0.50, 0.50 }, ButtonEnum::QuitGame, "Quit");
-	exit_button = Button::createButton({ motion.position.x + 425, motion.position.y - 275 }, { 0.40,0.40 }, ButtonEnum::ExitSettings, "");
+	main_menu_button = Button::createButton({ motion.position.x, motion.position.y + 180 }, { 0.50, 0.50 }, ButtonEnum::MainMenu, "Menu");
+	exit_button = Button::createButton({ motion.position.x + 425, motion.position.y - 275 }, { 0.40,0.40 }, ButtonEnum::ExitTool, "");
 	background_music_button = Button::createButton({ motion.position.x +275, motion.position.y - 190 }, { 0.77,0.77}, background_music_buttonEnum, "");
 	sound_effects_button = Button::createButton({ motion.position.x + 275, motion.position.y - 140 }, { 0.77, 0.77 }, sound_effect_buttonEnum, "");
 	background_music_text = Text::create_text(background_music_str, {motion.position.x/1.75, motion.position.y - 180 }, 0.5);
@@ -151,8 +151,9 @@ void Settings::handleSettingClicks(double mouse_x, double mouse_y)
 			closeSettings();
 		}
 		else
-			if (PhysicsSystem::is_entity_clicked(quit_button, mouse_x, mouse_y)) {
-				WorldSystem::quit_game();
+			if (PhysicsSystem::is_entity_clicked(main_menu_button, mouse_x, mouse_y)) {
+				WorldSystem::go_to_main_menu();
+				WorldSystem::set_game_to_restart();
 			}
 			else if (PhysicsSystem::is_entity_clicked(restart_button, mouse_x, mouse_y)) {
 				WorldSystem::set_game_to_restart();

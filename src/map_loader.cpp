@@ -106,6 +106,7 @@ void createBlobules(std::vector<std::vector<int>> blobulePositions) {
 			blob = Blobule::createBlobule(motion.position, blobuleCol::Blue, "blue");
 			break;
 		}
+		ECS::registry<Blobule>.get(blob).currentGrid = position;
 		blobuleList.push_back(blob);
 		count++;
 	}
