@@ -6,6 +6,7 @@
 #include "level_editor.hpp"
 #include "map_loader.hpp"
 #include "tile.hpp"
+#include "text.hpp"
 
 // stlib
 #include <filesystem>
@@ -16,7 +17,9 @@
 namespace fs = std::filesystem;
 std::vector<ECS::Entity> editor_blobule_list = {};
 std::vector<ECS::Entity> editor_egg_list = {};
+ECS::Entity notification_text;
 bool has_changes = false;
+int numTeleporters = 0;
 
 bool is_tile(LevelEditor::EditorEntity entity) {
 	return (
@@ -134,6 +137,7 @@ std::string tile_to_CSV(Tile tile) {
 void LevelEditor::clear_entity_lists() {
 	editor_blobule_list.clear();
 	editor_egg_list.clear();
+	numTeleporters = 0;
 }
 
 void LevelEditor::add_blobule(ECS::Entity blobule) {
@@ -145,6 +149,15 @@ void LevelEditor::add_blobule(ECS::Entity blobule) {
 void LevelEditor::place_entity(std::vector<std::vector<ECS::Entity>>& grid, EditorEntity entity, vec2 grid_coords) {
 	// Mark the map as changed and new
 	has_changes = true;
+
+	// Remove any text that is not the save button text
+	for (ECS::Entity text : ECS::registry<Text>.entities)
+	{
+		if (ECS::registry<Text>.get(text).content != "Save")
+		{
+			ECS::registry<Text>.remove(text);
+		}
+	}
 
 	// Find the tile we're placing on
 	int x_coord = grid_coords.x;
@@ -166,6 +179,9 @@ void LevelEditor::place_entity(std::vector<std::vector<ECS::Entity>>& grid, Edit
 				}
 			}
 		}
+
+		if (entity == EditorEntity::Teleport)
+			numTeleporters++;
 
 		ECS::registry<Tile>.remove(selected_tile);
 		ECS::Entity tile = Tile::createTile(selected_tile_motion.position, entity_to_terrain_type(entity));
@@ -254,35 +270,38 @@ void LevelEditor::place_entity(std::vector<std::vector<ECS::Entity>>& grid, Edit
 	}
 	else if (entity == EditorEntity::BlueBlob)
 	{
-	// Check for water/block tiles
-	if (bad_blobule_placement(selected_tile))
-		return;
+		// Check for water/block tiles
+		if (bad_blobule_placement(selected_tile))
+			return;
 
-	// Check that we're not trying to take another blob's spot
-	for (ECS::Entity blob : editor_blobule_list)
-	{
-		if (ECS::registry<Blobule>.get(blob).color != "blue")
+		// Check that we're not trying to take another blob's spot
+		for (ECS::Entity blob : editor_blobule_list)
 		{
-			if (ECS::registry<Blobule>.get(blob).currentGrid[0] == x_coord && ECS::registry<Blobule>.get(blob).currentGrid[1] == y_coord)
-				return;
+			if (ECS::registry<Blobule>.get(blob).color != "blue")
+			{
+				if (ECS::registry<Blobule>.get(blob).currentGrid[0] == x_coord && ECS::registry<Blobule>.get(blob).currentGrid[1] == y_coord)
+					return;
+			}
 		}
-	}
 
-	// Find the right blob and move it
-	for (ECS::Entity blob : editor_blobule_list)
-	{
-		if (ECS::registry<Blobule>.get(blob).color == "blue")
+		// Find the right blob and move it
+		for (ECS::Entity blob : editor_blobule_list)
 		{
-			ECS::registry<Motion>.get(blob).position = selected_tile_motion.position;
-			ECS::registry<Blobule>.get(blob).currentGrid = { x_coord, y_coord };
+			if (ECS::registry<Blobule>.get(blob).color == "blue")
+			{
+				ECS::registry<Motion>.get(blob).position = selected_tile_motion.position;
+				ECS::registry<Blobule>.get(blob).currentGrid = { x_coord, y_coord };
+			}
 		}
-	}
 	}
 	else if (entity == EditorEntity::Egg)
 	{
-		ECS::Entity egg = Egg::createEgg(selected_tile_motion.position);
-		ECS::registry<Egg>.get(egg).gridLocation = { x_coord, y_coord };
-		editor_egg_list.push_back(egg);
+		// Only allow one egg
+		if (editor_egg_list.size() < 1) {
+			ECS::Entity egg = Egg::createEgg(selected_tile_motion.position);
+			ECS::registry<Egg>.get(egg).gridLocation = { x_coord, y_coord };
+			editor_egg_list.push_back(egg);
+		}
 	}
 }
 
@@ -292,8 +311,19 @@ void LevelEditor::save_map(std::vector<std::vector<ECS::Entity>> grid) {
 	int numMaps = std::distance(fs::directory_iterator("data/level/"), fs::directory_iterator()) / 2 - 1;
 
 	// Don't save a new save if nothing has changed or we've hit map limit
-	if (!has_changes || numMaps >= 6)
+	if (!has_changes)
 	{
+		Text::create_text("No changes yet", { 300.f, 40.f }, 0.5);
+		return;
+	}
+	else if (numMaps >= 6)
+	{
+		Text::create_text("Max maps reached", { 300.f, 40.f }, 0.5);
+		return;
+	}
+	else if (numTeleporters == 1)
+	{
+		Text::create_text("Need more than one teleporter", { 300.f, 40.f }, 0.5);
 		return;
 	}
 
@@ -365,5 +395,6 @@ void LevelEditor::save_map(std::vector<std::vector<ECS::Entity>> grid) {
 	mapInfoFile << mapInfo;
 
 	// All changes have been saved
+	Text::create_text("Save Complete", { 300.f, 40.f }, 0.5);
 	has_changes = false;
 }
