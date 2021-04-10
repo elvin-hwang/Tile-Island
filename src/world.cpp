@@ -27,6 +27,7 @@
 #include <opencv2/videoio.hpp>
 #include "opencv2/opencv.hpp"
 
+
 using namespace cv;
 
 // Game Configuration
@@ -668,42 +669,25 @@ void WorldSystem::on_mouse_button(GLFWwindow* wnd, int button, int action)
                 gameState = GameState::Island;
                 break;
             case GameState::Island:
-//                cap.open("/Users/vincent/Tile-Island/data/video/tutorial.mp4");
-//                gameState = GameState::Tutorial;
-//                    if(cap.open("data/video/tutorial.mp4")){
-//                        std::cout<<"opened"<<std::endl;
-//                        gameState = GameState::Tutorial;
-//                    }
-//
-//                            if(!cap.isOpened()){
-//            break;
-//        }
-                    cap.open("data/video/tutorial.mp4");
-         while(1){
-                Mat frame;
-                cap >> frame;
-//            cap.read(frame);
+                gameState = GameState::Tutorial;
+                cap.open("data/video/tutorial.mp4");
+                 while(1){
+                        Mat frame;
+                        cap >> frame;
 
-            // convert frame to texture
-//             cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
-//             cv::flip(frame, frame, -1);
-//             cv::flip(frame, frame, 1);
-//             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame.cols, frame.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, frame.data);
+                        if (frame.empty())
+                        break;
 
-                if (frame.empty())
-                break;
+                        imshow( "Frame", frame );
+                        char c=(char)waitKey(1);
+                        if(c==27)
+                        break;
+                    }
 
-                imshow( "Frame", frame );
-                char c=(char)waitKey(1);
-                if(c==27)
-                break;
-            }
-
-            cap.release();
-                    gameState = GameState::Level;
+                cap.release();
+                gameState = GameState::Level;
                 break;
             case GameState::Tutorial:
-                gameState = GameState::Level;
                 break;
             }
             ECS::registry<Text>.clear();
